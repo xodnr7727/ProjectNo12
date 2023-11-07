@@ -16,6 +16,7 @@ class UCameraComponent;
 class UAnimMontage;
 class USlashOverlay;
 class USoundBase;
+class UParticleSystemComponent;
 UCLASS()
 class AProjectNo1Character : public ABaseCharacter, public IPickupInterface
 {
@@ -47,7 +48,7 @@ protected:
 
 	/** Called for side to side input */
 	void MoveRight(float Value);
-	void EKeyPressed();
+	void EKeyPressed();//장비 장착
 
 	UFUNCTION(BlueprintCallable)
 	void RMKeyPressed();
@@ -56,7 +57,7 @@ protected:
 	void RMKeyReleased();
 
 	void IfAttack();
-	void Sprint(); 
+	void Sprint(); //달리기
 	void StopSprinting(); 
 	
 	void EquipWeapon(AWeapon* Weapon);
@@ -65,10 +66,12 @@ protected:
 	virtual void BlockEnd() override;
 	virtual void DiveEnd() override;
 	virtual void Attack() override;
-	void Dive();
+	void Dive();//구르기
 	void EnableDive();
-	void DrinkPotion();
+	void DrinkPotion(); //포션 마시기
+	void DeactivatePotionEffect();
 	void EnablePotion();
+	void EnableRage();
 
 	bool IsArm();
 
@@ -76,6 +79,7 @@ protected:
 	bool CanArm();
 	bool CanBlock();
 	bool HasEnoughStamina();
+	bool HasEnoughPotionStamina();
 	bool HasEnoughAttackStamina();
 	bool HasEnoughSkillStamina();
 	bool HasEnoughShieldStamina();
@@ -115,9 +119,18 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void DrinkHealthPotion();
 
-	void OnNeckSkillPressed();
+	UFUNCTION(BlueprintCallable)
+	void DeactivateLargeSkillEffect();
 
+	void OnNeckSkillPressed();
+	void LargeSkillPressed();
+	void EnableLargeSkill();
+	void EnableSmallSkill();
+	bool IsAttackSkill();
+	void SmallSkillPressed();
 	void OnSwordSkillPressed();
+	void DeactivateSkillEffect(); //이펙트 해제
+	void RestoreDamage(); //공격력 복구
 
 	void FireballSword();
 
@@ -194,16 +207,40 @@ private:
 		UPROPERTY(EditAnywhere)
 		TSubclassOf<class AProjectileWeapon> ProjectileWeaponClass;
 
-		int32 CurrentComboStep;
-		TArray<FName> ComboSectionNames;
+		int32 CurrentComboStep; //콤보 단계
+		TArray<FName> ComboSectionNames; //콤보 단계별 이름
 
+		UPROPERTY(EditAnywhere, Category = "Skill")
 		float PotionCooldown; // 포션 마시기 쿨타임 변수
 		bool bCanDrinkPotion; // 포션 마실 수 있는지 여부
 
+		UPROPERTY(EditAnywhere, Category = "Skill")
 		float DiveCooldown; // 구르기 쿨타임 변수
 		bool bCanDive; // 구르기 할 수 있는지 여부
 
-		FTimerHandle CountdownTimerHandle;
+		UPROPERTY(EditAnywhere, Category = "Skill")
+		float RageCooldown; // 스킬 쿨타임 변수
+		bool bCanRage; // 스킬 사용할 수 있는지 여부
+
+		UPROPERTY(EditAnywhere, Category = "Skill")
+		float LargeSkillCooldown; // 스킬 쿨타임 변수
+		bool bCanLargeSkill; // 스킬 사용할 수 있는지 여부
+
+		UPROPERTY(EditAnywhere, Category = "Skill")
+		float SmallSkillCooldown; // 스킬 쿨타임 변수
+		bool bCanSmallSkill; // 스킬 사용할 수 있는지 여부
+
+		UPROPERTY(EditAnywhere, Category = "Skill")
+		float RageDuration;// 분노 지속 시간 (초)
+
+		UPROPERTY(EditAnywhere, Category = "Skill")
+		float PotionDuration;// 포션 지속 시간
+
+		UPROPERTY(VisibleAnywhere, Category = "Skill")
+		UParticleSystemComponent* RageSkillEffect;
+
+		UPROPERTY(VisibleAnywhere, Category = "Skill")
+		UParticleSystemComponent* PotionSkillEffect;
 
 public:
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }

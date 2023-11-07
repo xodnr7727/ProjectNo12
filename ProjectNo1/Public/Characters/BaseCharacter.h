@@ -71,6 +71,8 @@ protected:
 	virtual void PlayDiveMontage();
 	virtual void PlayDrinkMontage();
 	virtual void PlayNeckSkillMontage();
+	virtual void PlayLargeSkillMontage();
+	virtual void PlaySmallSkillMontage();
 	virtual void PlaySwordSkillMontage();
 	void StopAttackMontage();
 
@@ -152,6 +154,12 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
 		UAnimMontage* NeckSkillMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat)
+		UAnimMontage* LargeSkillMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat)
+		UAnimMontage* SmallSkillMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
 		UAnimMontage* SwordSkillMontage;

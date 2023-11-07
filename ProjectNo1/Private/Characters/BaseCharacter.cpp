@@ -359,6 +359,16 @@ void ABaseCharacter::PlayNeckSkillMontage()
 	PlayMontageSection(NeckSkillMontage, FName("Skill"));
 }
 
+void ABaseCharacter::PlayLargeSkillMontage()
+{
+	PlayMontageSection(LargeSkillMontage, FName("LargeSkill"));
+}
+
+void ABaseCharacter::PlaySmallSkillMontage()
+{
+	PlayMontageSection(SmallSkillMontage, FName("SmallSkill"));
+}
+
 void ABaseCharacter::PlaySwordSkillMontage()
 {
 	PlayMontageSection(SwordSkillMontage, FName("Skill"));

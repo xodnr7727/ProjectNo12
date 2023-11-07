@@ -20,6 +20,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator);
 
+	void DeactivateLargeSkillEffect();
+
+	void ActivateLargeSkillEffect();
+
 	void DeactivateEmbers();
 	virtual void DisableCapsuleCollision();
 	virtual void PlayEquipSound();
@@ -27,12 +31,16 @@ public:
 	UFUNCTION(BlueprintCallable)
 	virtual void FireballSword();
 
+	void IncreaseDamage();
+	void RestoreDamage();
+
 	void AttachMeshToSocket(USceneComponent* InParent, const FName& InSocketName);
 
 	TArray<AActor*> IgnoreActors;
 
 protected:
 	virtual void BeginPlay() override;
+
 	/*
 	virtual void OnCapsuleOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
 
@@ -88,6 +96,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 		UParticleSystem* HitParticles;
+
+	UPROPERTY(VisibleAnywhere, Category = "Skill")
+		UParticleSystemComponent* LargeSkillEffect;
 
 public:
 	FORCEINLINE UBoxComponent* GetWeaponBox() const { return WeaponBox; }

@@ -21,6 +21,7 @@ public:
 	void RegenMinusStamina(float DeltaTime);
 	void RecoveryStun();
 	void RecoveryHealth();
+	void BaseHealth();
 
 protected:
 	virtual void BeginPlay() override;
@@ -64,7 +65,10 @@ private:
 		float ShieldCost = 30.f;
 
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
-		float HealthRegenRate = 4.f;
+		float PotionCost = 10.f;
+
+	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
+		float HealthRegenRate = 2.f;
 
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
 		float StaminaRegenRate = 20.f;
@@ -96,6 +100,7 @@ public:
 	FORCEINLINE float GetSkillCost() const { return SkillCost; }
 	FORCEINLINE float GetDiveCost() const { return DiveCost; }
 	FORCEINLINE float GetShieldCost() const { return ShieldCost; }
+	FORCEINLINE float GetPotionCost() const { return PotionCost; }
 	FORCEINLINE float GetStamina() const { return Stamina; }
 	void AddSouls(int32 NumberOfSouls);
 	void AddGold(int32 AmountOfGold);

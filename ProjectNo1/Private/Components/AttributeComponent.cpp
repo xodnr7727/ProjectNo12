@@ -73,14 +73,20 @@ void UAttributeComponent::RecoveryStun()
 
 void UAttributeComponent::RecoveryHealth()
 {
-	float RestoreAmount = MaxHealth * 0.3f;
+	HealthRegenRate = 12.f;
+	/*float RestoreAmount = MaxHealth * 0.3f;
 
 	Health += RestoreAmount;
 
 	if (Health > MaxHealth)
 	{
 		Health = MaxHealth;
-	}
+	}*/
+}
+
+void UAttributeComponent::BaseHealth()
+{
+	HealthRegenRate = 2.f;
 }
 
 void UAttributeComponent::RegenStamina(float DeltaTime)

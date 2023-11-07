@@ -39,6 +39,9 @@ AWeapon::AWeapon()
 	ItemMesh->SetRelativeLocation(WeaponLocation);
 	ItemMesh->SetRelativeRotation(WeaponRotation);
 
+	LargeSkillEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("LargeSkillEffect"));
+	LargeSkillEffect->SetupAttachment(RootComponent); // 이펙트 위치 설정
+
 }
 
 void AWeapon::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator)
@@ -50,6 +53,22 @@ void AWeapon::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOw
 	PlayEquipSound();
 	DisableCapsuleCollision();
 	DeactivateEmbers();
+}
+
+void AWeapon::DeactivateLargeSkillEffect()
+{
+	if (LargeSkillEffect)
+	{
+		LargeSkillEffect->DeactivateSystem();
+	}
+}
+
+void AWeapon::ActivateLargeSkillEffect()
+{
+	if (LargeSkillEffect)
+	{
+		LargeSkillEffect->ActivateSystem();
+	}
 }
 
 void AWeapon::DeactivateEmbers()
@@ -107,8 +126,22 @@ void AWeapon::AttachMeshToSocket(USceneComponent* InParent, const FName& InSocke
 void AWeapon::BeginPlay()
 {
 	Super::BeginPlay();
+	LargeSkillEffect->DeactivateSystem(); // 초기에는 비활성화
 
 	WeaponBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnBoxOverlap);
+}
+
+void AWeapon::IncreaseDamage()
+{
+	// 공격력을 증가시키는 코드
+	Damage += 100.0f;
+}
+
+void AWeapon::RestoreDamage()
+{
+	// 공격력을 원래대로 복구시키는 코드
+	// 예를 들어, CharacterDamage = BaseDamage;
+	Damage -= 100.0f;
 }
 
 void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

@@ -18,6 +18,7 @@
 #include "Components/BoxComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Interfaces/HitInterface.h"
+#include "Particles/ParticleSystemComponent.h"
 #include "Components/AttributeComponent.h"
 #include "Item.h"
 #include "Weapons/Weapon.h"
@@ -78,6 +79,11 @@ AProjectNo1Character::AProjectNo1Character()
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 
+	RageSkillEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("RageSkillEffect"));
+	RageSkillEffect->SetupAttachment(RootComponent); // 이펙트 위치 설정
+
+	PotionSkillEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("PotionSkillEffect"));
+	PotionSkillEffect->SetupAttachment(RootComponent); // 이펙트 위치 설정
 
 	CurrentComboStep = 0; //콤보 공격
 	ComboSectionNames.Add(FName("Combo01"));
@@ -86,9 +92,24 @@ AProjectNo1Character::AProjectNo1Character()
 
 	PotionCooldown = 10.0f; // 초기 쿨타임 설정 (예: 10초)
 	bCanDrinkPotion = true; // 초기에 포션 마실 수 있도록 설정
+	PotionDuration = 5.0f; //포션 지속시간 설정 (예: 5초)
 
-    DiveCooldown = 6.0f; // 초기 쿨타임 설정 (예: 6초)
+    DiveCooldown = 2.0f; // 초기 쿨타임 설정 (예: 2초)
 	bCanDive = true; // 초기에 구르기 할 수 있도록 설정
+
+	RageCooldown = 15.0f; // 초기 쿨타임 설정 (예: 15초)
+	bCanRage = true; // 초기에 분노 사용할 수 있도록 설정
+	RageDuration = 8.0f;// 분노 지속 시간
+
+	RageCooldown = 15.0f; // 초기 쿨타임 설정 (예: 15초)
+	bCanRage = true; // 초기에 분노 사용할 수 있도록 설정
+	RageDuration = 8.0f;// 분노 지속 시간
+
+	LargeSkillCooldown = 8.0f; // 초기 쿨타임 설정 (예: 8초)
+	bCanLargeSkill = true; // 초기에 강공격 사용할 수 있도록 설정
+
+	SmallSkillCooldown = 6.0f; // 초기 쿨타임 설정 (예: 6초)
+	bCanSmallSkill = true; // 초기에 약공격 사용할 수 있도록 설정
 }
 
 void AProjectNo1Character::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)//맞는 함수
@@ -161,7 +182,8 @@ void AProjectNo1Character::AddGold(ATreasure* Treasure) //골드 추가
 void AProjectNo1Character::BeginPlay()
 {
 	Super::BeginPlay();
-
+	RageSkillEffect->DeactivateSystem(); // 초기에는 비활성화
+	PotionSkillEffect->DeactivateSystem(); // 초기에는 비활성화
 	Tags.Add(FName("EngageableTarget"));
 	InitializeSlashOverlay();
 	SpawnDefaultWeapon();//주무기 장착
@@ -211,27 +233,113 @@ void AProjectNo1Character::SetupPlayerInputComponent(class UInputComponent* Play
 	PlayerInputComponent->BindAction(FName("SwordSkill"), IE_Pressed, this, &AProjectNo1Character::OnSwordSkillPressed);
 
 	PlayerInputComponent->BindAction(FName("DrinkPotion"), IE_Pressed, this, &AProjectNo1Character::DrinkPotion);
+
+	PlayerInputComponent->BindAction(FName("LargeSkill"), IE_Pressed, this, &AProjectNo1Character::LargeSkillPressed);
+	PlayerInputComponent->BindAction(FName("SmallSkill"), IE_Pressed, this, &AProjectNo1Character::SmallSkillPressed);
 }
 
 void AProjectNo1Character::OnNeckSkillPressed()
 {
-	float RoarRadius = 1000.0f;
-	TArray<AActor*> OverlappingActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABossCharacter::StaticClass(), OverlappingActors);
+	FTimerHandle NeckSkillCountdown;
+	FTimerHandle RageEndTimerHandle;
+	FTimerHandle RageEffectEndTimerHandle;
 
-	if (CanNeckSkill() && HasEnoughSkillStamina())
+	if (CanNeckSkill() && HasEnoughSkillStamina() && bCanRage)
 	{
 		PlayNeckSkillMontage();
 		ActionState = EActionState::EAS_NeckSkillDo;
+		bCanRage = false;
+		EquippedWeapon->IncreaseDamage();	// 공격력 증가
+		RageSkillEffect->ActivateSystem();//분노 이펙트 활성화
+		GetWorldTimerManager().SetTimer(NeckSkillCountdown, this, &AProjectNo1Character::EnableRage, RageCooldown, false); // 쿨타임 타이머 시작
+		GetWorldTimerManager().SetTimer(RageEndTimerHandle, this, &AProjectNo1Character::RestoreDamage, RageDuration, false);//분노 지속시간 타이머 시작
+		GetWorldTimerManager().SetTimer(RageEffectEndTimerHandle, this, &AProjectNo1Character::DeactivateSkillEffect, RageDuration, false);//이펙트 지속시간 타이머 시작
 		if (Attributes && SlashOverlay)
 		{
 			Attributes->UseStamina(Attributes->GetSkillCost());
 			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
 		}
-
 	}
 }
 
+void AProjectNo1Character::DeactivateSkillEffect()
+{
+	// 분노 이펙트 비활성화
+	RageSkillEffect->DeactivateSystem();
+}
+
+void AProjectNo1Character::RestoreDamage()
+{
+	EquippedWeapon->RestoreDamage();// 공격력 복구
+}
+
+void AProjectNo1Character::EnableRage()
+{
+	bCanRage = true; // 쿨타임이 끝나면 다시 스킬을 사용할 수 있도록 설정
+}
+
+void AProjectNo1Character::LargeSkillPressed()
+{
+	FTimerHandle LargeSkillCountdown;
+
+	if (CanNeckSkill() && HasEnoughSkillStamina() && bCanLargeSkill)
+	{
+		PlayLargeSkillMontage();
+		ActionState = EActionState::EAS_AttackSkill;
+		bCanLargeSkill = false;
+		EquippedWeapon->IncreaseDamage();// 공격력 증가
+		EquippedWeapon->ActivateLargeSkillEffect();//강공격 이펙트 활성화
+		GetWorldTimerManager().SetTimer(LargeSkillCountdown, this, &AProjectNo1Character::EnableLargeSkill, LargeSkillCooldown, false); // 쿨타임 타이머 시작
+		if (Attributes && SlashOverlay)
+		{
+			Attributes->UseStamina(Attributes->GetSkillCost());
+			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+		}
+	}
+}
+
+void AProjectNo1Character::EnableLargeSkill()
+{
+	// 강공격 활성화
+	bCanLargeSkill = true;
+}
+
+void AProjectNo1Character::DeactivateLargeSkillEffect()
+{
+	EquippedWeapon->DeactivateLargeSkillEffect(); // 강공격 이펙트 비활성화
+	EquippedWeapon->RestoreDamage(); // 공격력 복구
+}
+
+void AProjectNo1Character::SmallSkillPressed()
+{
+	FTimerHandle SmallSkillCountdown;
+
+	if (CanNeckSkill() && HasEnoughSkillStamina() && bCanSmallSkill)
+	{
+		PlaySmallSkillMontage();
+		ActionState = EActionState::EAS_AttackSkill;
+		bCanSmallSkill = false;
+		EquippedWeapon->IncreaseDamage();	// 공격력 증가
+		EquippedWeapon->ActivateLargeSkillEffect();//약공격 이펙트 활성화
+		GetWorldTimerManager().SetTimer(SmallSkillCountdown, this, &AProjectNo1Character::EnableSmallSkill, SmallSkillCooldown, false); // 쿨타임 타이머 시작
+		if (Attributes && SlashOverlay)
+		{
+			Attributes->UseStamina(Attributes->GetSkillCost());
+			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+		}
+	}
+}
+
+void AProjectNo1Character::EnableSmallSkill()
+{
+	// 약공격 활성화
+	bCanSmallSkill = true;
+}
+
+bool AProjectNo1Character::IsAttackSkill()
+{
+	return ActionState == EActionState::EAS_AttackSkill;
+}
 
 void AProjectNo1Character::OnSwordSkillPressed()
 {
@@ -336,7 +444,7 @@ void AProjectNo1Character::LookUpAtRate(float Rate)
 void AProjectNo1Character::MoveForward(float Value)
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-
+	if (IsAttackSkill()) return;
 	if ((Controller != nullptr) && (Value != 0.0f))
 	{
 		// find out which way is forward
@@ -352,7 +460,7 @@ void AProjectNo1Character::MoveForward(float Value)
 void AProjectNo1Character::MoveRight(float Value)
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-
+	if (IsAttackSkill()) return;
 	if ((Controller != nullptr) && (Value != 0.0f))
 	{
 		// find out which way is right
@@ -445,6 +553,11 @@ void AProjectNo1Character::AttachWeaponToHand()//무기 손으로
 bool AProjectNo1Character::HasEnoughStamina()
 {
 	return Attributes && Attributes->GetStamina() > Attributes->GetDiveCost();
+}
+
+bool AProjectNo1Character::HasEnoughPotionStamina()
+{
+	return Attributes && Attributes->GetStamina() > Attributes->GetPotionCost();
 }
 
 bool AProjectNo1Character::HasEnoughAttackStamina()
@@ -586,13 +699,15 @@ void AProjectNo1Character::Attack()
 
 void AProjectNo1Character::Dive()
 {
+	FTimerHandle DiveCountdown;
+
 	if (CanAttack() && HasEnoughStamina() && bCanDive) {
 		PlayDiveMontage();
 		ActionState = EActionState::EAS_Dive;
 		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);//구르기 시 무적
-		GetCharacterMovement()->MaxWalkSpeed = 500.f;
-		bCanDive = false; // 포션을 마신 후, 마실 수 없도록 설정
-		GetWorldTimerManager().SetTimer(CountdownTimerHandle, this, &AProjectNo1Character::EnableDive, DiveCooldown, false); // 쿨타임 타이머 시작
+		GetCharacterMovement()->MaxWalkSpeed = 450.f;
+		bCanDive = false; // 구르기 한 후 연속 구르기 x
+		GetWorldTimerManager().SetTimer(DiveCountdown, this, &AProjectNo1Character::EnableDive, DiveCooldown, false); // 쿨타임 타이머 시작
 
 		if (Attributes && SlashOverlay)
 		{
@@ -618,15 +733,32 @@ void AProjectNo1Character::DiveEnd()
 
 void AProjectNo1Character::DrinkPotion()//포션 마시기
 {
-	if (Unequipoccupied() && bCanDrinkPotion)
+	FTimerHandle PotionCountdown;
+	FTimerHandle PotionEffectEndTimerHandle;
+
+	if (Unequipoccupied() && HasEnoughPotionStamina() && bCanDrinkPotion)
 	{
 		// 포션을 마시는 로직 추가
 		PlayDrinkMontage();
 		ActionState = EActionState::EAS_Drink;
+		bCanDrinkPotion = false; // 포션을 마신 후, 연속으로 마실 수 없도록 설정
+		GetWorldTimerManager().SetTimer(PotionCountdown,this,&AProjectNo1Character::EnablePotion, PotionCooldown,false); // 쿨타임 타이머 시작
+		GetWorldTimerManager().SetTimer(PotionEffectEndTimerHandle, this, &AProjectNo1Character::DeactivatePotionEffect, PotionDuration, false);//포션 지속시간 타이머 시작
 
-		bCanDrinkPotion = false; // 포션을 마신 후, 마실 수 없도록 설정
-		GetWorldTimerManager().SetTimer(CountdownTimerHandle,this,&AProjectNo1Character::EnablePotion, PotionCooldown,false); // 쿨타임 타이머 시작
+		if (Attributes && SlashOverlay)
+		{
+			Attributes->UseStamina(Attributes->GetPotionCost());
+			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+		}
 	}
+}
+
+void AProjectNo1Character::DeactivatePotionEffect()
+{
+	if (PotionSkillEffect) {
+		PotionSkillEffect->DeactivateSystem(); //포션 이펙트 비활성화
+	}
+	Attributes->BaseHealth();//체력 재생률 원상복귀
 }
 
 void AProjectNo1Character::EnablePotion()
@@ -634,12 +766,12 @@ void AProjectNo1Character::EnablePotion()
 	bCanDrinkPotion = true; // 쿨타임이 끝나면 다시 포션 마실 수 있도록 설정
 }
 
-void AProjectNo1Character::DrinkHealthPotion() {//체력회복포션
-	if (Attributes && SlashOverlay)
-	{
-		Attributes->RecoveryHealth();
-		SlashOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
+void AProjectNo1Character::DrinkHealthPotion() {
+
+	if (PotionSkillEffect) {
+		PotionSkillEffect->ActivateSystem();//포션 이펙트 활성화
 	}
+	Attributes->RecoveryHealth();//체력 재생률 증가
 }
 
 bool AProjectNo1Character::Unequipoccupied()//무장해제 상태

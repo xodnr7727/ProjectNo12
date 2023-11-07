@@ -13,11 +13,6 @@ UCLASS()
 class PROJECTNO1_API UUMonsterNameWidget : public UUserWidget
 {
 	GENERATED_BODY()
-	
-public:
-	void SetMonsterName(const FText& Name);
 
-private:
-	UPROPERTY()
-	class UTextBlock* MonsterName;
+
 };
