@@ -7,6 +7,7 @@
 class AShield;
 class AWeapon;
 class AProjectileWeapon;
+class AMySkillClass;
 class ATopArmor;
 class UAttributeComponent;
 class UAnimMontage;
@@ -131,6 +132,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		UAttributeComponent* Attributes;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	AMySkillClass* MySkillClass;
+
 	UPROPERTY(BlueprintReadOnly, Category = Combat)
 		AActor* CombatTarget;
 
@@ -181,6 +185,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 		TArray<FName> StunMontageSections;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+		TArray<FName> HitMontageSections;
 	/*
 	* Components
 	*/

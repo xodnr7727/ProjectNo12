@@ -67,13 +67,12 @@ void ABaseCharacter::BallHit_Implementation(const FVector& ImpactPoint, AActor* 
 
 void ABaseCharacter::GetStun_Implementation(const FVector& ImpactPoint, AActor* Hitter) // 몬스터가 스턴되는 함수
 {
-	if (IsAlive() && IsStun() && Hitter)
+	if (IsAlive() && Hitter)
 	{
-		DirectionalHitStun(Hitter->GetActorLocation());
+		AttackReactParry();
 	}
 	else Die();
 
-	PlayHitSound(ImpactPoint);
 	PlayBlockSound(ImpactPoint);
 	SpawnHitParticles(ImpactPoint);
 }
@@ -485,6 +484,7 @@ void ABaseCharacter::SetShieldCollisionEnabled(ECollisionEnabled::Type Collision
 		EquippedShield->IgnoreActors.Empty();
 	}
 }
+
 
 
 

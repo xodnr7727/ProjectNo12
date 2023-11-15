@@ -14,6 +14,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "AIController.h"
+#include "Weapons/Shield.h"
 #include "Soul.h"
 #include "Items/Treasure.h"
 #include "HUD/SlashOverlay.h"
@@ -21,6 +22,8 @@
 ALichEnemy::ALichEnemy()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	bAttack = true;
 
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
@@ -126,7 +129,7 @@ void ALichEnemy::CheckCombatTarget()
 
 void ALichEnemy::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)//타격 받는 함수
 {
-	if (IsEngaged()) return;
+	if (IsEngaged() && IsHitOnShield(Hitter)) return;
 
 	Super::GetHit_Implementation(ImpactPoint, Hitter);
 	if (!IsDead()) {
@@ -135,6 +138,7 @@ void ALichEnemy::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitte
 	ClearPatrolTimer();
 	ClearAttackTimer();
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetCharacterMovement()->Activate();
 	EnemyState = EEnemyState::EES_Attacking;
 	StopAttackMontage();
 
@@ -142,6 +146,34 @@ void ALichEnemy::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitte
 	{
 		if (!IsDead()) StartAttackTimer();
 	}
+}
+
+void ALichEnemy::GetStun_Implementation(const FVector& ImpactPoint, AActor* Hitter)//맞는 함수
+{
+	float AngleToMonster = CalculateAngleBetweenPlayerAndMonster(this, Hitter);
+	if (!(IsEngaged() && AngleToMonster <= MaxParryAngle)) return;
+	Super::GetStun_Implementation(ImpactPoint, Hitter);
+	if (!IsDead()) {
+		ShowHealthBar();
+	}
+	ClearPatrolTimer();
+	ClearAttackTimer();
+	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
+	EnemyState = EEnemyState::EES_Stunned;
+	StopAttackMontage();
+
+	if (IsInsideAttackRadius())
+	{
+		if (!IsDead()) StartAttackTimer();
+	}
+}
+
+bool ALichEnemy::IsHitOnShield(AActor* Hitter)
+{
+	// 여기에 방패에 맞았는지 여부를 확인하는 코드를 추가하세요.
+	// 방패에 맞았다면 true를 반환하고, 그렇지 않다면 false를 반환하세요.
+	// 예: Hitter이 방패 클래스에 속하는지 여부를 확인하는 코드
+	return Hitter && Hitter->IsA(AShield::StaticClass());
 }
 
 void ALichEnemy::BallHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
@@ -299,6 +331,7 @@ void ALichEnemy::PawnSeen(APawn* SeenPawn)
 	const bool bShouldChaseTarget =
 		EnemyState != EEnemyState::EES_Dead &&
 		EnemyState != EEnemyState::EES_Chasing &&
+		EnemyState != EEnemyState::EES_Stunned &&
 		EnemyState < EEnemyState::EES_Attacking &&
 		SeenPawn->ActorHasTag(FName("EngageableTarget"));
 
@@ -334,7 +367,8 @@ void ALichEnemy::Attack()
 {
 	Super::Attack();
 	if (CombatTarget == nullptr) return;
-
+	if (bAttack == false) return;
+	GetCharacterMovement()->Deactivate();
 	EnemyState = EEnemyState::EES_Engaged;
 	PlayAttackMontage();
 }
@@ -345,6 +379,7 @@ bool ALichEnemy::CanAttack()
 		IsInsideAttackRadius() &&
 		!IsAttacking() &&
 		!IsEngaged() &&
+		!IsStunned() &&
 		!IsDead();
 	return bCanAttack;
 }
@@ -352,7 +387,29 @@ bool ALichEnemy::CanAttack()
 void ALichEnemy::AttackEnd()
 {
 	EnemyState = EEnemyState::EES_NoState;
+	GetCharacterMovement()->Activate();
 	CheckCombatTarget();
+}
+
+void ALichEnemy::HitEnd()
+{
+	EnemyState = EEnemyState::EES_Attacking;
+	GetCharacterMovement()->Activate();//이동 허용
+	bAttack = true;
+}
+
+void ALichEnemy::StunEnd()
+{
+	EnemyState = EEnemyState::EES_NoState;
+	GetCharacterMovement()->Activate();//이동 허용
+	bAttack = true;	// 공격 가능 상태로 전환
+}
+
+void ALichEnemy::StunStart()
+{
+	EnemyState = EEnemyState::EES_Stunned;
+	GetCharacterMovement()->Deactivate(); //이동 억제
+	bAttack = false; 	// 공격 불가능 상태로 전환
 }
 
 void ALichEnemy::HandleDamage(float DamageAmount)
@@ -458,6 +515,11 @@ bool ALichEnemy::Alive()
 bool ALichEnemy::IsEngaged()
 {
 	return EnemyState == EEnemyState::EES_Engaged;
+}
+
+bool ALichEnemy::IsStunned()
+{
+	return EnemyState == EEnemyState::EES_Stunned;
 }
 
 void ALichEnemy::ClearPatrolTimer()

@@ -6,9 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Interfaces/HitInterface.h"
 #include "ProjectileWeapon.generated.h"
-
-class USphereComponent;
-class UStaticMeshComponent;
+class UBoxComponent;
 class UParticleSystemComponent;
 class UProjectileMovementComponent;
 UCLASS()
@@ -22,39 +20,15 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
-	void LaunchFireball(const FVector& FireballDirection);
-
-	void ExecuteGetHit(FHitResult& BoxHit);
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UPROPERTY(Category = Mesh, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	UStaticMeshComponent* Mesh;
-
-	UPROPERTY(Category = Particle, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	UParticleSystemComponent* Particle;
-
-	UPROPERTY(Category = Projectile, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	UProjectileMovementComponent* Movement;
-
-	UPROPERTY(Category = Sphere, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	USphereComponent* SphereComponent;
-
-	UPROPERTY(EditAnywhere, Category = "Fireball")
-	float FireballSpeed;
-
-	UFUNCTION(BlueprintImplementableEvent)
-	void CreateFields(const FVector& FieldLocation);
-
-
-public:
-	UFUNCTION()
-	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
-
 private:
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	float Damage;
+
+public:
 
 };

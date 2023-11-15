@@ -29,8 +29,8 @@ protected:
 
 	/** <ABaseCharacter> */
 	virtual void Die() override;
-	void SpawnEx();
-	void SpawnGd();
+	void SpawnEx();//경험치 드랍
+	void SpawnGd();//골드 드랍
 	bool InTargetRange(AActor* Target, double Radius);
 	void MoveToTarget(AActor* Target);
 	AActor* ChoosePatrolTarget();
@@ -39,7 +39,9 @@ protected:
 	virtual void HandleDamage(float DamageAmount) override;
 	virtual int32 PlayDeathMontage() override;
 	virtual void AttackEnd() override;
-
+	virtual void HitEnd() override;
+	virtual void StunEnd() override;
+	virtual void StunStart() override;
 
 	UFUNCTION()
 	void DestroyHitNumber(UUserWidget* HitNumber);
@@ -71,7 +73,9 @@ public:
 	void CheckCombatTarget();
 
 
-	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
+	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;//히트 함수
+	virtual void GetStun_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;//스턴 함수
+	bool IsHitOnShield(AActor* Hitter);
 	virtual void BallHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
@@ -148,16 +152,17 @@ private:
 	void InitializeEnemy();
 	void HideHealthBar();
 	void ShowHealthBar();
-	void LoseInterest();
+	void LoseInterest();//추적 X
 	void StartPatrolling();
 	void ChaseTarget();
 	bool IsOutsideCombatRadius();
-	bool IsOutsideAttackRadius();
-	bool IsInsideAttackRadius();
-	bool IsChasing();
-	bool IsAttacking();
-	bool IsDead();
-	bool IsEngaged();
+	bool IsOutsideAttackRadius();//공격 사정거리 밖
+	bool IsInsideAttackRadius();//공격 사정거리 안
+	bool IsChasing();//쫓는중
+	bool IsAttacking();//히트됨
+	bool IsDead();//죽음
+	bool IsEngaged();//전투중
+	bool IsStunned();//스턴됨
 	void ClearPatrolTimer();
 	void SpawnDefaultWeapon();
 
@@ -184,5 +189,8 @@ private:
 
 		UPROPERTY(EditAnywhere, Category = Combat)
 		TSubclassOf<class ATreasure> GdClass;
+
+		UPROPERTY(EditAnywhere)
+		bool bAttack;
 
 };

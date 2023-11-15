@@ -42,6 +42,8 @@ AWeapon::AWeapon()
 	LargeSkillEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("LargeSkillEffect"));
 	LargeSkillEffect->SetupAttachment(RootComponent); // 이펙트 위치 설정
 
+	SmallSkillEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("SmallSkillEffect"));
+	SmallSkillEffect->SetupAttachment(RootComponent); // 이펙트 위치 설정
 }
 
 void AWeapon::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator)
@@ -68,6 +70,22 @@ void AWeapon::ActivateLargeSkillEffect()
 	if (LargeSkillEffect)
 	{
 		LargeSkillEffect->ActivateSystem();
+	}
+}
+
+void AWeapon::DeactivateSmallSkillEffect()
+{
+	if (SmallSkillEffect)
+	{
+		SmallSkillEffect->DeactivateSystem();
+	}
+}
+
+void AWeapon::ActivateSmallSkillEffect()
+{
+	if (SmallSkillEffect)
+	{
+		SmallSkillEffect->ActivateSystem();
 	}
 }
 
@@ -99,24 +117,6 @@ void AWeapon::PlayEquipSound()
 	}
 }
 
-void AWeapon::FireballSword()
-{
-	// 칼의 위치와 회전 값을 가져옵니다.
-	FVector SwordLocation = SwordMesh->GetSocketLocation("SwordEnd");
-	FRotator SwordRotation = SwordMesh->GetSocketRotation("SwordEnd");
-
-	// 파이어볼을 생성하기 위해 파이어볼 클래스의 인스턴스를 생성합니다.
-	AProjectileWeapon* ProjectileWeapon = GetWorld()->SpawnActor<AProjectileWeapon>(ProjectileWeaponClass, SwordLocation, SwordRotation);
-
-	if (ProjectileWeapon)
-	{
-		// 파이어볼을 몬스터의 방향으로 날려보냅니다.
-		FVector FireballDirection = GetActorForwardVector() + FVector(0.0f, 0.0f, -1.0f);
-		ProjectileWeapon->LaunchFireball(FireballDirection);
-	}
-}
-
-
 void AWeapon::AttachMeshToSocket(USceneComponent* InParent, const FName& InSocketName)
 {
 	FAttachmentTransformRules TransformRules(EAttachmentRule::SnapToTarget, true);
@@ -127,6 +127,7 @@ void AWeapon::BeginPlay()
 {
 	Super::BeginPlay();
 	LargeSkillEffect->DeactivateSystem(); // 초기에는 비활성화
+	SmallSkillEffect->DeactivateSystem(); // 초기에는 비활성화
 
 	WeaponBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnBoxOverlap);
 }

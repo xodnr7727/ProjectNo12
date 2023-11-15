@@ -18,6 +18,7 @@
 #include "Components/BoxComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Interfaces/HitInterface.h"
+#include "Weapons/MySkillClass.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Components/AttributeComponent.h"
 #include "Item.h"
@@ -89,12 +90,13 @@ AProjectNo1Character::AProjectNo1Character()
 	ComboSectionNames.Add(FName("Combo01"));
 	ComboSectionNames.Add(FName("Combo02"));
 	ComboSectionNames.Add(FName("Combo03"));
+	AttackComboCount = 2.0f;//콤보 초기화 시간
 
 	PotionCooldown = 10.0f; // 초기 쿨타임 설정 (예: 10초)
 	bCanDrinkPotion = true; // 초기에 포션 마실 수 있도록 설정
 	PotionDuration = 5.0f; //포션 지속시간 설정 (예: 5초)
 
-    DiveCooldown = 2.0f; // 초기 쿨타임 설정 (예: 2초)
+    DiveCooldown = 1.0f; // 초기 쿨타임 설정 (예: 1초)
 	bCanDive = true; // 초기에 구르기 할 수 있도록 설정
 
 	RageCooldown = 15.0f; // 초기 쿨타임 설정 (예: 15초)
@@ -110,6 +112,9 @@ AProjectNo1Character::AProjectNo1Character()
 
 	SmallSkillCooldown = 6.0f; // 초기 쿨타임 설정 (예: 6초)
 	bCanSmallSkill = true; // 초기에 약공격 사용할 수 있도록 설정
+
+	ParryCountdown = 2.0f; //패리기능 쿨타임
+	bCanParry = true; //초기 패리기능 사용가능
 }
 
 void AProjectNo1Character::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)//맞는 함수
@@ -236,6 +241,8 @@ void AProjectNo1Character::SetupPlayerInputComponent(class UInputComponent* Play
 
 	PlayerInputComponent->BindAction(FName("LargeSkill"), IE_Pressed, this, &AProjectNo1Character::LargeSkillPressed);
 	PlayerInputComponent->BindAction(FName("SmallSkill"), IE_Pressed, this, &AProjectNo1Character::SmallSkillPressed);
+
+	PlayerInputComponent->BindAction(FName("Parry"), IE_Pressed, this, &AProjectNo1Character::Parry); 
 }
 
 void AProjectNo1Character::OnNeckSkillPressed()
@@ -288,7 +295,6 @@ void AProjectNo1Character::LargeSkillPressed()
 		ActionState = EActionState::EAS_AttackSkill;
 		bCanLargeSkill = false;
 		EquippedWeapon->IncreaseDamage();// 공격력 증가
-		EquippedWeapon->ActivateLargeSkillEffect();//강공격 이펙트 활성화
 		GetWorldTimerManager().SetTimer(LargeSkillCountdown, this, &AProjectNo1Character::EnableLargeSkill, LargeSkillCooldown, false); // 쿨타임 타이머 시작
 		if (Attributes && SlashOverlay)
 		{
@@ -310,6 +316,11 @@ void AProjectNo1Character::DeactivateLargeSkillEffect()
 	EquippedWeapon->RestoreDamage(); // 공격력 복구
 }
 
+void AProjectNo1Character::ActivateLargeSkillEffect()
+{
+	EquippedWeapon->ActivateLargeSkillEffect(); // 강공격 이펙트 활성화
+}
+
 void AProjectNo1Character::SmallSkillPressed()
 {
 	FTimerHandle SmallSkillCountdown;
@@ -320,7 +331,6 @@ void AProjectNo1Character::SmallSkillPressed()
 		ActionState = EActionState::EAS_AttackSkill;
 		bCanSmallSkill = false;
 		EquippedWeapon->IncreaseDamage();	// 공격력 증가
-		EquippedWeapon->ActivateLargeSkillEffect();//약공격 이펙트 활성화
 		GetWorldTimerManager().SetTimer(SmallSkillCountdown, this, &AProjectNo1Character::EnableSmallSkill, SmallSkillCooldown, false); // 쿨타임 타이머 시작
 		if (Attributes && SlashOverlay)
 		{
@@ -336,20 +346,29 @@ void AProjectNo1Character::EnableSmallSkill()
 	bCanSmallSkill = true;
 }
 
+void AProjectNo1Character::ActivateSmallSkillEffect()
+{
+	EquippedWeapon->ActivateSmallSkillEffect(); // 약공격 이펙트 활성화
+}
+
+void AProjectNo1Character::DeactivateSmallSkillEffect()
+{
+	EquippedWeapon->DeactivateSmallSkillEffect(); // 강공격 이펙트 비활성화
+	EquippedWeapon->RestoreDamage(); // 공격력 복구
+}
+
 bool AProjectNo1Character::IsAttackSkill()
 {
-	return ActionState == EActionState::EAS_AttackSkill;
+	return ActionState == EActionState::EAS_AttackSkill ||
+		ActionState == EActionState::EAS_Attacking ||
+		ActionState == EActionState::EAS_Parrying;
 }
 
 void AProjectNo1Character::OnSwordSkillPressed()
 {
-	FTimerHandle FireballTimerHandle;
-	float DelayInSeconds = 1.3f; // 1.3초 지연
-
 	if (CanNeckSkill() && HasEnoughSkillStamina())
 	{
 		PlaySwordSkillMontage();
-		GetWorldTimerManager().SetTimer(FireballTimerHandle, this, &AProjectNo1Character::FireballSword, DelayInSeconds, false);
 		ActionState = EActionState::EAS_SwordSkillDo;
 
 		if (Attributes && SlashOverlay)
@@ -357,23 +376,6 @@ void AProjectNo1Character::OnSwordSkillPressed()
 			Attributes->UseStamina(Attributes->GetSkillCost());
 			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
 		}
-	}
-}
-
-void AProjectNo1Character::FireballSword()
-{
-	// 칼의 위치와 회전 값을 가져옵니다.
-	FVector SwordLocation = GetMesh()->GetSocketLocation("FireBallEnd");
-	FRotator SwordRotation = GetMesh()->GetSocketRotation("FireBallEnd");
-
-	// 파이어볼을 생성하기 위해 파이어볼 클래스의 인스턴스를 생성합니다.
-	AProjectileWeapon* ProjectileWeapon = GetWorld()->SpawnActor<AProjectileWeapon>(ProjectileWeaponClass, SwordLocation, SwordRotation);
-
-	if (ProjectileWeapon)
-	{
-		// 파이어볼을 몬스터의 방향으로 날려보냅니다.
-		FVector FireballDirection = GetActorForwardVector() + FVector(0.0f, 0.0f, -0.2f);
-		ProjectileWeapon->LaunchFireball(FireballDirection);
 	}
 }
 
@@ -444,7 +446,7 @@ void AProjectNo1Character::LookUpAtRate(float Rate)
 void AProjectNo1Character::MoveForward(float Value)
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (IsAttackSkill()) return;
+	if (IsAttackSkill()) return; //공격중일때 이동 불가
 	if ((Controller != nullptr) && (Value != 0.0f))
 	{
 		// find out which way is forward
@@ -460,7 +462,7 @@ void AProjectNo1Character::MoveForward(float Value)
 void AProjectNo1Character::MoveRight(float Value)
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (IsAttackSkill()) return;
+	if (IsAttackSkill()) return; //공격중일때 이동 불가
 	if ((Controller != nullptr) && (Value != 0.0f))
 	{
 		// find out which way is right
@@ -676,8 +678,33 @@ void AProjectNo1Character::BlockEnd()
 	ActionState = EActionState::EAS_Unoccupied;
 }
 
+void AProjectNo1Character::Parry()
+{
+	FTimerHandle ParryCount;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (CanAttack() && HasEnoughAttackStamina())
+	{
+		AnimInstance->Montage_Play(ParryMontage);
+		bCanParry= false; // 패리 한 후 연속 패리 x
+		GetWorldTimerManager().SetTimer(ParryCount, this, &AProjectNo1Character::ParryCanDo, ParryCountdown, false); //패리 쿨타임 타이머 시작
+		ActionState = EActionState::EAS_Parrying;
+		if (Attributes && SlashOverlay) //공격 스태미너 소모
+		{
+			Attributes->UseStamina(Attributes->GetAttackCost());
+			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+		}
+	}
+}
+void AProjectNo1Character::ParryCanDo()
+{
+	bCanParry = true; //콤보 공격 리셋
+}
+
 void AProjectNo1Character::Attack()
 {
+	FTimerHandle AttackComboCountdown;
+
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	Super::Attack();
 	if (CanAttack() && HasEnoughAttackStamina())
@@ -686,15 +713,19 @@ void AProjectNo1Character::Attack()
 		AnimInstance->Montage_Play(AttackMontage);
 		AnimInstance->Montage_JumpToSection(SectionName, AttackMontage);
 
-		// 다음 콤보 스텝으로 이동 (콤보가 끝난 경우 0으로 초기화)
-		CurrentComboStep = (CurrentComboStep + 1) % ComboSectionNames.Num();
+		CurrentComboStep = (CurrentComboStep + 1) % ComboSectionNames.Num(); // 다음 콤보 스텝으로 이동 (콤보가 끝난 경우 0으로 초기화)
+		GetWorldTimerManager().SetTimer(AttackComboCountdown, this, &AProjectNo1Character::AttackComboReset, AttackComboCount, false); // 콤보 초기화 타이머 시작
 		ActionState = EActionState::EAS_Attacking;
-		if (Attributes && SlashOverlay)
+		if (Attributes && SlashOverlay) //공격 스태미너 소모
 		{
 			Attributes->UseStamina(Attributes->GetAttackCost());
 			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
 		}
 	}
+}
+void AProjectNo1Character::AttackComboReset()
+{
+	CurrentComboStep = 0; //콤보 공격 리셋
 }
 
 void AProjectNo1Character::Dive()
@@ -705,11 +736,11 @@ void AProjectNo1Character::Dive()
 		PlayDiveMontage();
 		ActionState = EActionState::EAS_Dive;
 		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);//구르기 시 무적
-		GetCharacterMovement()->MaxWalkSpeed = 450.f;
+		GetCharacterMovement()->MaxWalkSpeed = 500.f;
 		bCanDive = false; // 구르기 한 후 연속 구르기 x
 		GetWorldTimerManager().SetTimer(DiveCountdown, this, &AProjectNo1Character::EnableDive, DiveCooldown, false); // 쿨타임 타이머 시작
 
-		if (Attributes && SlashOverlay)
+		if (Attributes && SlashOverlay)//구르기 스태미너 소모
 		{
 			Attributes->UseStamina(Attributes->GetDiveCost());
 			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());

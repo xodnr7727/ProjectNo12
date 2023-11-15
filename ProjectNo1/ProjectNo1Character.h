@@ -64,8 +64,11 @@ protected:
 
 	virtual void AttackEnd() override;
 	virtual void BlockEnd() override;
+	void Parry(); //패리 기능
+	void ParryCanDo(); //패리기능 사용 활성화
 	virtual void DiveEnd() override;
 	virtual void Attack() override;
+	void AttackComboReset(); //콤보 리셋
 	void Dive();//구르기
 	void EnableDive();
 	void DrinkPotion(); //포션 마시기
@@ -107,6 +110,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Block")
 	class UAnimMontage* ShieldMontage;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parry")
+	class UAnimMontage* ParryMontage;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Equip")
 	class UAnimMontage* EquipUnEquipMontage;
 
@@ -122,6 +128,15 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void DeactivateLargeSkillEffect();
 
+	UFUNCTION(BlueprintCallable)
+	void DeactivateSmallSkillEffect();
+
+	UFUNCTION(BlueprintCallable)
+	void ActivateLargeSkillEffect();
+
+	UFUNCTION(BlueprintCallable)
+	void ActivateSmallSkillEffect();
+
 	void OnNeckSkillPressed();
 	void LargeSkillPressed();
 	void EnableLargeSkill();
@@ -131,8 +146,6 @@ protected:
 	void OnSwordSkillPressed();
 	void DeactivateSkillEffect(); //이펙트 해제
 	void RestoreDamage(); //공격력 복구
-
-	void FireballSword();
 
 	void EquipNeck(AWeapon* NewNeck);
 
@@ -207,8 +220,15 @@ private:
 		UPROPERTY(EditAnywhere)
 		TSubclassOf<class AProjectileWeapon> ProjectileWeaponClass;
 
+		UPROPERTY(EditAnywhere)
+		TSubclassOf<class AMySkillClass> LargeSkillClass;
+
 		int32 CurrentComboStep; //콤보 단계
 		TArray<FName> ComboSectionNames; //콤보 단계별 이름
+		float AttackComboCount; //공격 콤보 초기화 변수
+
+		float ParryCountdown; // 패리기능 쿨타임 변수
+		bool bCanParry;//패리기능 사용 가능 여부
 
 		UPROPERTY(EditAnywhere, Category = "Skill")
 		float PotionCooldown; // 포션 마시기 쿨타임 변수

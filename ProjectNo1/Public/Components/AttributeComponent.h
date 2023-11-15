@@ -28,7 +28,7 @@ protected:
 
 
 private:
-	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
+	UPROPERTY(EditAnywhere,  Category = "Actor Attributes")
 		float Health;
 
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")

@@ -143,6 +143,7 @@ void ABossCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* H
 	ClearPatrolTimer();
 	ClearAttackTimer();
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetCharacterMovement()->Activate();
 	EnemyState = EEnemyState::EES_Attacking;
 	StopAttackMontage();
 
@@ -396,8 +397,8 @@ void ABossCharacter::Attack() //공격 함수
 {
 	Super::Attack();
 	if (CombatTarget == nullptr) return;
-
 	if (bAttack == false) return;
+	GetCharacterMovement()->Deactivate();
 	EnemyState = EEnemyState::EES_Engaged;
 	PlayAttackMontage();
 }
@@ -416,6 +417,7 @@ bool ABossCharacter::CanAttack()
 void ABossCharacter::AttackEnd()
 {
 	EnemyState = EEnemyState::EES_NoState;
+	GetCharacterMovement()->Activate();
 	CheckCombatTarget();
 }
 

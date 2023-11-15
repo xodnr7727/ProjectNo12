@@ -21,15 +21,14 @@ public:
 	void Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator);
 
 	void DeactivateLargeSkillEffect();
-
 	void ActivateLargeSkillEffect();
+
+	void DeactivateSmallSkillEffect();
+	void ActivateSmallSkillEffect();
 
 	void DeactivateEmbers();
 	virtual void DisableCapsuleCollision();
 	virtual void PlayEquipSound();
-
-	UFUNCTION(BlueprintCallable)
-	virtual void FireballSword();
 
 	void IncreaseDamage();
 	void RestoreDamage();
@@ -99,6 +98,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Skill")
 		UParticleSystemComponent* LargeSkillEffect;
+
+	UPROPERTY(VisibleAnywhere, Category = "Skill")
+		UParticleSystemComponent* SmallSkillEffect;
 
 public:
 	FORCEINLINE UBoxComponent* GetWeaponBox() const { return WeaponBox; }

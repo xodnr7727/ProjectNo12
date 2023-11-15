@@ -38,15 +38,30 @@ public:
 protected:
 
 	UFUNCTION()
-	void OnWeaponHit(AActor* OtherWeapon);
+	void OnWeaponHit(AActor* OtherWeapon);//막기 이펙트 사운드 재생
 
-
+	void OnParry(ALichEnemy* HitEnemy); //패리 이펙트 사운드 재생
 	UFUNCTION()
 	void OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
-	void ExecuteGetHit(FHitResult& BoxHit);
+	void ExecuteGetHit(FHitResult& BoxHit); //막기 기능 일부
+
+	void ExecuteGetStun(FHitResult& BoxHit); //패리 기능 일부
 
 private:
+	void BoxTrace(FHitResult& BoxHit);
+
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	FVector BoxTraceExtent = FVector(5.f);
+
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	bool bShowBoxDebug = false;
+
+	UPROPERTY(VisibleAnywhere)
+	USceneComponent* BoxTraceStart;
+
+	UPROPERTY(VisibleAnywhere)
+	USceneComponent* BoxTraceEnd;
 
 	UPROPERTY(EditAnywhere, Category = "Shield Properties")
 	USoundBase* EquipSound;
@@ -56,6 +71,12 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Shield Properties")
 	UParticleSystem* HitParticles;
+
+	UPROPERTY(EditAnywhere, Category = "Shield Properties")
+	USoundBase* StunSound;
+
+	UPROPERTY(EditAnywhere, Category = "Shield Properties")
+	UParticleSystem* StunParticles;
 
 public:
 	FORCEINLINE UBoxComponent* GetShieldBox() const { return ShieldBox; }

@@ -139,6 +139,7 @@ void AGoblin::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)/
 	ClearPatrolTimer();
 	ClearAttackTimer();
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetCharacterMovement()->Activate();
 	EnemyState = EEnemyState::EES_Attacking;
 	StopAttackMontage();
 
@@ -345,7 +346,7 @@ void AGoblin::Attack()
 {
 	Super::Attack();
 	if (CombatTarget == nullptr) return;
-
+	GetCharacterMovement()->Deactivate();
 	EnemyState = EEnemyState::EES_Engaged;
 	PlayAttackMontage();
 }
@@ -363,6 +364,7 @@ bool AGoblin::CanAttack()
 void AGoblin::AttackEnd()
 {
 	EnemyState = EEnemyState::EES_NoState;
+	GetCharacterMovement()->Activate();
 	CheckCombatTarget();
 }
 
