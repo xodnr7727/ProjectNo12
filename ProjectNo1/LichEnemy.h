@@ -75,9 +75,8 @@ public:
 
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;//히트 함수
 	virtual void GetStun_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;//스턴 함수
-	bool IsHitOnShield(AActor* Hitter);
 	virtual void BallHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
-
+	bool IsHitOnShield(AActor* Hitter);
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	
 	virtual void Destroyed() override;

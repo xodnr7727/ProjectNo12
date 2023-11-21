@@ -5,6 +5,7 @@
 #include "Interfaces/HitInterface.h"
 #include "BaseCharacter.generated.h"
 class AShield;
+class APotion;
 class AWeapon;
 class AProjectileWeapon;
 class AMySkillClass;
@@ -119,6 +120,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Shield)
 		AShield* EquippedShield;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Potion)
+		APotion* EquippedPotion;
 
 	UPROPERTY(VisibleAnywhere, Category = Enemy)
 		ALichEnemy* LichEnemy;

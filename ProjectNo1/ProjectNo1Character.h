@@ -68,7 +68,6 @@ protected:
 	void ParryCanDo(); //패리기능 사용 활성화
 	virtual void DiveEnd() override;
 	virtual void Attack() override;
-	void AttackComboReset(); //콤보 리셋
 	void Dive();//구르기
 	void EnableDive();
 	void DrinkPotion(); //포션 마시기
@@ -106,6 +105,18 @@ protected:
 	 
 	UFUNCTION(BlueprintCallable)
 	void HitReactEnd();
+
+	UFUNCTION(BlueprintCallable)
+	void DrinkEnd();
+
+	UFUNCTION(BlueprintCallable)
+	void AttackComboResetCountDown();
+
+	UFUNCTION(BlueprintCallable)
+	void AttackComboStartCountDown();
+
+	UFUNCTION(BlueprintCallable)
+	void AttackComboReset(); //콤보 리셋
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Block")
 	class UAnimMontage* ShieldMontage;
@@ -184,6 +195,7 @@ private:
 
 		void SpawnDefaultWeapon();
 		void SpawnDefaultWeaponTwo();
+		void SpawnDefaultPotionOne();
 
 		UPROPERTY(VisibleInstanceOnly)
 		AItem* OverlappingItem;
@@ -218,6 +230,9 @@ private:
 		TSubclassOf<class AShield> ShieldClass;
 
 		UPROPERTY(EditAnywhere)
+		TSubclassOf<class APotion> PotionClass;
+
+		UPROPERTY(EditAnywhere)
 		TSubclassOf<class AProjectileWeapon> ProjectileWeaponClass;
 
 		UPROPERTY(EditAnywhere)
@@ -226,6 +241,7 @@ private:
 		int32 CurrentComboStep; //콤보 단계
 		TArray<FName> ComboSectionNames; //콤보 단계별 이름
 		float AttackComboCount; //공격 콤보 초기화 변수
+		FTimerHandle AttackComboCountdown; //콤보 초기화 타이머
 
 		float ParryCountdown; // 패리기능 쿨타임 변수
 		bool bCanParry;//패리기능 사용 가능 여부

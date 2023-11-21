@@ -4,6 +4,7 @@
 #include "Weapons/Weapon.h"
 #include "Weapons/ProjectileWeapon.h"
 #include "Weapons/Shield.h"
+#include "Weapons/Potion.h"
 #include "ProjectNo1/LichEnemy.h"
 #include "Components/AttributeComponent.h"
 #include "Components/CapsuleComponent.h"

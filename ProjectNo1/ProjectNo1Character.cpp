@@ -24,6 +24,7 @@
 #include "Item.h"
 #include "Weapons/Weapon.h"
 #include "Weapons/Shield.h"
+#include "Weapons/Potion.h"
 #include "Weapons/ProjectileWeapon.h"
 #include "HUD/MyProNo1HUD.h"
 #include "HUD/SlashOverlay.h"
@@ -90,7 +91,7 @@ AProjectNo1Character::AProjectNo1Character()
 	ComboSectionNames.Add(FName("Combo01"));
 	ComboSectionNames.Add(FName("Combo02"));
 	ComboSectionNames.Add(FName("Combo03"));
-	AttackComboCount = 2.0f;//콤보 초기화 시간
+	AttackComboCount = 3.0f;//콤보 초기화 시간
 
 	PotionCooldown = 10.0f; // 초기 쿨타임 설정 (예: 10초)
 	bCanDrinkPotion = true; // 초기에 포션 마실 수 있도록 설정
@@ -149,8 +150,12 @@ void AProjectNo1Character::Tick(float DeltaTime)
 
 	if (Attributes && SlashOverlay)
 	{
-		Attributes->RegenHealth(DeltaTime);
-		Attributes->RegenStamina(DeltaTime);
+		if (ActionState == EActionState::EAS_Unoccupied) {
+			Attributes->RegenHealth(DeltaTime);
+			Attributes->RegenStamina(DeltaTime);
+			SlashOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
+			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+		}
 		SlashOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
 		SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
 		SlashOverlay->SetExperienceBarPercent(Attributes->GetExperiencePercent());
@@ -193,6 +198,7 @@ void AProjectNo1Character::BeginPlay()
 	InitializeSlashOverlay();
 	SpawnDefaultWeapon();//주무기 장착
 	SpawnDefaultWeaponTwo();//쉴드 장착
+	SpawnDefaultPotionOne();//포션 장착
 }
 
 void AProjectNo1Character::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -703,18 +709,15 @@ void AProjectNo1Character::ParryCanDo()
 
 void AProjectNo1Character::Attack()
 {
-	FTimerHandle AttackComboCountdown;
-
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	Super::Attack();
+	
 	if (CanAttack() && HasEnoughAttackStamina())
 	{
 		FName SectionName = ComboSectionNames[CurrentComboStep];
 		AnimInstance->Montage_Play(AttackMontage);
 		AnimInstance->Montage_JumpToSection(SectionName, AttackMontage);
-
 		CurrentComboStep = (CurrentComboStep + 1) % ComboSectionNames.Num(); // 다음 콤보 스텝으로 이동 (콤보가 끝난 경우 0으로 초기화)
-		GetWorldTimerManager().SetTimer(AttackComboCountdown, this, &AProjectNo1Character::AttackComboReset, AttackComboCount, false); // 콤보 초기화 타이머 시작
 		ActionState = EActionState::EAS_Attacking;
 		if (Attributes && SlashOverlay) //공격 스태미너 소모
 		{
@@ -722,6 +725,15 @@ void AProjectNo1Character::Attack()
 			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
 		}
 	}
+}
+void AProjectNo1Character::AttackComboResetCountDown()
+{
+	GetWorldTimerManager().ClearTimer(AttackComboCountdown); //공격 키 재입력시 콤보 초기화 타이머 초기화
+}
+
+void AProjectNo1Character::AttackComboStartCountDown()
+{
+	GetWorldTimerManager().SetTimer(AttackComboCountdown, this, &AProjectNo1Character::AttackComboReset, AttackComboCount, false); // 콤보 초기화 타이머 시작
 }
 void AProjectNo1Character::AttackComboReset()
 {
@@ -773,14 +785,27 @@ void AProjectNo1Character::DrinkPotion()//포션 마시기
 		PlayDrinkMontage();
 		ActionState = EActionState::EAS_Drink;
 		bCanDrinkPotion = false; // 포션을 마신 후, 연속으로 마실 수 없도록 설정
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);//포션 마실 시 무적
 		GetWorldTimerManager().SetTimer(PotionCountdown,this,&AProjectNo1Character::EnablePotion, PotionCooldown,false); // 쿨타임 타이머 시작
 		GetWorldTimerManager().SetTimer(PotionEffectEndTimerHandle, this, &AProjectNo1Character::DeactivatePotionEffect, PotionDuration, false);//포션 지속시간 타이머 시작
-
+		if (EquippedPotion)
+		{
+			EquippedPotion->AttachMeshToSocket(GetMesh(), FName("LeftHandPotionSocket"));
+		}
 		if (Attributes && SlashOverlay)
 		{
 			Attributes->UseStamina(Attributes->GetPotionCost());
 			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
 		}
+	}
+}
+void AProjectNo1Character::DrinkEnd()
+{
+	ActionState = EActionState::EAS_Unoccupied;
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//무적 해제
+	if (EquippedPotion)
+	{
+		EquippedPotion->AttachMeshToSocket(GetMesh(), FName("BeltPotionSocket"));
 	}
 }
 
@@ -867,6 +892,17 @@ void AProjectNo1Character::SpawnDefaultWeaponTwo()
 		AShield* DefaultShield = World->SpawnActor<AShield>(ShieldClass);
 		DefaultShield->Equip(GetMesh(), FName("LeftHandWeaponSocket"), this, this);
 		EquippedShield = DefaultShield;
+	}
+}
+
+void AProjectNo1Character::SpawnDefaultPotionOne()
+{
+	UWorld* World = GetWorld();
+	if (World && PotionClass)
+	{
+		APotion* DefaultPotion = World->SpawnActor<APotion>(PotionClass);
+		DefaultPotion->Equip(GetMesh(), FName("BeltPotionSocket"), this, this);
+		EquippedPotion = DefaultPotion;
 	}
 }
 	
