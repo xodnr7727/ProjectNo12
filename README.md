@@ -51,4 +51,4 @@
 
 **[MyProNo1HUD.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/HUD/MyProNo1HUD.h) : 플레이어 기본 베이스 UI**
 
-**[SlashOverlay.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/HUD/SlashOverlay.h) : 플레이어 체력, 스태미너, 경험치, 골드 선언 파일**
+**[SlashOverlay.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/HUD/SlashOverlay.h) : 체력, 스태미너, 경험치, 골드 퍼센트 설정 파일**
