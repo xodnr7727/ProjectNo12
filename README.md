@@ -41,13 +41,13 @@
 
 **[HealthBar.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/HUD/HealthBar.h) : 체력 프로그래스바** 
 
-**[HealthBarComponent.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/HUD/HealthBarComponent.h) : 체력 위젯** 
+**[HealthBarComponent.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/HUD/HealthBarComponent.h) : 체력 바 위젯** 
 
 **[StunBar.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/HUD/StunBar.h) : 보스 몬스터 스턴 프로그래스바 선언**
 
 **[StunBarComponent.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/HUD/StunBarComponent.h) : 보스 몬스터 스턴 바 위젯**
 
-**[AttributeComponent.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/Components/AttributeComponent.h) : 플레이어의 체력, 스태미너, 스턴, 경험치, 골드, 경험치 관련 함수와 변수 선언, 각각의 동작 비용 관련 함수 선언**
+**[AttributeComponent.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/Components/AttributeComponent.h) : 체력, 스태미너, 스턴, 경험치, 골드, 경험치 관련 함수와 변수 선언, 각각의 동작 비용 관련 함수 선언**
 
 **[MyProNo1HUD.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/HUD/MyProNo1HUD.h) : 플레이어 기본 베이스 UI**
 
