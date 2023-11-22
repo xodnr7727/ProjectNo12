@@ -3,7 +3,7 @@
 
 **[CharacterTypes.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/CharacterTypes.h) : 몬스터, 플레이어의 행동 상태**
 
-**[MyProAnimInstance.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/MyProAnimInstance.h) : 몬스터, 플레이어의 동작 함수나 변수**
+**[MyProAnimInstance.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/MyProAnimInstance.h) : 몬스터, 플레이어의 애니메이션 동작 함수나 변수**
 
 [**ProjectNo1Character](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/ProjectNo1Character.h) : 플레이어 파일**
 
