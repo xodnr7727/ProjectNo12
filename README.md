@@ -13,7 +13,11 @@
 
 [**BossCharacter](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/BossCharacter.h) : 드래곤 보스몬스터 파일**
 
+---
+
 **[LevelTransferVolume](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/LevelTransferVolume.h) : 레벨 이동 파일**
+
+---
 
 **[Item.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/Item.h) : 아이템이나 무기들의 공통 함수, 변수 선언**
 
@@ -27,9 +31,13 @@
 
 **[Soul.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/Soul.h) : 경험치**
 
+---
+
 **[HitInterface.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/Interfaces/HitInterface.h) : 히트, 블록, 스턴의 기본 블루프린트네이티브이벤트 선언파일**
 
 **[PickupInterface.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/Interfaces/PickupInterface.h) : 아이템 줍기, 경험치 습득, 골드 습득 파일**
+
+---
 
 **[HealthBar.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/HUD/HealthBar.h) : 체력 프로그래스바** 
 
