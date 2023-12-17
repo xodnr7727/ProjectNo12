@@ -71,7 +71,7 @@ private:
 		float HealthRegenRate = 2.f;
 
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
-		float StaminaRegenRate = 20.f;
+		float StaminaRegenRate = 15.f;
 
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
 		float StaminaMinusRate = 10.f;

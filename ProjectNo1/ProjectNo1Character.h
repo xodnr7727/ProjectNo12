@@ -68,7 +68,9 @@ protected:
 	void ParryCanDo(); //패리기능 사용 활성화
 	virtual void DiveEnd() override;
 	virtual void Attack() override;
-	void Dive();//구르기
+	void Dive();
+	bool IsDiving();
+	//구르기
 	void EnableDive();
 	void DrinkPotion(); //포션 마시기
 	void DeactivatePotionEffect();
@@ -149,6 +151,7 @@ protected:
 	void ActivateSmallSkillEffect();
 
 	void OnNeckSkillPressed();
+	void SwingSword();
 	void LargeSkillPressed();
 	void EnableLargeSkill();
 	void EnableSmallSkill();
@@ -185,6 +188,17 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+	// Function to check if there is a stunned enemy in front of the player
+	UFUNCTION(BlueprintPure, Category = "SpecialTargeting")
+	bool HasStunnedEnemyInFront();
+
+	// Function to enable special targeting attack when a stunned enemy is in front
+	UFUNCTION(BlueprintCallable, Category = "SpecialTargeting")
+	void EnableSpecialTargetingAttack();
+
+	// Function to handle the input for the special targeting attack
+	void SpecialTargetingAttackInput();
 
 private:
 
@@ -238,6 +252,9 @@ private:
 		UPROPERTY(EditAnywhere)
 		TSubclassOf<class AMySkillClass> LargeSkillClass;
 
+		UPROPERTY(EditAnywhere, Category = "Combat")
+		TSubclassOf<class AProjectileWeapon> SwordProjectileClass;
+
 		int32 CurrentComboStep; //콤보 단계
 		TArray<FName> ComboSectionNames; //콤보 단계별 이름
 		float AttackComboCount; //공격 콤보 초기화 변수
@@ -277,6 +294,13 @@ private:
 
 		UPROPERTY(VisibleAnywhere, Category = "Skill")
 		UParticleSystemComponent* PotionSkillEffect;
+		 
+		// Range to detect stunned enemies in front of the player
+		UPROPERTY(EditDefaultsOnly, Category = "SpecialTargeting")
+		float SpecialTargetingRange;
+
+		// Flag to track if the special targeting attack is enabled
+		bool bIsSpecialTargetingEnabled;
 
 public:
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }

@@ -87,6 +87,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void StoreHitNumber(UUserWidget* HitNubmer, FVector Location);
 	bool Alive();
+	bool IsStunned();//스턴됨
 	void ProjectileAttack();
 
 	FORCEINLINE EEnemyState GetEnemyState() const { return EnemyState; }
@@ -161,7 +162,6 @@ private:
 	bool IsAttacking();//히트됨
 	bool IsDead();//죽음
 	bool IsEngaged();//전투중
-	bool IsStunned();//스턴됨
 	void ClearPatrolTimer();
 	void SpawnDefaultWeapon();
 

@@ -20,8 +20,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator);
 
-	void DeactivateEmbers();
 	void DisableCapsuleCollision();
+	void DeactivateEffect();
+	void ActivateEffect();
 	void AttachMeshToSocket(USceneComponent* InParent, const FName& InSocketName);
 
 	TArray<AActor*> IgnoreActors;
@@ -35,6 +36,12 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Potion Properties")
 	UParticleSystem* PotionParticles;
+
+	UPROPERTY(VisibleAnywhere, Category = "Potion Properties")
+	UStaticMeshComponent* PotionMesh;
+
+	UPROPERTY(VisibleAnywhere, Category = "Potion")
+	UParticleSystemComponent* PotionEffect;
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

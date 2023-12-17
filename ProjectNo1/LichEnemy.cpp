@@ -170,8 +170,8 @@ void ALichEnemy::GetStun_Implementation(const FVector& ImpactPoint, AActor* Hitt
 
 bool ALichEnemy::IsHitOnShield(AActor* Hitter)
 {
-	// 여기에 방패에 맞았는지 여부를 확인하는 코드를 추가하세요.
-	// 방패에 맞았다면 true를 반환하고, 그렇지 않다면 false를 반환하세요.
+	// 여기에 방패에 맞았는지 여부를 확인하는 코드를 추가
+	// 방패에 맞았다면 true를 반환하고, 그렇지 않다면 false를 반환
 	// 예: Hitter이 방패 클래스에 속하는지 여부를 확인하는 코드
 	return Hitter && Hitter->IsA(AShield::StaticClass());
 }

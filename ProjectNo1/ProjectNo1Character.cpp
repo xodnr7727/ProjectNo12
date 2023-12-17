@@ -116,6 +116,12 @@ AProjectNo1Character::AProjectNo1Character()
 
 	ParryCountdown = 2.0f; //패리기능 쿨타임
 	bCanParry = true; //초기 패리기능 사용가능
+
+	// Set the default value for the special targeting range
+	SpecialTargetingRange = 200.0f;
+
+	// Initialize the special targeting flag
+	bIsSpecialTargetingEnabled = false;
 }
 
 void AProjectNo1Character::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)//맞는 함수
@@ -150,19 +156,24 @@ void AProjectNo1Character::Tick(float DeltaTime)
 
 	if (Attributes && SlashOverlay)
 	{
-		if (ActionState == EActionState::EAS_Unoccupied) {
+		if (ActionState == EActionState::EAS_Unoccupied) {//기본 상태일때만 체력이나 스태미너 재생
 			Attributes->RegenHealth(DeltaTime);
 			Attributes->RegenStamina(DeltaTime);
 			SlashOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
 			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
 		}
-		SlashOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
-		SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
-		SlashOverlay->SetExperienceBarPercent(Attributes->GetExperiencePercent());
-		if (ActionState == EActionState::EAS_Blocking) {
+		if (ActionState == EActionState::EAS_Sprint) {//달리기중일때 스태미너 초당 소모
 			Attributes->RegenMinusStamina(DeltaTime);
 			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
 		}
+		SlashOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
+		SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+		SlashOverlay->SetExperienceBarPercent(Attributes->GetExperiencePercent());
+	}
+
+	if (HasStunnedEnemyInFront())//플레이어 앞에 스턴된 적이 있다면
+	{
+		EnableSpecialTargetingAttack();//스턴 공격 허용
 	}
 }
 
@@ -199,6 +210,11 @@ void AProjectNo1Character::BeginPlay()
 	SpawnDefaultWeapon();//주무기 장착
 	SpawnDefaultWeaponTwo();//쉴드 장착
 	SpawnDefaultPotionOne();//포션 장착
+
+	if (HasStunnedEnemyInFront())//플레이어 앞에 스턴된 적이 있다면
+	{
+		EnableSpecialTargetingAttack();//스턴 공격 허용
+	}
 }
 
 void AProjectNo1Character::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -246,9 +262,10 @@ void AProjectNo1Character::SetupPlayerInputComponent(class UInputComponent* Play
 	PlayerInputComponent->BindAction(FName("DrinkPotion"), IE_Pressed, this, &AProjectNo1Character::DrinkPotion);
 
 	PlayerInputComponent->BindAction(FName("LargeSkill"), IE_Pressed, this, &AProjectNo1Character::LargeSkillPressed);
-	PlayerInputComponent->BindAction(FName("SmallSkill"), IE_Pressed, this, &AProjectNo1Character::SmallSkillPressed);
 
 	PlayerInputComponent->BindAction(FName("Parry"), IE_Pressed, this, &AProjectNo1Character::Parry); 
+
+	PlayerInputComponent->BindAction(FName("SpecialTargetingAttack"), IE_Pressed, this, &AProjectNo1Character::SpecialTargetingAttackInput);
 }
 
 void AProjectNo1Character::OnNeckSkillPressed()
@@ -301,6 +318,7 @@ void AProjectNo1Character::LargeSkillPressed()
 		ActionState = EActionState::EAS_AttackSkill;
 		bCanLargeSkill = false;
 		EquippedWeapon->IncreaseDamage();// 공격력 증가
+		SwingSword();//검기 발사
 		GetWorldTimerManager().SetTimer(LargeSkillCountdown, this, &AProjectNo1Character::EnableLargeSkill, LargeSkillCooldown, false); // 쿨타임 타이머 시작
 		if (Attributes && SlashOverlay)
 		{
@@ -325,6 +343,21 @@ void AProjectNo1Character::DeactivateLargeSkillEffect()
 void AProjectNo1Character::ActivateLargeSkillEffect()
 {
 	EquippedWeapon->ActivateLargeSkillEffect(); // 강공격 이펙트 활성화
+}
+
+void AProjectNo1Character::SwingSword()
+{
+	// 플레이어가 칼을 휘두를 때 호출되는 함수
+
+	// 칼 휘두르는 애니메이션 재생 등 추가적인 동작을 수행할 수 있음
+
+	// 검기 프로젝타일 생성
+	if (SwordProjectileClass)
+	{
+		FVector SpawnLocation = GetActorLocation() + GetActorForwardVector() * 100.0f;
+		FRotator SpawnRotation = GetActorRotation();
+		AProjectileWeapon* SwordProjectile = GetWorld()->SpawnActor<AProjectileWeapon>(SwordProjectileClass, SpawnLocation, SpawnRotation);
+	}
 }
 
 void AProjectNo1Character::SmallSkillPressed()
@@ -401,9 +434,10 @@ void AProjectNo1Character::Jump()
 
 void AProjectNo1Character::Sprint()//달리기
 {
-	if (HasEnoughStamina()) {
+	if (HasEnoughStamina() && ActionState == EActionState::EAS_Unoccupied) {
 		GetCharacterMovement()->MaxWalkSpeed = 450.f;
 
+		ActionState = EActionState::EAS_Sprint;
 	}
 }
 
@@ -411,6 +445,7 @@ void AProjectNo1Character::StopSprinting()
 {
 	GetCharacterMovement()->MaxWalkSpeed = 300.f;
 
+	ActionState = EActionState::EAS_Unoccupied;
 } 
 
 float AProjectNo1Character::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -695,6 +730,7 @@ void AProjectNo1Character::Parry()
 		bCanParry= false; // 패리 한 후 연속 패리 x
 		GetWorldTimerManager().SetTimer(ParryCount, this, &AProjectNo1Character::ParryCanDo, ParryCountdown, false); //패리 쿨타임 타이머 시작
 		ActionState = EActionState::EAS_Parrying;
+		UE_LOG(LogTemp, Log, TEXT("Parry"));
 		if (Attributes && SlashOverlay) //공격 스태미너 소모
 		{
 			Attributes->UseStamina(Attributes->GetAttackCost());
@@ -704,7 +740,54 @@ void AProjectNo1Character::Parry()
 }
 void AProjectNo1Character::ParryCanDo()
 {
-	bCanParry = true; //콤보 공격 리셋
+	bCanParry = true; //패리 가능
+}
+
+bool AProjectNo1Character::HasStunnedEnemyInFront()
+{
+	TArray<FHitResult> HitResults;
+	FVector StartLocation = GetActorLocation();
+	FVector EndLocation = StartLocation + GetActorForwardVector() * SpecialTargetingRange;
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.AddIgnoredActor(this); // Ignore the player
+	CollisionParams.bTraceComplex = true;
+	bool bHit = GetWorld()->SweepMultiByChannel(HitResults, StartLocation, EndLocation, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(50.0f), CollisionParams);
+
+	if (bHit)
+	{
+		for (const FHitResult& HitResult : HitResults)
+		{
+			AActor* OverlappingActor = HitResult.GetActor();
+			// 액터의 클래스가 ALichEnemy인지 확인
+			if (OverlappingActor->IsA(ALichEnemy::StaticClass()))
+			{
+				LichEnemy = Cast<ALichEnemy>(OverlappingActor);
+
+				if (LichEnemy && LichEnemy->IsStunned())
+				{
+					//UE_LOG(LogTemp, Log, TEXT("LichEnemyStunnedCheck")); 확인완료
+					return true;
+				}
+			}
+		}
+	}
+	DrawDebugLine(GetWorld(), StartLocation, EndLocation, FColor::Red, false, 2.0f);
+	return false;
+}
+
+void AProjectNo1Character::EnableSpecialTargetingAttack()
+{
+	bIsSpecialTargetingEnabled = true; //스턴 공격 가능
+}
+
+void AProjectNo1Character::SpecialTargetingAttackInput()
+{
+	if (bIsSpecialTargetingEnabled)
+	{
+
+		SmallSkillPressed();
+		bIsSpecialTargetingEnabled = false; //연속 스턴 공격 x
+	}
 }
 
 void AProjectNo1Character::Attack()
@@ -719,6 +802,7 @@ void AProjectNo1Character::Attack()
 		AnimInstance->Montage_JumpToSection(SectionName, AttackMontage);
 		CurrentComboStep = (CurrentComboStep + 1) % ComboSectionNames.Num(); // 다음 콤보 스텝으로 이동 (콤보가 끝난 경우 0으로 초기화)
 		ActionState = EActionState::EAS_Attacking;
+		UE_LOG(LogTemp, Log, TEXT("Attack"));
 		if (Attributes && SlashOverlay) //공격 스태미너 소모
 		{
 			Attributes->UseStamina(Attributes->GetAttackCost());
@@ -747,6 +831,7 @@ void AProjectNo1Character::Dive()
 	if (CanAttack() && HasEnoughStamina() && bCanDive) {
 		PlayDiveMontage();
 		ActionState = EActionState::EAS_Dive;
+		UE_LOG(LogTemp, Log, TEXT("Dive"));
 		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);//구르기 시 무적
 		GetCharacterMovement()->MaxWalkSpeed = 500.f;
 		bCanDive = false; // 구르기 한 후 연속 구르기 x
@@ -758,8 +843,13 @@ void AProjectNo1Character::Dive()
 			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
 		}
 	}
-
 }
+
+bool AProjectNo1Character::IsDiving()
+{
+	return ActionState == EActionState::EAS_Dive;
+}
+
 void AProjectNo1Character::EnableDive()
 {
 	bCanDive = true; // 쿨타임이 끝나면 다시 구르기를 할 수 있도록 설정
@@ -784,13 +874,19 @@ void AProjectNo1Character::DrinkPotion()//포션 마시기
 		// 포션을 마시는 로직 추가
 		PlayDrinkMontage();
 		ActionState = EActionState::EAS_Drink;
+		UE_LOG(LogTemp, Log, TEXT("DrinkPotion"));
 		bCanDrinkPotion = false; // 포션을 마신 후, 연속으로 마실 수 없도록 설정
 		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);//포션 마실 시 무적
 		GetWorldTimerManager().SetTimer(PotionCountdown,this,&AProjectNo1Character::EnablePotion, PotionCooldown,false); // 쿨타임 타이머 시작
 		GetWorldTimerManager().SetTimer(PotionEffectEndTimerHandle, this, &AProjectNo1Character::DeactivatePotionEffect, PotionDuration, false);//포션 지속시간 타이머 시작
+		EquippedPotion->ActivateEffect();
 		if (EquippedPotion)
 		{
-			EquippedPotion->AttachMeshToSocket(GetMesh(), FName("LeftHandPotionSocket"));
+			EquippedPotion->AttachMeshToSocket(GetMesh(), FName("RightHandPotionSocket"));
+		}
+		if (EquippedWeapon)
+		{
+			EquippedWeapon->SetActorHiddenInGame(true);
 		}
 		if (Attributes && SlashOverlay)
 		{
@@ -803,9 +899,14 @@ void AProjectNo1Character::DrinkEnd()
 {
 	ActionState = EActionState::EAS_Unoccupied;
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//무적 해제
+	EquippedPotion->DeactivateEffect();
 	if (EquippedPotion)
 	{
-		EquippedPotion->AttachMeshToSocket(GetMesh(), FName("BeltPotionSocket"));
+		EquippedPotion->AttachMeshToSocket(GetMesh(), FName("RightBeltPotionSocket"));
+	}
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->SetActorHiddenInGame(false);
 	}
 }
 
@@ -901,7 +1002,7 @@ void AProjectNo1Character::SpawnDefaultPotionOne()
 	if (World && PotionClass)
 	{
 		APotion* DefaultPotion = World->SpawnActor<APotion>(PotionClass);
-		DefaultPotion->Equip(GetMesh(), FName("BeltPotionSocket"), this, this);
+		DefaultPotion->Equip(GetMesh(), FName("RightBeltPotionSocket"), this, this);
 		EquippedPotion = DefaultPotion;
 	}
 }

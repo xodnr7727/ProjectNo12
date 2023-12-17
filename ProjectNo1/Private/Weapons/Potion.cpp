@@ -19,6 +19,12 @@ APotion::APotion()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	PotionMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PotionMesh"));
+	PotionMesh->SetupAttachment(GetRootComponent());
+
+	PotionEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("PotionEffect"));
+	PotionEffect->SetupAttachment(RootComponent); // 이펙트 위치 설정
+
 	PotionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("PotionBox"));
 	PotionBox->SetupAttachment(GetRootComponent());
 	PotionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -31,6 +37,25 @@ void APotion::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	if (ItemEffect) {
+		ItemEffect->Deactivate(); // 초기에는 비활성화
+	}
+}
+
+void APotion::DeactivateEffect()
+{
+	if (ItemEffect)
+	{
+		ItemEffect->Deactivate();
+	}
+}
+
+void APotion::ActivateEffect()
+{
+	if (ItemEffect)
+	{
+		ItemEffect->Activate();
+	}
 }
 
 void APotion::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator)
@@ -40,14 +65,6 @@ void APotion::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOw
 	SetInstigator(NewInstigator);
 	AttachMeshToSocket(InParent, InSocketName);
 	DisableCapsuleCollision();
-	DeactivateEmbers();
-}
-void APotion::DeactivateEmbers()
-{
-	if (ItemEffect)
-	{
-		ItemEffect->Deactivate();
-	}
 }
 
 void APotion::DisableCapsuleCollision()
