@@ -20,6 +20,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator);
 
+	void SpawnSkillHitParticles(const FVector& ImpactPoint);
+	void PlaySkillSound();
+
+	void DeactivateGuardCounterEffect();
+	void ActivateGuardCounterEffect();
+
 	void DeactivateLargeSkillEffect();
 	void ActivateLargeSkillEffect();
 
@@ -32,6 +38,12 @@ public:
 
 	void IncreaseDamage();
 	void RestoreDamage();
+	void IncreaseSkillDamage();
+	void RestoreSkillDamage();
+	void IncreaseStunDamage();
+	void RestoreStunDamage();
+	void IncreaseCounterDamage();
+	void RestoreCounterDamage();
 
 	void AttachMeshToSocket(USceneComponent* InParent, const FName& InSocketName);
 
@@ -46,8 +58,11 @@ protected:
 	virtual void OnCapsuleEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) override;
 */
 	UFUNCTION()
-		void OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	
+	UFUNCTION()
+	void OnSkillBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
 	bool CanShieldBlock();
 
 	void ExecuteGetHit(FHitResult& BoxHit);
@@ -64,31 +79,32 @@ private:
 
 	void BoxTrace(FHitResult& BoxHit);
 
+	UPROPERTY(VisibleAnywhere)
+	    USceneComponent* BoxTraceStart;
+
+	UPROPERTY(VisibleAnywhere)
+	    USceneComponent* BoxTraceEnd;
+
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 		FVector BoxTraceExtent = FVector(5.f);
 
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 		bool bShowBoxDebug = false;
 
-	UPROPERTY(VisibleAnywhere)
-		USceneComponent* BoxTraceStart;
-
-	UPROPERTY(VisibleAnywhere)
-		USceneComponent* BoxTraceEnd;
-
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
-	USoundBase* EquipSound;
+	    USoundBase* EquipSound;
 
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
-	UBoxComponent* WeaponBox;
+	    UBoxComponent* WeaponBox;
 
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
-	USkeletalMeshComponent* SwordMesh;
+	     UBoxComponent* SkillBox;
+
+	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
+	    USkeletalMeshComponent* SwordMesh;
 
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 		float Damage;
-
-	EWeaponAState WeaponAState = EWeaponAState::EIS_NoAttaking;
 
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 		USoundBase* BlockSound;
@@ -96,12 +112,24 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 		UParticleSystem* HitParticles;
 
+	EWeaponAState WeaponAState = EWeaponAState::EIS_NoAttaking;
+
+	UPROPERTY(EditAnywhere, Category = "Skill")
+		USoundBase* SkillSound;
+
+	UPROPERTY(EditAnywhere, Category = "Skill")
+		UParticleSystem* SkillHitParticles;
+
 	UPROPERTY(VisibleAnywhere, Category = "Skill")
 		UParticleSystemComponent* LargeSkillEffect;
 
 	UPROPERTY(VisibleAnywhere, Category = "Skill")
 		UParticleSystemComponent* SmallSkillEffect;
 
+	UPROPERTY(VisibleAnywhere, Category = "Skill")
+		UParticleSystemComponent* GuardCounterEffect;
+
 public:
 	FORCEINLINE UBoxComponent* GetWeaponBox() const { return WeaponBox; }
+	FORCEINLINE UBoxComponent* GetSkillBox() const { return SkillBox; }
 };

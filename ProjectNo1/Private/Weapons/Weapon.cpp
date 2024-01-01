@@ -27,6 +27,12 @@ AWeapon::AWeapon()
 	WeaponBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
 	WeaponBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
 
+	SkillBox = CreateDefaultSubobject<UBoxComponent>(TEXT("Skill Box"));
+	SkillBox->SetupAttachment(GetRootComponent());
+	SkillBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	SkillBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
+	SkillBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+
 	BoxTraceStart = CreateDefaultSubobject<USceneComponent>(TEXT("Box Trace Start"));
 	BoxTraceStart->SetupAttachment(GetRootComponent());
 
@@ -44,6 +50,10 @@ AWeapon::AWeapon()
 
 	SmallSkillEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("SmallSkillEffect"));
 	SmallSkillEffect->SetupAttachment(RootComponent); // 이펙트 위치 설정
+
+	GuardCounterEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("GuardCounterEffect"));
+	GuardCounterEffect->SetupAttachment(RootComponent); // 이펙트 위치 설정
+
 }
 
 void AWeapon::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator)
@@ -55,6 +65,46 @@ void AWeapon::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOw
 	PlayEquipSound();
 	DisableCapsuleCollision();
 	DeactivateEmbers();
+}
+
+void AWeapon::PlaySkillSound()
+{
+	if (SkillSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			SkillSound,
+			GetActorLocation()
+		);
+	}
+}
+
+void AWeapon::SpawnSkillHitParticles(const FVector& ImpactPoint)
+{
+	if (SkillHitParticles && GetWorld())
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(
+			GetWorld(),
+			SkillHitParticles,
+			ImpactPoint
+		);
+	}
+}
+
+void AWeapon::DeactivateGuardCounterEffect()
+{
+	if (GuardCounterEffect)
+	{
+		GuardCounterEffect->DeactivateSystem();
+	}
+}
+
+void AWeapon::ActivateGuardCounterEffect()
+{
+	if (GuardCounterEffect)
+	{
+		GuardCounterEffect->ActivateSystem();
+	}
 }
 
 void AWeapon::DeactivateLargeSkillEffect()
@@ -127,9 +177,11 @@ void AWeapon::BeginPlay()
 {
 	Super::BeginPlay();
 	LargeSkillEffect->DeactivateSystem(); // 초기에는 비활성화
-	SmallSkillEffect->DeactivateSystem(); // 초기에는 비활성화
+	SmallSkillEffect->DeactivateSystem(); // ''
+	GuardCounterEffect->DeactivateSystem(); // ''
 
 	WeaponBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnBoxOverlap);
+	SkillBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnSkillBoxOverlap);
 }
 
 void AWeapon::IncreaseDamage()
@@ -143,6 +195,46 @@ void AWeapon::RestoreDamage()
 	// 공격력을 원래대로 복구시키는 코드
 	// 예를 들어, CharacterDamage = BaseDamage;
 	Damage -= 100.0f;
+}
+
+void AWeapon::IncreaseSkillDamage()
+{
+	// 공격력을 증가시키는 코드
+	Damage += 400.0f;
+}
+
+void AWeapon::RestoreSkillDamage()
+{
+	// 공격력을 원래대로 복구시키는 코드
+	// 예를 들어, CharacterDamage = BaseDamage;
+	Damage -= 400.0f;
+}
+
+
+void AWeapon::IncreaseStunDamage()
+{
+	// 공격력을 증가시키는 코드
+	Damage += 500.0f;
+}
+
+void AWeapon::RestoreStunDamage()
+{
+	// 공격력을 원래대로 복구시키는 코드
+	// 예를 들어, CharacterDamage = BaseDamage;
+	Damage -= 500.0f;
+}
+
+void AWeapon::IncreaseCounterDamage()
+{
+	// 공격력을 증가시키는 코드
+	Damage += 400.0f;
+}
+
+void AWeapon::RestoreCounterDamage()
+{
+	// 공격력을 원래대로 복구시키는 코드
+	// 예를 들어, CharacterDamage = BaseDamage;
+	Damage -= 400.0f;
 }
 
 void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -183,6 +275,40 @@ void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 				BossCharacter->ShowHitNumber(Damage, BoxHit.Location);
 			}
 		}
+}
+
+void AWeapon::OnSkillBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+
+	FHitResult BoxHit;
+	BoxTrace(BoxHit);
+
+	ABaseCharacter* BaseCharacter = Cast<ABaseCharacter>(BoxHit.GetActor());
+	ALichEnemy* HitEnemy = Cast<ALichEnemy>(BoxHit.GetActor());
+	AGoblin* Goblin = Cast<AGoblin>(BoxHit.GetActor());
+	ABossCharacter* BossCharacter = Cast<ABossCharacter>(BoxHit.GetActor());
+	AActor* OwnerActor = GetOwner();
+
+
+	if (BoxHit.GetActor() != GetOwner())
+	{
+		UGameplayStatics::ApplyDamage(BoxHit.GetActor(), Damage, GetInstigator()->GetController(), this, UDamageType::StaticClass());
+		ExecuteGetHit(BoxHit);
+		ExecuteGetBlock(BoxHit);
+		CreateFields(BoxHit.ImpactPoint);
+		SpawnSkillHitParticles(BoxHit.ImpactPoint);
+		PlaySkillSound(); //스킬 타격 사운드 재생
+
+		if (HitEnemy) {
+			HitEnemy->ShowHitNumber(Damage, BoxHit.Location);
+		}
+		if (Goblin) {
+			Goblin->ShowHitNumber(Damage, BoxHit.Location);
+		}
+		if (BossCharacter) {
+			BossCharacter->ShowHitNumber(Damage, BoxHit.Location);
+		}
+	}
 }
 
 bool AWeapon::CanShieldBlock()

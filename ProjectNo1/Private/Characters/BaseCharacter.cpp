@@ -229,6 +229,29 @@ void ABaseCharacter::SpawnArrowParticles(const FVector& ImpactPoint)
 	}
 }
 
+void ABaseCharacter::ActivateSkillParticles()
+{
+	if (SkillParticles && GetWorld())
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(
+			GetWorld(),
+			SkillParticles,
+			GetActorLocation()
+		);
+	}
+}
+void ABaseCharacter::PlayWeaponSkillSound()
+{
+	if (WeaponSkillSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			WeaponSkillSound,
+			GetActorLocation()
+		);
+	}
+}
+
 void ABaseCharacter::PlayBlockSound(const FVector& ImpactPoint)
 {
 	if (BlockSound)
@@ -364,6 +387,11 @@ void ABaseCharacter::PlayLargeSkillMontage()
 	PlayMontageSection(LargeSkillMontage, FName("LargeSkill"));
 }
 
+void ABaseCharacter::PlayGuardCounterMontage()
+{
+	PlayMontageSection(GuardCounterMontage, FName("GuardCounter"));
+}
+
 void ABaseCharacter::PlaySmallSkillMontage()
 {
 	PlayMontageSection(SmallSkillMontage, FName("SmallSkill"));
@@ -432,6 +460,11 @@ bool ABaseCharacter::IsStun()
 	return Attributes && Attributes->IsStun();
 }
 
+bool ABaseCharacter::IsAttacking()
+{
+	return LichEnemy && LichEnemy->IsEngaged();
+}
+
 bool ABaseCharacter::HasEnoughShieldStamina()
 {
 	return Attributes && Attributes->GetStamina() > Attributes->GetShieldCost();
@@ -476,6 +509,14 @@ void ABaseCharacter::SetWeaponCollisionEnabled(ECollisionEnabled::Type Collision
 	}
 }
 
+void ABaseCharacter::SetSkillCollisionEnabled(ECollisionEnabled::Type CollisionEnabled)
+{
+	if (EquippedWeapon && EquippedWeapon->GetSkillBox())
+	{
+		EquippedWeapon->GetSkillBox()->SetCollisionEnabled(CollisionEnabled);
+		EquippedWeapon->IgnoreActors.Empty();
+	}
+}
 
 void ABaseCharacter::SetShieldCollisionEnabled(ECollisionEnabled::Type CollisionEnabled)
 {
@@ -485,7 +526,6 @@ void ABaseCharacter::SetShieldCollisionEnabled(ECollisionEnabled::Type Collision
 		EquippedShield->IgnoreActors.Empty();
 	}
 }
-
 
 
 

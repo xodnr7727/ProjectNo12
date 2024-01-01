@@ -88,6 +88,8 @@ public:
 	void StoreHitNumber(UUserWidget* HitNubmer, FVector Location);
 	bool Alive();
 	bool IsStunned();//스턴됨
+	bool IsNotStunned();//스턴풀림
+	bool IsEngaged();//전투중
 	void ProjectileAttack();
 
 	FORCEINLINE EEnemyState GetEnemyState() const { return EnemyState; }
@@ -161,7 +163,6 @@ private:
 	bool IsChasing();//쫓는중
 	bool IsAttacking();//히트됨
 	bool IsDead();//죽음
-	bool IsEngaged();//전투중
 	void ClearPatrolTimer();
 	void SpawnDefaultWeapon();
 
@@ -186,10 +187,11 @@ private:
 	UPROPERTY(EditAnywhere, Category = Combat)
 		TSubclassOf<class ASoul> ExClass;
 
-		UPROPERTY(EditAnywhere, Category = Combat)
+	UPROPERTY(EditAnywhere, Category = Combat)
 		TSubclassOf<class ATreasure> GdClass;
 
-		UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere)
 		bool bAttack;
+
 
 };

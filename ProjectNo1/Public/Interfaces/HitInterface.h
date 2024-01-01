@@ -27,7 +27,8 @@ public:
 	void GetBlock(const FVector& ImpactPoint, AActor* Hitter);
 	UFUNCTION(BlueprintNativeEvent)
 	void GetStun(const FVector& ImpactPoint, AActor* Hitter);
-
 	UFUNCTION(BlueprintNativeEvent)
 	void BallHit(const FVector& ImpactPoint, AActor* Hitter);
+	UFUNCTION(BlueprintNativeEvent)
+	void ProjectileHit(FHitResult HitResult, AActor* Shooter, AController* ShooterController);
 };

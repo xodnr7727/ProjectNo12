@@ -51,6 +51,8 @@ protected:
 	void SpawnArrowParticles(const FVector& ImpactPoint);
 	void PlayBlockSound(const FVector& ImpactPoint);
 	void SpawnBlockParticles(const FVector& ImpactPoint);
+	void ActivateSkillParticles();
+	void PlayWeaponSkillSound();
 
 	void DisableCapsule();
 
@@ -63,6 +65,8 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	bool IsStun();
 
+	bool IsAttacking();
+
 	bool HasEnoughShieldStamina();
 	void PlayHitReactMontage(const FName& SectionName);
 	void PlayStunReactMontage(const FName& SectionName);
@@ -74,6 +78,7 @@ protected:
 	virtual void PlayDrinkMontage();
 	virtual void PlayNeckSkillMontage();
 	virtual void PlayLargeSkillMontage();
+	virtual void PlayGuardCounterMontage();
 	virtual void PlaySmallSkillMontage();
 	virtual void PlaySwordSkillMontage();
 	void StopAttackMontage();
@@ -110,13 +115,16 @@ protected:
 		void SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
 
 	UFUNCTION(BlueprintCallable)
+		void SetSkillCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
+
+	UFUNCTION(BlueprintCallable)
 		void SetShieldCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Weapon)
 		AWeapon* EquippedWeapon;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Weapon)
-		AProjectileWeapon* Projectile;
+		AProjectileWeapon* EquippedProjectile;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Shield)
 		AShield* EquippedShield;
@@ -167,6 +175,9 @@ protected:
 		UAnimMontage* LargeSkillMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
+		UAnimMontage* GuardCounterMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat)
 		UAnimMontage* SmallSkillMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
@@ -206,19 +217,25 @@ private:
 	UPROPERTY(EditAnywhere, Category = Combat)
 		UParticleSystem* HitParticles;
 
-		UPROPERTY(EditAnywhere, Category = Combat)
+	UPROPERTY(EditAnywhere, Category = Combat)
 		USoundBase* BlockSound;
 
-		UPROPERTY(EditAnywhere, Category = Combat)
+	UPROPERTY(EditAnywhere, Category = Combat)
 		UParticleSystem* BlockParticles;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 		UParticleSystem* WeaponParticles;
 
-		UPROPERTY(EditAnywhere, Category = Combat)
+	UPROPERTY(EditAnywhere, Category = Combat)
+		USoundBase* WeaponSkillSound;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
 		USoundBase* ArrowSound;
 
-		UPROPERTY(EditAnywhere, Category = Combat)
+	UPROPERTY(EditAnywhere, Category = Combat)
 		UParticleSystem* ArrowParticles;
+
+	UPROPERTY(EditAnywhere, Category = "Skill")
+		UParticleSystem* SkillParticles;
 
 };

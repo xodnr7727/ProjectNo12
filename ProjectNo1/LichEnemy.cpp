@@ -140,6 +140,7 @@ void ALichEnemy::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitte
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetCharacterMovement()->Activate();
 	EnemyState = EEnemyState::EES_Attacking;
+	bAttack = true;
 	StopAttackMontage();
 
 	if (IsInsideAttackRadius())
@@ -168,28 +169,31 @@ void ALichEnemy::GetStun_Implementation(const FVector& ImpactPoint, AActor* Hitt
 	}
 }
 
+void ALichEnemy::BallHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)//맞는 함수
+{
+	if (IsEngaged()) return;
+	Super::BallHit_Implementation(ImpactPoint, Hitter);
+	if (!IsDead()) {
+		ShowHealthBar();
+	}
+	ClearPatrolTimer();
+	ClearAttackTimer();
+	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
+	EnemyState = EEnemyState::EES_Attacking;
+	StopAttackMontage();
+	UE_LOG(LogTemp, Log, TEXT("BallHit_Implementation"));
+	if (IsInsideAttackRadius())
+	{
+		if (!IsDead()) StartAttackTimer();
+	}
+}
+
 bool ALichEnemy::IsHitOnShield(AActor* Hitter)
 {
 	// 여기에 방패에 맞았는지 여부를 확인하는 코드를 추가
 	// 방패에 맞았다면 true를 반환하고, 그렇지 않다면 false를 반환
 	// 예: Hitter이 방패 클래스에 속하는지 여부를 확인하는 코드
 	return Hitter && Hitter->IsA(AShield::StaticClass());
-}
-
-void ALichEnemy::BallHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
-{
-	if (IsEngaged()) return;
-
-	Super::BallHit_Implementation(ImpactPoint, Hitter);
-	if (!IsDead()) {
-		ShowHealthBar();
-	}
-
-	ClearPatrolTimer();
-	ClearAttackTimer();
-	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
-	EnemyState = EEnemyState::EES_Attacking;
-	StopAttackMontage();
 }
 
 
@@ -389,6 +393,7 @@ void ALichEnemy::AttackEnd()
 	EnemyState = EEnemyState::EES_NoState;
 	GetCharacterMovement()->Activate();
 	CheckCombatTarget();
+	bAttack = true;
 }
 
 void ALichEnemy::HitEnd()
@@ -520,6 +525,11 @@ bool ALichEnemy::IsEngaged()
 bool ALichEnemy::IsStunned()
 {
 	return EnemyState == EEnemyState::EES_Stunned;
+}
+
+bool ALichEnemy::IsNotStunned()
+{
+	return EnemyState != EEnemyState::EES_Stunned;
 }
 
 void ALichEnemy::ClearPatrolTimer()

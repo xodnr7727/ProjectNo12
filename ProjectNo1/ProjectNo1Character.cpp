@@ -1,27 +1,31 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "ProjectNo1Character.h"
+#include "MyProAnimInstance.h"
 #include "LichEnemy.h"
 #include "BossCharacter.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
-#include "MyProAnimInstance.h"
+#include "Components/BoxComponent.h"
+#include "Components/AttributeComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
+#include "GameFramework/Actor.h"
+#include "GameFramework/PlayerController.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Kismet/GameplayStatics.h"
-#include "Components/BoxComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Interfaces/HitInterface.h"
-#include "Weapons/MySkillClass.h"
 #include "Particles/ParticleSystemComponent.h"
-#include "Components/AttributeComponent.h"
+#include "Engine/World.h"
 #include "Item.h"
+#include "Items/Treasure.h"
+#include "Weapons/MySkillClass.h"
 #include "Weapons/Weapon.h"
 #include "Weapons/Shield.h"
 #include "Weapons/Potion.h"
@@ -29,7 +33,6 @@
 #include "HUD/MyProNo1HUD.h"
 #include "HUD/SlashOverlay.h"
 #include "Soul.h"
-#include "Items/Treasure.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AProjectNo1Character
@@ -90,8 +93,8 @@ AProjectNo1Character::AProjectNo1Character()
 	CurrentComboStep = 0; //콤보 공격
 	ComboSectionNames.Add(FName("Combo01"));
 	ComboSectionNames.Add(FName("Combo02"));
-	ComboSectionNames.Add(FName("Combo03"));
 	AttackComboCount = 3.0f;//콤보 초기화 시간
+	//ComboSectionNames.Add(FName("Combo03"));
 
 	PotionCooldown = 10.0f; // 초기 쿨타임 설정 (예: 10초)
 	bCanDrinkPotion = true; // 초기에 포션 마실 수 있도록 설정
@@ -108,6 +111,10 @@ AProjectNo1Character::AProjectNo1Character()
 	bCanRage = true; // 초기에 분노 사용할 수 있도록 설정
 	RageDuration = 8.0f;// 분노 지속 시간
 
+	SwordSkillCooldown = 8.0f; // 초기 쿨타임 설정 (예: 8초)
+	SwordSkillDuration = 6.0f; // 초기 쿨타임 설정 (예: 8초)
+	bCanSwordSkill = true; // 초기에 검 공격 사용할 수 있도록 설정
+
 	LargeSkillCooldown = 8.0f; // 초기 쿨타임 설정 (예: 8초)
 	bCanLargeSkill = true; // 초기에 강공격 사용할 수 있도록 설정
 
@@ -122,7 +129,11 @@ AProjectNo1Character::AProjectNo1Character()
 
 	// Initialize the special targeting flag
 	bIsSpecialTargetingEnabled = false;
+
+	GuardCounterDisableTimer = 2.0f; //가드 카운터 타이머
+	bIsGuardCounterAttackEnabled = false; //가드 카운터 부울 변수
 }
+
 
 void AProjectNo1Character::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)//맞는 함수
 {
@@ -147,6 +158,7 @@ void AProjectNo1Character::GetBlock_Implementation(const FVector& ImpactPoint, A
 		Super::GetBlock_Implementation(ImpactPoint, Hitter);
 
 		SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
+		EnableGuardCounter(); //가드 카운터 활성화
 		ActionState = EActionState::EAS_Blocking;
 }
 
@@ -174,6 +186,10 @@ void AProjectNo1Character::Tick(float DeltaTime)
 	if (HasStunnedEnemyInFront())//플레이어 앞에 스턴된 적이 있다면
 	{
 		EnableSpecialTargetingAttack();//스턴 공격 허용
+	}
+	else if (!HasStunnedEnemyInFront()) //플레이어 앞에 스턴된 적이 없다면
+	{
+		DisableSpecialTargetingAttack();//스턴 공격 불가
 	}
 }
 
@@ -206,7 +222,7 @@ void AProjectNo1Character::BeginPlay()
 	RageSkillEffect->DeactivateSystem(); // 초기에는 비활성화
 	PotionSkillEffect->DeactivateSystem(); // 초기에는 비활성화
 	Tags.Add(FName("EngageableTarget"));
-	InitializeSlashOverlay();
+	InitializeSlashOverlay();//기본 UI 설정
 	SpawnDefaultWeapon();//주무기 장착
 	SpawnDefaultWeaponTwo();//쉴드 장착
 	SpawnDefaultPotionOne();//포션 장착
@@ -214,6 +230,10 @@ void AProjectNo1Character::BeginPlay()
 	if (HasStunnedEnemyInFront())//플레이어 앞에 스턴된 적이 있다면
 	{
 		EnableSpecialTargetingAttack();//스턴 공격 허용
+	}
+	else if (!HasStunnedEnemyInFront())//플레이어 앞에 스턴된 적이 없다면
+	{
+		DisableSpecialTargetingAttack();//스턴 공격 불가
 	}
 }
 
@@ -266,6 +286,8 @@ void AProjectNo1Character::SetupPlayerInputComponent(class UInputComponent* Play
 	PlayerInputComponent->BindAction(FName("Parry"), IE_Pressed, this, &AProjectNo1Character::Parry); 
 
 	PlayerInputComponent->BindAction(FName("SpecialTargetingAttack"), IE_Pressed, this, &AProjectNo1Character::SpecialTargetingAttackInput);
+
+	PlayerInputComponent->BindAction(FName("GuardCounter"), IE_Pressed, this, &AProjectNo1Character::GuardCounterPressed);
 }
 
 void AProjectNo1Character::OnNeckSkillPressed()
@@ -278,8 +300,8 @@ void AProjectNo1Character::OnNeckSkillPressed()
 	{
 		PlayNeckSkillMontage();
 		ActionState = EActionState::EAS_NeckSkillDo;
-		bCanRage = false;
-		EquippedWeapon->IncreaseDamage();	// 공격력 증가
+		bCanRage = false;//연속 사용 불가
+		EquippedWeapon->IncreaseDamage();// 공격력 증가
 		RageSkillEffect->ActivateSystem();//분노 이펙트 활성화
 		GetWorldTimerManager().SetTimer(NeckSkillCountdown, this, &AProjectNo1Character::EnableRage, RageCooldown, false); // 쿨타임 타이머 시작
 		GetWorldTimerManager().SetTimer(RageEndTimerHandle, this, &AProjectNo1Character::RestoreDamage, RageDuration, false);//분노 지속시간 타이머 시작
@@ -294,8 +316,7 @@ void AProjectNo1Character::OnNeckSkillPressed()
 
 void AProjectNo1Character::DeactivateSkillEffect()
 {
-	// 분노 이펙트 비활성화
-	RageSkillEffect->DeactivateSystem();
+	RageSkillEffect->DeactivateSystem();// 분노 이펙트 비활성화
 }
 
 void AProjectNo1Character::RestoreDamage()
@@ -315,11 +336,16 @@ void AProjectNo1Character::LargeSkillPressed()
 	if (CanNeckSkill() && HasEnoughSkillStamina() && bCanLargeSkill)
 	{
 		PlayLargeSkillMontage();
-		ActionState = EActionState::EAS_AttackSkill;
-		bCanLargeSkill = false;
-		EquippedWeapon->IncreaseDamage();// 공격력 증가
-		SwingSword();//검기 발사
+		ActionState = EActionState::EAS_LargeAttack;
+		bCanLargeSkill = false;//연속 사용 X
 		GetWorldTimerManager().SetTimer(LargeSkillCountdown, this, &AProjectNo1Character::EnableLargeSkill, LargeSkillCooldown, false); // 쿨타임 타이머 시작
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);//강공격 시 무적
+		
+		if (EquippedWeapon)
+		{
+			EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("SpineSocket"));
+		}
+
 		if (Attributes && SlashOverlay)
 		{
 			Attributes->UseStamina(Attributes->GetSkillCost());
@@ -328,36 +354,86 @@ void AProjectNo1Character::LargeSkillPressed()
 	}
 }
 
+void AProjectNo1Character::EndLargeAttack()
+{
+	
+	ActionState = EActionState::EAS_Unoccupied;
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//무적 해제
+
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("RightHandWeaponSocket"));
+	}
+}
 void AProjectNo1Character::EnableLargeSkill()
 {
-	// 강공격 활성화
-	bCanLargeSkill = true;
-}
-
-void AProjectNo1Character::DeactivateLargeSkillEffect()
-{
-	EquippedWeapon->DeactivateLargeSkillEffect(); // 강공격 이펙트 비활성화
-	EquippedWeapon->RestoreDamage(); // 공격력 복구
-}
-
-void AProjectNo1Character::ActivateLargeSkillEffect()
-{
-	EquippedWeapon->ActivateLargeSkillEffect(); // 강공격 이펙트 활성화
+	bCanLargeSkill = true;// 강공격 사용 활성화
 }
 
 void AProjectNo1Character::SwingSword()
 {
-	// 플레이어가 칼을 휘두를 때 호출되는 함수
-
-	// 칼 휘두르는 애니메이션 재생 등 추가적인 동작을 수행할 수 있음
-
-	// 검기 프로젝타일 생성
+	if (EquippedProjectile) {
+		EquippedProjectile->SetActorHiddenInGame(true);
+	}
 	if (SwordProjectileClass)
 	{
-		FVector SpawnLocation = GetActorLocation() + GetActorForwardVector() * 100.0f;
-		FRotator SpawnRotation = GetActorRotation();
-		AProjectileWeapon* SwordProjectile = GetWorld()->SpawnActor<AProjectileWeapon>(SwordProjectileClass, SpawnLocation, SpawnRotation);
+		UE_LOG(LogTemp, Log, TEXT("SwingSword"));
+
+		const FRotator SpawnRotation = GetActorRotation();
+		const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(FVector(80.0f, 30.0f, 10.0f));
+		UWorld* const World = GetWorld();
+		if (World != NULL) {
+
+			AProjectileWeapon* SpawnedProjectile = World ->SpawnActor<AProjectileWeapon>(SwordProjectileClass, SpawnLocation, SpawnRotation);
+			UE_LOG(LogTemp, Log, TEXT("SpawnActor"));
+			if (SpawnedProjectile) {
+				SpawnedProjectile->GetProjectileMovement()->SetVelocityInLocalSpace(FVector::ForwardVector * 2000.0f);
+			}
+		}
 	}
+}
+
+void AProjectNo1Character::GuardCounterPressed()
+{
+	if (CanNeckSkill() && HasEnoughSkillStamina() && bIsGuardCounterAttackEnabled)
+	{
+		PlayGuardCounterMontage();
+		ActionState = EActionState::EAS_AttackSkill;
+		bIsGuardCounterAttackEnabled = false;//연속 사용 X
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);//카운터 공격 시 무적
+		EquippedWeapon->IncreaseCounterDamage();// 공격력 증가
+		UE_LOG(LogTemp, Log, TEXT("GuardCounter"));
+		if (Attributes && SlashOverlay)
+		{
+			Attributes->UseStamina(Attributes->GetSkillCost());
+			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+		}
+	}
+}
+
+void AProjectNo1Character::DeactivateGuardCounterEffect()
+{
+	EquippedWeapon->DeactivateGuardCounterEffect(); // 카운터 공격 이펙트 비활성화
+	EquippedWeapon->RestoreCounterDamage(); // 공격력 복구
+}
+
+void AProjectNo1Character::ActivateGuardCounterEffect()
+{
+	EquippedWeapon->ActivateGuardCounterEffect(); // 카운터 공격 이펙트 활성화
+}
+
+void AProjectNo1Character::EnableGuardCounter()
+{
+	FTimerHandle GuardCounterCountdown;
+
+	bIsGuardCounterAttackEnabled = true;// 가드 카운터 활성화
+	GetWorldTimerManager().SetTimer(GuardCounterCountdown, this, &AProjectNo1Character::DisableGuardCounter, GuardCounterDisableTimer, false);
+	//일정 시간 내에 가드 카운터 공격하지 않을 시 비활성화
+}
+
+void AProjectNo1Character::DisableGuardCounter()
+{
+	bIsGuardCounterAttackEnabled = false;// 가드 카운터 비활성화
 }
 
 void AProjectNo1Character::SmallSkillPressed()
@@ -368,8 +444,10 @@ void AProjectNo1Character::SmallSkillPressed()
 	{
 		PlaySmallSkillMontage();
 		ActionState = EActionState::EAS_AttackSkill;
-		bCanSmallSkill = false;
-		EquippedWeapon->IncreaseDamage();	// 공격력 증가
+		bCanSmallSkill = false;//연속 사용 X
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);//스턴 공격 시 무적
+		EquippedWeapon->IncreaseStunDamage();// 공격력 증가
+		UE_LOG(LogTemp, Log, TEXT("StunAttack"));
 		GetWorldTimerManager().SetTimer(SmallSkillCountdown, this, &AProjectNo1Character::EnableSmallSkill, SmallSkillCooldown, false); // 쿨타임 타이머 시작
 		if (Attributes && SlashOverlay)
 		{
@@ -379,10 +457,16 @@ void AProjectNo1Character::SmallSkillPressed()
 	}
 }
 
+void AProjectNo1Character::EndSmallSkill()
+{
+	ActionState = EActionState::EAS_Unoccupied;
+	EquippedWeapon->RestoreStunDamage(); // 공격력 복구
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//무적 해제
+}
+
 void AProjectNo1Character::EnableSmallSkill()
 {
-	// 약공격 활성화
-	bCanSmallSkill = true;
+	bCanSmallSkill = true;// 약공격 활성화
 }
 
 void AProjectNo1Character::ActivateSmallSkillEffect()
@@ -392,8 +476,7 @@ void AProjectNo1Character::ActivateSmallSkillEffect()
 
 void AProjectNo1Character::DeactivateSmallSkillEffect()
 {
-	EquippedWeapon->DeactivateSmallSkillEffect(); // 강공격 이펙트 비활성화
-	EquippedWeapon->RestoreDamage(); // 공격력 복구
+	EquippedWeapon->DeactivateSmallSkillEffect(); // 약공격 이펙트 비활성화
 }
 
 bool AProjectNo1Character::IsAttackSkill()
@@ -405,17 +488,50 @@ bool AProjectNo1Character::IsAttackSkill()
 
 void AProjectNo1Character::OnSwordSkillPressed()
 {
-	if (CanNeckSkill() && HasEnoughSkillStamina())
+	FTimerHandle SwordSkillCountdown;
+	FTimerHandle SwordSkillAGITime;
+
+	if (CanNeckSkill() && HasEnoughSkillStamina() && bCanSwordSkill)
 	{
 		PlaySwordSkillMontage();
-		ActionState = EActionState::EAS_SwordSkillDo;
-
+		ActionState = EActionState::EAS_AttackSkill;
+		bCanSwordSkill = false;//연속 사용 X
+		EquippedWeapon->IncreaseSkillDamage();// 공격력 증가
+		GetWorldTimerManager().SetTimer(SwordSkillCountdown, this, &AProjectNo1Character::EnableSwordSkill, SwordSkillCooldown, false); // 쿨타임 타이머 시작
+		GetWorldTimerManager().SetTimer(SwordSkillAGITime, this, &AProjectNo1Character::DeactivateLargeSkillEffect, SwordSkillDuration, false); // 지속시간 타이머 시작
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);//검 공격 시 무적
+		PlayWeaponSkillSound(); //스킬 사운드 재생
+		ActivateSkillParticles(); // 스킬 이펙트 재생
 		if (Attributes && SlashOverlay)
 		{
 			Attributes->UseStamina(Attributes->GetSkillCost());
 			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
 		}
 	}
+}
+
+void AProjectNo1Character::EndSwordSkill()
+{
+	ActionState = EActionState::EAS_Unoccupied;
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//무적 해제
+}
+
+void AProjectNo1Character::EnableSwordSkill()
+{
+	bCanSwordSkill = true;// 강공격 사용 활성화
+}
+
+void AProjectNo1Character::DeactivateLargeSkillEffect()
+{
+	EquippedWeapon->DeactivateLargeSkillEffect(); // 강공격 이펙트 비활성화
+	EquippedWeapon->DeactivateSmallSkillEffect(); // 약공격 이펙트 비활성화
+	EquippedWeapon->RestoreSkillDamage(); // 공격력 복구
+}
+
+void AProjectNo1Character::ActivateLargeSkillEffect()
+{
+	EquippedWeapon->ActivateLargeSkillEffect(); // 강공격 이펙트 활성화
+	EquippedWeapon->ActivateSmallSkillEffect(); // 약공격 이펙트 활성화
 }
 
 void AProjectNo1Character::EquipNeck(AWeapon* NewNeck)
@@ -519,7 +635,7 @@ void AProjectNo1Character::MoveRight(float Value)
 
 void AProjectNo1Character::RMKeyPressed()
 {
-	if (!(HasEnoughShieldStamina()))return;
+	if (!(HasEnoughShieldStamina()) || ActionState == EActionState::EAS_Sprint)return; //쉴드에 충분한 스태미너가 아니거나 달리기 상태 일때 리턴
 	if (CanBlock())
 	{
 		DisBlock();
@@ -546,6 +662,7 @@ void AProjectNo1Character::IfAttack()
 void AProjectNo1Character::EKeyPressed()
 {
 	AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
+	AProjectileWeapon* OverlappingProjectileWeapon = Cast<AProjectileWeapon>(OverlappingItem);
 	if (OverlappingWeapon)
 	{
 		if (EquippedWeapon)
@@ -553,6 +670,7 @@ void AProjectNo1Character::EKeyPressed()
 			EquippedWeapon->Destroy();
 		}
 		EquipWeapon(OverlappingWeapon);
+		EquipProjectileWeapon(OverlappingProjectileWeapon);
 	}
 	else
 	{
@@ -575,6 +693,16 @@ void AProjectNo1Character::EquipWeapon(AWeapon* Weapon)
 	//CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
 	OverlappingItem = nullptr;
 	EquippedWeapon = Weapon;
+}
+
+void AProjectNo1Character::EquipProjectileWeapon(AProjectileWeapon* ProjectileWeapon)
+{
+	ProjectileWeapon->ProjectileEquip(GetMesh(), this, this);
+	CharacterState = ECharacterState::ECS_Unequipped;
+	//Weapon->Equip(GetMesh(), FName("RightHandWeaponSocket"), this, this);
+	//CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
+	OverlappingItem = nullptr;
+	EquippedProjectile = ProjectileWeapon;
 }
 
 void AProjectNo1Character::AttachWeaponToBack()//무기 등으로
@@ -743,7 +871,7 @@ void AProjectNo1Character::ParryCanDo()
 	bCanParry = true; //패리 가능
 }
 
-bool AProjectNo1Character::HasStunnedEnemyInFront()
+bool AProjectNo1Character::HasStunnedEnemyInFront()//플레이어 앞 적 스턴 체크 함수
 {
 	TArray<FHitResult> HitResults;
 	FVector StartLocation = GetActorLocation();
@@ -765,19 +893,28 @@ bool AProjectNo1Character::HasStunnedEnemyInFront()
 
 				if (LichEnemy && LichEnemy->IsStunned())
 				{
-					//UE_LOG(LogTemp, Log, TEXT("LichEnemyStunnedCheck")); 확인완료
+					//UE_LOG(LogTemp, Log, TEXT("LichEnemyStunnedCheck")); //확인완료
 					return true;
+				}
+				else if(LichEnemy && LichEnemy->IsNotStunned()){
+					//UE_LOG(LogTemp, Log, TEXT("LichEnemyNotStunnedCheck"));//확인완료
+					return false;
 				}
 			}
 		}
 	}
-	DrawDebugLine(GetWorld(), StartLocation, EndLocation, FColor::Red, false, 2.0f);
+	//DrawDebugLine(GetWorld(), StartLocation, EndLocation, FColor::Red, false, 2.0f); //확인완료
 	return false;
 }
 
 void AProjectNo1Character::EnableSpecialTargetingAttack()
 {
 	bIsSpecialTargetingEnabled = true; //스턴 공격 가능
+}
+
+void AProjectNo1Character::DisableSpecialTargetingAttack()
+{
+	bIsSpecialTargetingEnabled = false; //스턴 공격 불가
 }
 
 void AProjectNo1Character::SpecialTargetingAttackInput()
@@ -886,7 +1023,7 @@ void AProjectNo1Character::DrinkPotion()//포션 마시기
 		}
 		if (EquippedWeapon)
 		{
-			EquippedWeapon->SetActorHiddenInGame(true);
+			EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("SpineSocket"));
 		}
 		if (Attributes && SlashOverlay)
 		{
@@ -906,7 +1043,7 @@ void AProjectNo1Character::DrinkEnd()
 	}
 	if (EquippedWeapon)
 	{
-		EquippedWeapon->SetActorHiddenInGame(false);
+		EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("RightHandWeaponSocket"));
 	}
 }
 
@@ -967,6 +1104,7 @@ void AProjectNo1Character::PlayEquip(const FName& SectionName)
 void AProjectNo1Character::EndAttacking()
 {
 	ActionState = EActionState::EAS_Unoccupied;
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//무적 해제
 }
 
 void AProjectNo1Character::EndBlocking()
@@ -1006,4 +1144,4 @@ void AProjectNo1Character::SpawnDefaultPotionOne()
 		EquippedPotion = DefaultPotion;
 	}
 }
-	
+

@@ -62,6 +62,8 @@ protected:
 	
 	void EquipWeapon(AWeapon* Weapon);
 
+	void EquipProjectileWeapon(AProjectileWeapon* ProjectileWeapon);
+
 	virtual void AttackEnd() override;
 	virtual void BlockEnd() override;
 	void Parry(); //패리 기능
@@ -136,6 +138,15 @@ protected:
 	void EndBlocking();
 
 	UFUNCTION(BlueprintCallable)
+	void EndLargeAttack();
+
+	UFUNCTION(BlueprintCallable)
+	void EndSwordSkill();
+
+	UFUNCTION(BlueprintCallable)
+	void EndSmallSkill();
+
+	UFUNCTION(BlueprintCallable)
 	void DrinkHealthPotion();
 
 	UFUNCTION(BlueprintCallable)
@@ -150,9 +161,21 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void ActivateSmallSkillEffect();
 
-	void OnNeckSkillPressed();
+	UFUNCTION(BlueprintCallable)
+	void DeactivateGuardCounterEffect();
+
+	UFUNCTION(BlueprintCallable)
+	void ActivateGuardCounterEffect();
+
+	UFUNCTION(BlueprintCallable)
 	void SwingSword();
+
+	void OnNeckSkillPressed();
 	void LargeSkillPressed();
+	void GuardCounterPressed();
+	void EnableGuardCounter();
+	void DisableGuardCounter();
+	void EnableSwordSkill();
 	void EnableLargeSkill();
 	void EnableSmallSkill();
 	bool IsAttackSkill();
@@ -196,6 +219,7 @@ public:
 	// Function to enable special targeting attack when a stunned enemy is in front
 	UFUNCTION(BlueprintCallable, Category = "SpecialTargeting")
 	void EnableSpecialTargetingAttack();
+	void DisableSpecialTargetingAttack();
 
 	// Function to handle the input for the special targeting attack
 	void SpecialTargetingAttackInput();
@@ -284,6 +308,12 @@ private:
 		bool bCanSmallSkill; // 스킬 사용할 수 있는지 여부
 
 		UPROPERTY(EditAnywhere, Category = "Skill")
+		float SwordSkillCooldown; // 스킬 쿨타임 변수
+		UPROPERTY(EditAnywhere, Category = "Skill")
+		float SwordSkillDuration; // 스킬 지속 시간
+		bool bCanSwordSkill; // 스킬 사용할 수 있는지 여부
+
+		UPROPERTY(EditAnywhere, Category = "Skill")
 		float RageDuration;// 분노 지속 시간 (초)
 
 		UPROPERTY(EditAnywhere, Category = "Skill")
@@ -301,6 +331,11 @@ private:
 
 		// Flag to track if the special targeting attack is enabled
 		bool bIsSpecialTargetingEnabled;
+
+		//가드 카운터 부울 변수
+		UPROPERTY(EditAnywhere, Category = "Skill")
+		float GuardCounterDisableTimer; // 스킬 쿨타임 변수
+		bool bIsGuardCounterAttackEnabled;
 
 public:
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }

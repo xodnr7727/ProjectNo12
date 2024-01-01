@@ -32,7 +32,8 @@ enum class EActionState : uint8
 	EAS_Parrying UMETA(DisplayName = "Parrying"),
 	EAS_Drink UMETA(DisplayName = "Drink"),
 	EAS_Sprint UMETA(DisplayName = "Sprint"),
-	EAS_AttackSkill UMETA(DisplayName = "AttackSkill")
+	EAS_AttackSkill UMETA(DisplayName = "AttackSkill"),
+	EAS_LargeAttack UMETA(DisplayName = "LargeAttack")
 };
 
 UENUM(BlueprintType)
