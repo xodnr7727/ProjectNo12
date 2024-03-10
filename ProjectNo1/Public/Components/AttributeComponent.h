@@ -91,6 +91,7 @@ public:
 	float GetHealthPercent();
 	float GetStunPercent();
 	bool IsAlive();
+	bool IsCanLaserSkill();
 	bool IsStun();
 
 	void UseStamina(float StaminaCost);

@@ -107,12 +107,8 @@ AProjectNo1Character::AProjectNo1Character()
 	bCanRage = true; // 초기에 분노 사용할 수 있도록 설정
 	RageDuration = 8.0f;// 분노 지속 시간
 
-	RageCooldown = 15.0f; // 초기 쿨타임 설정 (예: 15초)
-	bCanRage = true; // 초기에 분노 사용할 수 있도록 설정
-	RageDuration = 8.0f;// 분노 지속 시간
-
 	SwordSkillCooldown = 8.0f; // 초기 쿨타임 설정 (예: 8초)
-	SwordSkillDuration = 6.0f; // 초기 쿨타임 설정 (예: 8초)
+	SwordSkillDuration = 6.0f; // 초기 지속시간 설정 (예: 6초)
 	bCanSwordSkill = true; // 초기에 검 공격 사용할 수 있도록 설정
 
 	LargeSkillCooldown = 8.0f; // 초기 쿨타임 설정 (예: 8초)
@@ -181,6 +177,12 @@ void AProjectNo1Character::Tick(float DeltaTime)
 		SlashOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
 		SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
 		SlashOverlay->SetExperienceBarPercent(Attributes->GetExperiencePercent());
+	}
+
+	if (!HasEnoughStamina() && ActionState == EActionState::EAS_Sprint) { //달리기중일때 스태미너가 부족하면 달리기 해제
+		GetCharacterMovement()->MaxWalkSpeed = 300.f;
+
+		ActionState = EActionState::EAS_Unoccupied;
 	}
 
 	if (HasStunnedEnemyInFront())//플레이어 앞에 스턴된 적이 있다면
@@ -532,6 +534,21 @@ void AProjectNo1Character::ActivateLargeSkillEffect()
 {
 	EquippedWeapon->ActivateLargeSkillEffect(); // 강공격 이펙트 활성화
 	EquippedWeapon->ActivateSmallSkillEffect(); // 약공격 이펙트 활성화
+}
+
+void AProjectNo1Character::ActivateSkillParticles()
+{
+	if (SkillParticles && GetWorld())
+	{
+		FVector SpawnLocation = GetActorLocation() - FVector(0.0f, 0.0f, GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
+		//플레이어 발바닥에 생성되도록
+
+		UGameplayStatics::SpawnEmitterAtLocation(
+			GetWorld(),
+			SkillParticles,
+			SpawnLocation
+		);
+	}
 }
 
 void AProjectNo1Character::EquipNeck(AWeapon* NewNeck)

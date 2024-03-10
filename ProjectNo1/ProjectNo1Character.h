@@ -170,6 +170,8 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void SwingSword();
 
+	void ActivateSkillParticles();
+
 	void OnNeckSkillPressed();
 	void LargeSkillPressed();
 	void GuardCounterPressed();
@@ -219,6 +221,8 @@ public:
 	// Function to enable special targeting attack when a stunned enemy is in front
 	UFUNCTION(BlueprintCallable, Category = "SpecialTargeting")
 	void EnableSpecialTargetingAttack();
+
+	UFUNCTION(BlueprintCallable, Category = "SpecialTargeting")
 	void DisableSpecialTargetingAttack();
 
 	// Function to handle the input for the special targeting attack
@@ -324,6 +328,9 @@ private:
 
 		UPROPERTY(VisibleAnywhere, Category = "Skill")
 		UParticleSystemComponent* PotionSkillEffect;
+
+		UPROPERTY(EditAnywhere, Category = "Skill")
+		UParticleSystem* SkillParticles;
 		 
 		// Range to detect stunned enemies in front of the player
 		UPROPERTY(EditDefaultsOnly, Category = "SpecialTargeting")

@@ -20,8 +20,16 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator);
 
+	void SpawnLaserSkillHitParticles(const FVector& ImpactPoint);
+	void PlayLaserSkillSound();
+	void SpawnRushSkillHitParticles(const FVector& ImpactPoint);
+	void PlayRushSkillSound();
+
 	void SpawnSkillHitParticles(const FVector& ImpactPoint);
 	void PlaySkillSound();
+
+	void DeactivateLaserSkillEffect();
+	void ActivateLaserSkillEffect();
 
 	void DeactivateGuardCounterEffect();
 	void ActivateGuardCounterEffect();
@@ -45,6 +53,9 @@ public:
 	void IncreaseCounterDamage();
 	void RestoreCounterDamage();
 
+	void IncreaseLaserSkillDamage();
+	void RestoreLaserSkillDamage();
+
 	void AttachMeshToSocket(USceneComponent* InParent, const FName& InSocketName);
 
 	TArray<AActor*> IgnoreActors;
@@ -62,6 +73,12 @@ protected:
 	
 	UFUNCTION()
 	void OnSkillBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnLaserSkillBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnRushSkillBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	bool CanShieldBlock();
 
@@ -101,6 +118,18 @@ private:
 	     UBoxComponent* SkillBox;
 
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
+		 UBoxComponent* LaserSkillBox;
+	
+	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
+		 UBoxComponent* RushSkillBox;
+
+	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
+		 UBoxComponent* ClawSkillBox;
+
+	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
+		 UBoxComponent* TeethSkillBox;
+
+	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	    USkeletalMeshComponent* SwordMesh;
 
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
@@ -120,6 +149,18 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Skill")
 		UParticleSystem* SkillHitParticles;
 
+	UPROPERTY(EditAnywhere, Category = "Skill")
+		USoundBase* LaserSkillSound;
+
+	UPROPERTY(EditAnywhere, Category = "Skill")
+		UParticleSystem* LaserSkillHitParticles;
+
+	UPROPERTY(EditAnywhere, Category = "Skill")
+		USoundBase* RushSkillSound;
+
+	UPROPERTY(EditAnywhere, Category = "Skill")
+		UParticleSystem* RushSkillHitParticles;
+
 	UPROPERTY(VisibleAnywhere, Category = "Skill")
 		UParticleSystemComponent* LargeSkillEffect;
 
@@ -129,7 +170,14 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Skill")
 		UParticleSystemComponent* GuardCounterEffect;
 
+	UPROPERTY(VisibleAnywhere, Category = "Skill")
+	    UParticleSystemComponent* LaserSkillEffect;
+
 public:
 	FORCEINLINE UBoxComponent* GetWeaponBox() const { return WeaponBox; }
 	FORCEINLINE UBoxComponent* GetSkillBox() const { return SkillBox; }
+	FORCEINLINE UBoxComponent* GetLaserSkillBox() const { return LaserSkillBox; }
+	FORCEINLINE UBoxComponent* GetRushSkillBox() const { return RushSkillBox; }
+	FORCEINLINE UBoxComponent* GetClawSkillBox() const { return ClawSkillBox; }
+	FORCEINLINE UBoxComponent* GetTeethSkillBox() const { return TeethSkillBox; }
 };

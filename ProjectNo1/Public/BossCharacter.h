@@ -15,6 +15,7 @@
 class UHealthBarComponent;
 class UStunBarComponent;
 class UPawnSensingComponent;
+class AProjectNo1Character;
 /**
  * 
  */
@@ -39,6 +40,8 @@ protected:
 	AActor* ChoosePatrolTarget();
 	virtual void Attack() override;
 	virtual bool CanAttack() override;
+	virtual bool CanLaserAttack() override;
+	virtual bool CanRushAttack() override;
 	virtual void HandleDamage(float DamageAmount) override;
 	virtual int32 PlayDeathMontage() override;
 	virtual void AttackEnd() override;
@@ -48,6 +51,25 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void RecoveryStunState();
+
+	void OnLaserSkill();
+	virtual void EndLaserSkill() override;
+	void EnableLaserSkill();
+
+	UFUNCTION(BlueprintCallable)
+	void ActivateLaserSkillEffect();
+
+	void RushSkill();
+	virtual void EndRushSkill() override;
+	void EnableRushSkill();
+	void EnableSkill();
+	void DisableRushSkill();
+
+	UFUNCTION(BlueprintCallable)
+	void ActivateRushSkillEffect();
+
+	UFUNCTION(BlueprintCallable)
+	void DeactivateRushSkillEffect();
 
 	UFUNCTION()
 	void DestroyHitNumber(UUserWidget* HitNumber);
@@ -78,7 +100,6 @@ public:
 	void CheckPatrolTarget();
 	void CheckCombatTarget();
 
-
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 	virtual void BallHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 	virtual void GetStun_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
@@ -93,6 +114,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void StoreHitNumber(UUserWidget* HitNubmer, FVector Location);
 	bool Alive();
+	bool IsCanLaserSkill();
 	void Stun();
 	void ProjectileAttack();
 
@@ -145,6 +167,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class AWeapon> WeaponClass;
 
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class AWeapon> LaserWeaponClass;
+
 	//맵에 타격 데미지를 적중 위치 저장
 	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	TMap<UUserWidget*, FVector> HitNumbers;
@@ -175,9 +200,17 @@ private:
 	bool IsEngaged();
 	void ClearPatrolTimer();
 
+	// Function to check if there is a stunned enemy in front of the player
+	UFUNCTION(BlueprintPure, Category = "Skill")
+	bool HasExistPlayerInFront();
+
+	UFUNCTION(BlueprintPure, Category = "Skill")
+	bool HasExistRushPlayerInFront();
+
 	void SpawnDefaultWeapon();
 	void SpawnLeftWeapon();
 	void SpawnRightWeapon();
+	void SpawnRushSkillWeapon();
 
 	/** Combat */
 	void StartAttackTimer();
@@ -205,5 +238,33 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TSubclassOf<class ATreasure> GdClass;
+
+	UPROPERTY(VisibleAnywhere, Category = Player)
+	AProjectNo1Character* ProjectNo1Character;
+
+	bool bCanSkill; // 스킬 사용할 수 있는지 여부
+	float AllSkillCooldown; // 스킬 쿨타임 변수
+	float CollisonTimer; // 무기 콜리전 해제 타이머
+
+	UPROPERTY(EditAnywhere, Category = "Skill")
+	float LaserSkillCooldown; // 레이저 스킬 쿨타임 변수
+	bool bCanLaserSkill; // 레이저 스킬 사용할 수 있는지 여부
+	float LaserSkillTimer; // 레이저 지속시간
+
+	UPROPERTY(EditDefaultsOnly, Category = "Skill")
+	float LaserSkillEnableRange;  // Range to detect player in front of the enemie
+
+	UPROPERTY(VisibleAnywhere, Category = "Skill")
+	UParticleSystemComponent* LaserSkillEffect;
+
+	UPROPERTY(EditAnywhere, Category = "Skill")
+	float RushSkillCooldown; // 돌진 스킬 쿨타임 변수
+	bool bCanRushSkill; // 돌진 스킬 사용할 수 있는지 여부
+
+	UPROPERTY(EditDefaultsOnly, Category = "Skill")
+	float RushSkillEnableRange;  // Range to detect player in front of the enemie
+
+	UPROPERTY(VisibleAnywhere, Category = "Skill")
+	UParticleSystemComponent* RushSkillEffect;
 
 };

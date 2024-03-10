@@ -61,6 +61,11 @@ bool UAttributeComponent::IsAlive()
 	return Health > 0.f;
 }
 
+bool UAttributeComponent::IsCanLaserSkill()
+{
+	return Health < 0.51f;
+}
+
 bool UAttributeComponent::IsStun()
 {
 	return Stun < 0.1f;

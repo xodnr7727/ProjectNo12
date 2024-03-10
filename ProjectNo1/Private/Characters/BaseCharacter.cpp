@@ -229,17 +229,6 @@ void ABaseCharacter::SpawnArrowParticles(const FVector& ImpactPoint)
 	}
 }
 
-void ABaseCharacter::ActivateSkillParticles()
-{
-	if (SkillParticles && GetWorld())
-	{
-		UGameplayStatics::SpawnEmitterAtLocation(
-			GetWorld(),
-			SkillParticles,
-			GetActorLocation()
-		);
-	}
-}
 void ABaseCharacter::PlayWeaponSkillSound()
 {
 	if (WeaponSkillSound)
@@ -247,6 +236,18 @@ void ABaseCharacter::PlayWeaponSkillSound()
 		UGameplayStatics::PlaySoundAtLocation(
 			this,
 			WeaponSkillSound,
+			GetActorLocation()
+		);
+	}
+}
+
+void ABaseCharacter::PlayRushSkillSound()
+{
+	if (RushSkillSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			RushSkillSound,
 			GetActorLocation()
 		);
 	}
@@ -402,6 +403,15 @@ void ABaseCharacter::PlaySwordSkillMontage()
 	PlayMontageSection(SwordSkillMontage, FName("Skill"));
 }
 
+void ABaseCharacter::PlayLaserSkillMontage()
+{
+	PlayMontageSection(LaserSkillMontage, FName("LaserSkill"));
+}
+
+void ABaseCharacter::PlayRushSkillMontage()
+{
+	PlayMontageSection(RushSkillMontage, FName("RushSkill"));
+}
 
 void ABaseCharacter::StopAttackMontage()
 {
@@ -441,6 +451,16 @@ void ABaseCharacter::DisableCapsule()
 }
 
 bool ABaseCharacter::CanAttack()
+{
+	return false;
+}
+
+bool ABaseCharacter::CanLaserAttack()
+{
+	return false;
+}
+
+bool ABaseCharacter::CanRushAttack()
 {
 	return false;
 }
@@ -494,6 +514,14 @@ void ABaseCharacter::DiveEnd()
 {
 }
 
+void ABaseCharacter::EndLaserSkill()
+{
+}
+
+void ABaseCharacter::EndRushSkill()
+{
+}
+
 void ABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -518,6 +546,31 @@ void ABaseCharacter::SetSkillCollisionEnabled(ECollisionEnabled::Type CollisionE
 	}
 }
 
+void ABaseCharacter::SetRushSkillCollisionEnabled(ECollisionEnabled::Type CollisionEnabled)
+{
+	if (EquippedWeapon && EquippedWeapon->GetRushSkillBox())
+	{
+		EquippedWeapon->GetRushSkillBox()->SetCollisionEnabled(CollisionEnabled);
+		EquippedWeapon->IgnoreActors.Empty();
+	}
+}
+
+void ABaseCharacter::SetClawSkillCollisionEnabled(ECollisionEnabled::Type CollisionEnabled)
+{
+	if (EquippedWeapon && EquippedWeapon->GetClawSkillBox())
+	{
+		EquippedWeapon->GetClawSkillBox()->SetCollisionEnabled(CollisionEnabled);
+		EquippedWeapon->IgnoreActors.Empty();
+	}
+}
+void ABaseCharacter::SetTeethSkillCollisionEnabled(ECollisionEnabled::Type CollisionEnabled)
+{
+	if (EquippedWeapon && EquippedWeapon->GetTeethSkillBox())
+	{
+		EquippedWeapon->GetTeethSkillBox()->SetCollisionEnabled(CollisionEnabled);
+		EquippedWeapon->IgnoreActors.Empty();
+	}
+}
 void ABaseCharacter::SetShieldCollisionEnabled(ECollisionEnabled::Type CollisionEnabled)
 {
 	if (EquippedShield && EquippedShield->GetShieldBox())

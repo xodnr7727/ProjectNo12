@@ -51,12 +51,15 @@ protected:
 	void SpawnArrowParticles(const FVector& ImpactPoint);
 	void PlayBlockSound(const FVector& ImpactPoint);
 	void SpawnBlockParticles(const FVector& ImpactPoint);
-	void ActivateSkillParticles();
 	void PlayWeaponSkillSound();
+
+	void PlayRushSkillSound();
 
 	void DisableCapsule();
 
 	virtual bool CanAttack();
+	virtual bool CanLaserAttack();
+	virtual bool CanRushAttack();
 	virtual bool CanNeckSkill();
 
 	UFUNCTION(BlueprintCallable)
@@ -81,6 +84,8 @@ protected:
 	virtual void PlayGuardCounterMontage();
 	virtual void PlaySmallSkillMontage();
 	virtual void PlaySwordSkillMontage();
+	virtual void PlayLaserSkillMontage();
+	virtual void PlayRushSkillMontage();
 	void StopAttackMontage();
 
 	void SpawnEffect(const FVector& ImpactPoint);
@@ -109,7 +114,13 @@ protected:
 	virtual void StunStart();
 
 	UFUNCTION(BlueprintCallable)
-		virtual void DiveEnd(); 
+	virtual void DiveEnd(); 
+
+	UFUNCTION(BlueprintCallable)
+	virtual void EndLaserSkill();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void EndRushSkill();
 
 	UFUNCTION(BlueprintCallable)
 		void SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
@@ -118,6 +129,15 @@ protected:
 		void SetSkillCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
 
 	UFUNCTION(BlueprintCallable)
+		void SetRushSkillCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
+
+	UFUNCTION(BlueprintCallable)
+		void SetClawSkillCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
+
+	UFUNCTION(BlueprintCallable)
+		void SetTeethSkillCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
+
+		UFUNCTION(BlueprintCallable)
 		void SetShieldCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Weapon)
@@ -138,14 +158,14 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = Weapon)
 	    AWeapon* EquippedNeck;
 
-		UPROPERTY(VisibleAnywhere, Category = Weapon)
+	UPROPERTY(VisibleAnywhere, Category = Weapon)
 		ATopArmor* EquippedArmor;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		UAttributeComponent* Attributes;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	AMySkillClass* MySkillClass;
+	    AMySkillClass* MySkillClass;
 
 	UPROPERTY(BlueprintReadOnly, Category = Combat)
 		AActor* CombatTarget;
@@ -182,6 +202,12 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
 		UAnimMontage* SwordSkillMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat)
+		UAnimMontage* LaserSkillMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat)
+		UAnimMontage* RushSkillMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
 		UAnimMontage* DeathMontage;
@@ -230,12 +256,13 @@ private:
 		USoundBase* WeaponSkillSound;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
+		USoundBase* RushSkillSound;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
 		USoundBase* ArrowSound;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 		UParticleSystem* ArrowParticles;
 
-	UPROPERTY(EditAnywhere, Category = "Skill")
-		UParticleSystem* SkillParticles;
 
 };

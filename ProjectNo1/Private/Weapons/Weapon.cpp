@@ -33,6 +33,30 @@ AWeapon::AWeapon()
 	SkillBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
 	SkillBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
 
+	LaserSkillBox = CreateDefaultSubobject<UBoxComponent>(TEXT("LaserSkill Box"));
+	LaserSkillBox->SetupAttachment(GetRootComponent());
+	LaserSkillBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	LaserSkillBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
+	LaserSkillBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+
+	RushSkillBox = CreateDefaultSubobject<UBoxComponent>(TEXT("RushSkill Box"));
+	RushSkillBox->SetupAttachment(GetRootComponent());
+	RushSkillBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	RushSkillBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
+	RushSkillBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+
+	ClawSkillBox = CreateDefaultSubobject<UBoxComponent>(TEXT("ClawSkill Box"));
+	ClawSkillBox->SetupAttachment(GetRootComponent());
+	ClawSkillBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	ClawSkillBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
+	ClawSkillBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+
+	TeethSkillBox = CreateDefaultSubobject<UBoxComponent>(TEXT("TeethSkill Box"));
+	TeethSkillBox->SetupAttachment(GetRootComponent());
+	TeethSkillBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	TeethSkillBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
+	TeethSkillBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+
 	BoxTraceStart = CreateDefaultSubobject<USceneComponent>(TEXT("Box Trace Start"));
 	BoxTraceStart->SetupAttachment(GetRootComponent());
 
@@ -54,6 +78,9 @@ AWeapon::AWeapon()
 	GuardCounterEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("GuardCounterEffect"));
 	GuardCounterEffect->SetupAttachment(RootComponent); // 이펙트 위치 설정
 
+	LaserSkillEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("LaserSkillEffect"));
+	LaserSkillEffect->SetupAttachment(RootComponent); // 이펙트 위치 설정
+
 }
 
 void AWeapon::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator)
@@ -65,6 +92,54 @@ void AWeapon::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOw
 	PlayEquipSound();
 	DisableCapsuleCollision();
 	DeactivateEmbers();
+}
+
+void AWeapon::PlayLaserSkillSound()
+{
+	if (LaserSkillSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			LaserSkillSound,
+			GetActorLocation()
+		);
+	}
+}
+
+void AWeapon::SpawnLaserSkillHitParticles(const FVector& ImpactPoint)
+{
+	if (LaserSkillHitParticles && GetWorld())
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(
+			GetWorld(),
+			LaserSkillHitParticles,
+			ImpactPoint
+		);
+	}
+}
+
+void AWeapon::PlayRushSkillSound()
+{
+	if (RushSkillSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			RushSkillSound,
+			GetActorLocation()
+		);
+	}
+}
+
+void AWeapon::SpawnRushSkillHitParticles(const FVector& ImpactPoint)
+{
+	if (RushSkillHitParticles && GetWorld())
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(
+			GetWorld(),
+			RushSkillHitParticles,
+			ImpactPoint
+		);
+	}
 }
 
 void AWeapon::PlaySkillSound()
@@ -88,6 +163,22 @@ void AWeapon::SpawnSkillHitParticles(const FVector& ImpactPoint)
 			SkillHitParticles,
 			ImpactPoint
 		);
+	}
+}
+
+void AWeapon::DeactivateLaserSkillEffect()
+{
+	if (LaserSkillEffect)
+	{
+		LaserSkillEffect->DeactivateSystem();
+	}
+}
+
+void AWeapon::ActivateLaserSkillEffect()
+{
+	if (LaserSkillEffect)
+	{
+		LaserSkillEffect->ActivateSystem();
 	}
 }
 
@@ -176,12 +267,24 @@ void AWeapon::AttachMeshToSocket(USceneComponent* InParent, const FName& InSocke
 void AWeapon::BeginPlay()
 {
 	Super::BeginPlay();
-	LargeSkillEffect->DeactivateSystem(); // 초기에는 비활성화
-	SmallSkillEffect->DeactivateSystem(); // ''
-	GuardCounterEffect->DeactivateSystem(); // ''
-
+	if (LargeSkillEffect) {
+		LargeSkillEffect->DeactivateSystem(); // 초기에는 비활성화
+	}
+	if (SmallSkillEffect) {
+		SmallSkillEffect->DeactivateSystem(); // ''
+	}
+	if (GuardCounterEffect) {
+		GuardCounterEffect->DeactivateSystem(); // ''
+	}
+	if (LaserSkillEffect) {
+		LaserSkillEffect->Deactivate(); // ''
+	}
 	WeaponBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnBoxOverlap);
 	SkillBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnSkillBoxOverlap);
+	LaserSkillBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnLaserSkillBoxOverlap);
+	RushSkillBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnRushSkillBoxOverlap);
+	TeethSkillBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnBoxOverlap);
+	ClawSkillBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnBoxOverlap);
 }
 
 void AWeapon::IncreaseDamage()
@@ -237,6 +340,19 @@ void AWeapon::RestoreCounterDamage()
 	Damage -= 400.0f;
 }
 
+void AWeapon::IncreaseLaserSkillDamage()
+{
+	// 공격력을 증가시키는 코드
+	Damage += 50.0f;
+}
+
+void AWeapon::RestoreLaserSkillDamage()
+{
+	// 공격력을 원래대로 복구시키는 코드
+	// 예를 들어, CharacterDamage = BaseDamage;
+	Damage -= 50.0f;
+}
+
 void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 
@@ -289,7 +405,6 @@ void AWeapon::OnSkillBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor
 	ABossCharacter* BossCharacter = Cast<ABossCharacter>(BoxHit.GetActor());
 	AActor* OwnerActor = GetOwner();
 
-
 	if (BoxHit.GetActor() != GetOwner())
 	{
 		UGameplayStatics::ApplyDamage(BoxHit.GetActor(), Damage, GetInstigator()->GetController(), this, UDamageType::StaticClass());
@@ -308,6 +423,81 @@ void AWeapon::OnSkillBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor
 		if (BossCharacter) {
 			BossCharacter->ShowHitNumber(Damage, BoxHit.Location);
 		}
+	}
+}
+
+void AWeapon::OnLaserSkillBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+
+	FHitResult BoxHit;
+	BoxTrace(BoxHit);
+
+	ABaseCharacter* BaseCharacter = Cast<ABaseCharacter>(BoxHit.GetActor());
+	ALichEnemy* HitEnemy = Cast<ALichEnemy>(BoxHit.GetActor());
+	AGoblin* Goblin = Cast<AGoblin>(BoxHit.GetActor());
+	ABossCharacter* BossCharacter = Cast<ABossCharacter>(BoxHit.GetActor());
+	AActor* OwnerActor = GetOwner();
+
+	if (BoxHit.GetActor() && BoxHit.GetActor()->IsA(ALichEnemy::StaticClass()) && GetOwner() && GetOwner()->IsA(ALichEnemy::StaticClass())) return;
+	if (BoxHit.GetActor() && BoxHit.GetActor()->IsA(ALichEnemy::StaticClass()) && GetOwner() && GetOwner()->IsA(ABossCharacter::StaticClass())) return;
+	if (BoxHit.GetActor() && BoxHit.GetActor()->IsA(ALichEnemy::StaticClass()) && GetOwner() && GetOwner()->IsA(AGoblin::StaticClass())) return;
+	if (BoxHit.GetActor() && BoxHit.GetActor()->IsA(ABossCharacter::StaticClass()) && GetOwner() && GetOwner()->IsA(ABossCharacter::StaticClass())) return;
+	if (BoxHit.GetActor() && BoxHit.GetActor()->IsA(ABossCharacter::StaticClass()) && GetOwner() && GetOwner()->IsA(ALichEnemy::StaticClass())) return;
+	if (BoxHit.GetActor() && BoxHit.GetActor()->IsA(ABossCharacter::StaticClass()) && GetOwner() && GetOwner()->IsA(AGoblin::StaticClass())) return;
+	if (BoxHit.GetActor() && BoxHit.GetActor()->IsA(AGoblin::StaticClass()) && GetOwner() && GetOwner()->IsA(ABossCharacter::StaticClass())) return;
+	if (BoxHit.GetActor() && BoxHit.GetActor()->IsA(AGoblin::StaticClass()) && GetOwner() && GetOwner()->IsA(ALichEnemy::StaticClass())) return;
+	if (BoxHit.GetActor() && BoxHit.GetActor()->IsA(AGoblin::StaticClass()) && GetOwner() && GetOwner()->IsA(AGoblin::StaticClass())) return;
+	if (BoxHit.GetActor() != GetOwner())
+	{
+		UGameplayStatics::ApplyDamage(BoxHit.GetActor(), Damage, GetInstigator()->GetController(), this, UDamageType::StaticClass());
+		ExecuteGetHit(BoxHit);
+		ExecuteGetBlock(BoxHit);
+		CreateFields(BoxHit.ImpactPoint);
+		SpawnLaserSkillHitParticles(BoxHit.ImpactPoint);
+		PlayLaserSkillSound(); //스킬 타격 사운드 재생
+
+		if (HitEnemy) {
+			HitEnemy->ShowHitNumber(Damage, BoxHit.Location);
+		}
+		if (Goblin) {
+			Goblin->ShowHitNumber(Damage, BoxHit.Location);
+		}
+		if (BossCharacter) {
+			BossCharacter->ShowHitNumber(Damage, BoxHit.Location);
+		}
+	}
+}
+
+void AWeapon::OnRushSkillBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+
+	FHitResult BoxHit;
+	BoxTrace(BoxHit);
+
+	ABaseCharacter* BaseCharacter = Cast<ABaseCharacter>(BoxHit.GetActor());
+	ALichEnemy* HitEnemy = Cast<ALichEnemy>(BoxHit.GetActor());
+	AGoblin* Goblin = Cast<AGoblin>(BoxHit.GetActor());
+	ABossCharacter* BossCharacter = Cast<ABossCharacter>(BoxHit.GetActor());
+	AActor* OwnerActor = GetOwner();
+
+	if (BoxHit.GetActor() && BoxHit.GetActor()->IsA(ALichEnemy::StaticClass()) && GetOwner() && GetOwner()->IsA(ALichEnemy::StaticClass())) return;
+	if (BoxHit.GetActor() && BoxHit.GetActor()->IsA(ALichEnemy::StaticClass()) && GetOwner() && GetOwner()->IsA(ABossCharacter::StaticClass())) return;
+	if (BoxHit.GetActor() && BoxHit.GetActor()->IsA(ALichEnemy::StaticClass()) && GetOwner() && GetOwner()->IsA(AGoblin::StaticClass())) return;
+	if (BoxHit.GetActor() && BoxHit.GetActor()->IsA(ABossCharacter::StaticClass()) && GetOwner() && GetOwner()->IsA(ABossCharacter::StaticClass())) return;
+	if (BoxHit.GetActor() && BoxHit.GetActor()->IsA(ABossCharacter::StaticClass()) && GetOwner() && GetOwner()->IsA(ALichEnemy::StaticClass())) return;
+	if (BoxHit.GetActor() && BoxHit.GetActor()->IsA(ABossCharacter::StaticClass()) && GetOwner() && GetOwner()->IsA(AGoblin::StaticClass())) return;
+	if (BoxHit.GetActor() && BoxHit.GetActor()->IsA(AGoblin::StaticClass()) && GetOwner() && GetOwner()->IsA(ABossCharacter::StaticClass())) return;
+	if (BoxHit.GetActor() && BoxHit.GetActor()->IsA(AGoblin::StaticClass()) && GetOwner() && GetOwner()->IsA(ALichEnemy::StaticClass())) return;
+	if (BoxHit.GetActor() && BoxHit.GetActor()->IsA(AGoblin::StaticClass()) && GetOwner() && GetOwner()->IsA(AGoblin::StaticClass())) return;
+	if (BoxHit.GetActor() != GetOwner())
+	{
+		UGameplayStatics::ApplyDamage(BoxHit.GetActor(), Damage, GetInstigator()->GetController(), this, UDamageType::StaticClass());
+		ExecuteGetHit(BoxHit);
+		ExecuteGetBlock(BoxHit);
+		CreateFields(BoxHit.ImpactPoint);
+		SpawnRushSkillHitParticles(BoxHit.ImpactPoint);
+		PlayRushSkillSound(); //스킬 타격 사운드 재생
+
 	}
 }
 
