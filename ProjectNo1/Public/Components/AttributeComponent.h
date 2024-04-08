@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "Soul.h"
 #include "AttributeComponent.generated.h"
+class UParticleSystemComponent;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PROJECTNO1_API UAttributeComponent : public UActorComponent
@@ -25,7 +26,6 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-
 
 private:
 	UPROPERTY(EditAnywhere,  Category = "Actor Attributes")
@@ -85,6 +85,12 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
 		int32 Souls;
 
+	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
+		int32 Level;
+
+	UPROPERTY(EditAnywhere, Category = "Skill")
+		UParticleSystem* LevelUpParticle;
+
 public:
 	void ReceiveDamage(float Damage);
 	void ReceiveStun(float Damage);
@@ -104,10 +110,12 @@ public:
 	FORCEINLINE float GetPotionCost() const { return PotionCost; }
 	FORCEINLINE float GetStamina() const { return Stamina; }
 	void AddSouls(int32 NumberOfSouls);
+	void AddLevel(int32 AmountOfLevel);
 	void AddGold(int32 AmountOfGold);
 	void AddEx(float DropEx);
 	FORCEINLINE int32 GetGold() const { return Gold; }
 	FORCEINLINE float GetExperience() const { return Experience; }
 	FORCEINLINE int32 GetSouls() const { return Souls; }
+	FORCEINLINE int32 GetLevel() const { return Level; }
 
 };

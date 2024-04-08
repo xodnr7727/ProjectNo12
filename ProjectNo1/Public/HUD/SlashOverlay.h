@@ -21,6 +21,8 @@ public:
 	void SetExperienceBarPercent(float Percent);
 
 	void SetGold(int32 Gold);
+
+	void SetLevel(int32 Level);
 	//void SetSouls(int32 Souls);
 		
 private:
@@ -35,6 +37,9 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* GoldText;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* LevelText;
 
 	//UPROPERTY(meta = (BindWidget))
 	//	class UTextBlock* SoulsText;

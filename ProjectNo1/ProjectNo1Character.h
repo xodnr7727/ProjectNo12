@@ -39,6 +39,8 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Input)
 		float TurnRateGamepad;
 
+	void ActivateLevelParticles();
+
 protected:
 
 	virtual void BeginPlay() override;
@@ -71,8 +73,7 @@ protected:
 	virtual void DiveEnd() override;
 	virtual void Attack() override;
 	void Dive();
-	bool IsDiving();
-	//구르기
+	bool IsDiving(); //구르기
 	void EnableDive();
 	void DrinkPotion(); //포션 마시기
 	void DeactivatePotionEffect();

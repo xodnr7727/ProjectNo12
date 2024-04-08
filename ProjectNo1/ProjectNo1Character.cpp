@@ -206,6 +206,7 @@ void AProjectNo1Character::AddEx(ASoul* Soul) //경험치 추가
 	{
 		Attributes->AddSouls(Soul->GetSouls());
 		SlashOverlay->SetExperienceBarPercent(Attributes->GetExperiencePercent());
+		SlashOverlay->SetLevel(Attributes->GetLevel());
 	}
 }
 
@@ -537,6 +538,21 @@ void AProjectNo1Character::ActivateLargeSkillEffect()
 }
 
 void AProjectNo1Character::ActivateSkillParticles()
+{
+	if (SkillParticles && GetWorld())
+	{
+		FVector SpawnLocation = GetActorLocation() - FVector(0.0f, 0.0f, GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
+		//플레이어 발바닥에 생성되도록
+
+		UGameplayStatics::SpawnEmitterAtLocation(
+			GetWorld(),
+			SkillParticles,
+			SpawnLocation
+		);
+	}
+}
+
+void AProjectNo1Character::ActivateLevelParticles()
 {
 	if (SkillParticles && GetWorld())
 	{

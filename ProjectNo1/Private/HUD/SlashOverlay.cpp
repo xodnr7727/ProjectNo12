@@ -42,6 +42,19 @@ void USlashOverlay::SetGold(int32 Gold)
 	}
 }
 
+
+void USlashOverlay::SetLevel(int32 Level)
+{
+	if (LevelText)
+	{
+		const FString String = FString::Printf(TEXT("%'d"), Level);
+		FNumberFormattingOptions FormatOptions;
+		FormatOptions.UseGrouping = true;
+		const FText Text = FText::AsNumber(Level, &FormatOptions);
+		LevelText->SetText(Text);
+	}
+}
+
 /*void USlashOverlay::SetSouls(int32 Souls)
 {
 	if (SoulsText)
