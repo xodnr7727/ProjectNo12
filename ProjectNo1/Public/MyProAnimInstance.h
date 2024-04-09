@@ -36,6 +36,12 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = Movement)
 	class UCharacterMovementComponent* BossCharacterMovement;
 
+	UPROPERTY(BlueprintReadOnly)
+	class AGoblin* Goblin;
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement)
+	class UCharacterMovementComponent* GoblinMovement;
+
 	UPROPERTY(BlueprintReadWrite, Category = Movement)
 	float GroundSpeed;
 
@@ -45,14 +51,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Movement, Meta = (AllowPrivateAccess = true))
 		bool IsInAir;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Movement | Character State")
+	UPROPERTY(BlueprintReadOnly, Category = Movement)
 	ECharacterState CharacterState;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Movement | ActionState")
+	UPROPERTY(BlueprintReadOnly, Category = Movement)
 	EActionState ActionState;
 
-	UPROPERTY(BlueprintReadWrite, Category = "Movement | EnemyState")
+	UPROPERTY(BlueprintReadWrite, Category = Movement)
 	EEnemyState EnemyState;
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement)
+	TEnumAsByte<EDeathPose> DeathPose;
 
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Movement, Meta = (AllowPrivateAccess = true))

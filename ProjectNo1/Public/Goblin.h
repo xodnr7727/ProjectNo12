@@ -37,7 +37,6 @@ protected:
 	virtual void Attack() override;
 	virtual bool CanAttack() override;
 	virtual void HandleDamage(float DamageAmount) override;
-	virtual int32 PlayDeathMontage() override;
 	virtual void AttackEnd() override;
 
 	UFUNCTION()
@@ -50,9 +49,6 @@ protected:
 
 	UFUNCTION()
 	void PawnSeen(APawn* SeenPawn);
-
-	UPROPERTY(BlueprintReadOnly)
-	TEnumAsByte<EDeathPose> DeathPose;
 
 	UPROPERTY(BlueprintReadOnly)
 	EEnemyState EnemyState = EEnemyState::EES_Patrolling;
@@ -82,7 +78,9 @@ public:
 	void StoreHitNumber(UUserWidget* HitNubmer, FVector Location);
 
 	void ProjectileAttack();
+	void InitializeEnemy();
 
+	FORCEINLINE EEnemyState GetEnemyState() const { return EnemyState; }
 private:
 
 	UPROPERTY(EditAnywhere)
@@ -145,7 +143,6 @@ private:
 
 
 	/** AI behavior */
-	void InitializeEnemy();
 	void HideHealthBar();
 	void ShowHealthBar();
 	void LoseInterest();

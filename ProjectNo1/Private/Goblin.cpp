@@ -77,6 +77,7 @@ void AGoblin::Tick(float DeltaTime)
 	{
 		CheckPatrolTarget();
 	}
+	/*
 	if (PlayerCharacter)
 	{
 		// 플레이어와의 거리 계산
@@ -94,7 +95,7 @@ void AGoblin::Tick(float DeltaTime)
 
 			// 공격 로직을 여기에 추가 (예: 타이머를 사용하여 주기적으로 공격)
 		}
-	}
+	}*/
 }
 
 
@@ -183,8 +184,8 @@ void AGoblin::SpawnDefaultAmor()
 
 void AGoblin::Die()
 {
+	Super::Die();
 	EnemyState = EEnemyState::EES_Dead;
-	PlayDeathMontage();
 	ClearAttackTimer();
 	HideHealthBar();
 	DisableCapsule();
@@ -376,18 +377,6 @@ void AGoblin::HandleDamage(float DamageAmount)
 	{
 		HealthBarWidget->SetHealthPercent(Attributes->GetHealthPercent());
 	}
-}
-
-int32 AGoblin::PlayDeathMontage()
-{
-	const int32 Selection = Super::PlayDeathMontage();
-	TEnumAsByte<EDeathPose> Pose(Selection);
-	if (Pose < EDeathPose::EDP_MAX)
-	{
-		DeathPose = Pose;
-	}
-
-	return Selection;
 }
 
 void AGoblin::InitializeEnemy()

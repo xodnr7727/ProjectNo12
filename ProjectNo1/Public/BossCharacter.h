@@ -43,7 +43,6 @@ protected:
 	virtual bool CanLaserAttack() override;
 	virtual bool CanRushAttack() override;
 	virtual void HandleDamage(float DamageAmount) override;
-	virtual int32 PlayDeathMontage() override;
 	virtual void AttackEnd() override;
 	virtual void HitEnd() override;
 	virtual void StunEnd() override;
@@ -83,9 +82,6 @@ protected:
 	void PawnSeen(APawn* SeenPawn);
 
 	UPROPERTY(BlueprintReadOnly)
-	TEnumAsByte<EDeathPose> DeathPose;
-
-	UPROPERTY(BlueprintReadOnly)
 	EEnemyState EnemyState = EEnemyState::EES_Patrolling;
 
 	UPROPERTY(VisibleAnywhere)
@@ -117,6 +113,7 @@ public:
 	bool IsCanLaserSkill();
 	void Stun();
 	void ProjectileAttack();
+	void InitializeEnemy();
 
 	FORCEINLINE EEnemyState GetEnemyState() const { return EnemyState; }
 
@@ -182,7 +179,6 @@ private:
 
 
 	/** AI behavior */
-	void InitializeEnemy();
 	void HideHealthBar();
 	void ShowHealthBar();
 	void HideStunBar();

@@ -37,7 +37,6 @@ protected:
 	virtual void Attack() override;
 	virtual bool CanAttack() override;
 	virtual void HandleDamage(float DamageAmount) override;
-	virtual int32 PlayDeathMontage() override;
 	virtual void AttackEnd() override;
 	virtual void HitEnd() override;
 	virtual void StunEnd() override;
@@ -53,9 +52,6 @@ protected:
 
 	UFUNCTION()
 		void PawnSeen(APawn* SeenPawn);
-
-	UPROPERTY(BlueprintReadOnly)
-		TEnumAsByte<EDeathPose> DeathPose;
 
 	UPROPERTY(BlueprintReadOnly)
 		EEnemyState EnemyState = EEnemyState::EES_Patrolling;
@@ -91,6 +87,7 @@ public:
 	bool IsNotStunned();//스턴풀림
 	bool IsEngaged();//전투중
 	void ProjectileAttack();
+	void InitializeEnemy();
 
 	FORCEINLINE EEnemyState GetEnemyState() const { return EnemyState; }
 
@@ -151,7 +148,7 @@ private:
 
 
 	/** AI behavior */
-	void InitializeEnemy();
+
 	void HideHealthBar();
 	void ShowHealthBar();
 	void LoseInterest();//추적 X

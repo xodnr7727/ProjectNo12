@@ -15,6 +15,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class UAnimMontage;
 class USlashOverlay;
+class AMyPlayerController;
 class USoundBase;
 class UParticleSystemComponent;
 UCLASS()
@@ -34,12 +35,13 @@ public:
 	virtual void GetBlock_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 	virtual void SetOverlappingItem(AItem* Item) override;
 	virtual void AddEx(ASoul* Soul) override;
+	void LevelUpAll();
+	void LevelUpEC();
+	void LevelUpES();
 	virtual void AddGold(ATreasure* Treasure) override;
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Input)
 		float TurnRateGamepad;
-
-	void ActivateLevelParticles();
 
 protected:
 
@@ -58,6 +60,7 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void RMKeyReleased();
 
+	bool BlockCantState();
 	void IfAttack();
 	void Sprint(); //달리기
 	void StopSprinting(); 
@@ -98,6 +101,7 @@ protected:
 	void DisBlock();
 	void AsBlock();
 	void PlayEquip(const FName& SectionName);
+	virtual void Die() override;
 
 	UFUNCTION(BlueprintCallable)
 	void AttachWeaponToBack();
@@ -176,13 +180,17 @@ protected:
 	void OnNeckSkillPressed();
 	void LargeSkillPressed();
 	void GuardCounterPressed();
+	void ReCounterDamage();
+	void EnableGuardCountdown();
 	void EnableGuardCounter();
 	void DisableGuardCounter();
 	void EnableSwordSkill();
 	void EnableLargeSkill();
 	void EnableSmallSkill();
+	void EnableHit();
 	bool IsAttackSkill();
 	void SmallSkillPressed();
+	void ReStunDamage();
 	void OnSwordSkillPressed();
 	void DeactivateSkillEffect(); //이펙트 해제
 	void RestoreDamage(); //공격력 복구
@@ -229,11 +237,12 @@ public:
 	// Function to handle the input for the special targeting attack
 	void SpecialTargetingAttackInput();
 
+	void InitializeSlashOverlay();
 private:
 
-	    void InitializeSlashOverlay();
 	    bool IsUnoccupied();
 		bool Unequipoccupied();
+		bool Dead();
 		void SetHUDHealth();
 
 		void SpawnDefaultWeapon();
@@ -259,6 +268,9 @@ private:
 
 		UPROPERTY()
 		USlashOverlay* SlashOverlay;
+
+		UPROPERTY()
+		AMyPlayerController* MyPlayerController;
 
 		UPROPERTY(VisibleAnywhere)
 		USceneComponent* BoxTraceStart;
@@ -340,11 +352,21 @@ private:
 		// Flag to track if the special targeting attack is enabled
 		bool bIsSpecialTargetingEnabled;
 
-		//가드 카운터 부울 변수
 		UPROPERTY(EditAnywhere, Category = "Skill")
-		float GuardCounterDisableTimer; // 스킬 쿨타임 변수
-		bool bIsGuardCounterAttackEnabled;
+		float GuardCounterCooldown; // 가드 카운터 쿨타임 변수
+		UPROPERTY(EditAnywhere, Category = "Skill")
+		float GuardCounterDisableTimer; // 가드 카운터 제한시간 타이머 변수
+		bool bIsGuardCounterAttackEnabled; //가드 카운터 부울 변수
+		bool bIsGuardCountdownEnabled; //가드 카운터 쿨타임 부울 변수
 
+		UPROPERTY(EditAnywhere, Category = "Skill")
+		float LevelUpCountdown;
+		
+		UPROPERTY(EditAnywhere, Category = "Skill")
+		float EnableHitCountdown; //무적 시간 변수
+
+		UPROPERTY(EditAnywhere, Category = "Skill")
+		float DamagebackCountdown;
 public:
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
 	FORCEINLINE EActionState GetActionState() const { return ActionState; }

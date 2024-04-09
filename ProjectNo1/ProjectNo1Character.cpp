@@ -32,6 +32,7 @@
 #include "Weapons/ProjectileWeapon.h"
 #include "HUD/MyProNo1HUD.h"
 #include "HUD/SlashOverlay.h"
+#include "MyPlayerController.h"
 #include "Soul.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -126,8 +127,16 @@ AProjectNo1Character::AProjectNo1Character()
 	// Initialize the special targeting flag
 	bIsSpecialTargetingEnabled = false;
 
-	GuardCounterDisableTimer = 2.0f; //가드 카운터 타이머
+	GuardCounterCooldown = 6.0f; // 초기 쿨타임 설정 (예: 6초)
+	GuardCounterDisableTimer = 2.0f; //가드 카운터 제한 시간 타이머
 	bIsGuardCounterAttackEnabled = false; //가드 카운터 부울 변수
+	bIsGuardCountdownEnabled = true;
+
+	LevelUpCountdown = 0.5f; // 초기 쿨타임 설정 (예: 6초)
+
+	EnableHitCountdown = 2.0f;// 무적 시간 타이머
+
+	DamagebackCountdown = 2.0f;// 데미지 복구 타이머
 }
 
 
@@ -139,7 +148,10 @@ void AProjectNo1Character::GetHit_Implementation(const FVector& ImpactPoint, AAc
 		Super::GetHit_Implementation(ImpactPoint, Hitter);
 
 		SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
-		ActionState = EActionState::EAS_HitReaction;
+		if (Attributes && Attributes->GetHealthPercent() > 0.f)
+		{
+			ActionState = EActionState::EAS_HitReaction;
+		}
 }
 
 void AProjectNo1Character::GetBlock_Implementation(const FVector& ImpactPoint, AActor* Hitter)//막는 함수
@@ -210,6 +222,27 @@ void AProjectNo1Character::AddEx(ASoul* Soul) //경험치 추가
 	}
 }
 
+void AProjectNo1Character::LevelUpAll()
+{
+	FTimerHandle LevelCountdown;
+	LevelUpEC();
+	GetWorldTimerManager().SetTimer(LevelCountdown, this, &AProjectNo1Character::LevelUpES, LevelUpCountdown, false); // 카운드다운 타이머 시작
+}
+
+void AProjectNo1Character::LevelUpEC()
+{
+	ActionState = EActionState::EAS_LevelUp;
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);//무적
+	GetCharacterMovement()->Deactivate();
+}
+
+void AProjectNo1Character::LevelUpES()
+{
+	ActionState = EActionState::EAS_Unoccupied;
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//무적 해제
+	GetCharacterMovement()->Activate();
+}
+
 void AProjectNo1Character::AddGold(ATreasure* Treasure) //골드 추가
 {
 	if (Attributes && SlashOverlay)
@@ -218,6 +251,7 @@ void AProjectNo1Character::AddGold(ATreasure* Treasure) //골드 추가
 		SlashOverlay->SetGold(Attributes->GetGold());
 	}
 }
+
 
 void AProjectNo1Character::BeginPlay()
 {
@@ -299,7 +333,7 @@ void AProjectNo1Character::OnNeckSkillPressed()
 	FTimerHandle RageEndTimerHandle;
 	FTimerHandle RageEffectEndTimerHandle;
 
-	if (CanNeckSkill() && HasEnoughSkillStamina() && bCanRage)
+	if (!Dead() && CanNeckSkill() && HasEnoughSkillStamina() && bCanRage)
 	{
 		PlayNeckSkillMontage();
 		ActionState = EActionState::EAS_NeckSkillDo;
@@ -336,7 +370,7 @@ void AProjectNo1Character::LargeSkillPressed()
 {
 	FTimerHandle LargeSkillCountdown;
 
-	if (CanNeckSkill() && HasEnoughSkillStamina() && bCanLargeSkill)
+	if (!Dead() && CanNeckSkill() && HasEnoughSkillStamina() && bCanLargeSkill)
 	{
 		PlayLargeSkillMontage();
 		ActionState = EActionState::EAS_LargeAttack;
@@ -398,13 +432,21 @@ void AProjectNo1Character::SwingSword()
 
 void AProjectNo1Character::GuardCounterPressed()
 {
-	if (CanNeckSkill() && HasEnoughSkillStamina() && bIsGuardCounterAttackEnabled)
+	FTimerHandle GuardCounterTimer;
+	FTimerHandle EnableHitTimer;
+	FTimerHandle CounterDamageTimer;
+
+	if (!Dead() && CanNeckSkill() && HasEnoughSkillStamina() && bIsGuardCounterAttackEnabled)
 	{
 		PlayGuardCounterMontage();
 		ActionState = EActionState::EAS_AttackSkill;
+		bIsGuardCountdownEnabled = false; //쿨타임 부울 변수
 		bIsGuardCounterAttackEnabled = false;//연속 사용 X
 		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);//카운터 공격 시 무적
 		EquippedWeapon->IncreaseCounterDamage();// 공격력 증가
+		GetWorldTimerManager().SetTimer(GuardCounterTimer, this, &AProjectNo1Character::EnableGuardCountdown, GuardCounterCooldown, false); // 쿨타임 타이머 시작
+		GetWorldTimerManager().SetTimer(EnableHitTimer, this, &AProjectNo1Character::EnableHit, EnableHitCountdown, false); // 카운트다운 타이머 시작
+		GetWorldTimerManager().SetTimer(CounterDamageTimer, this, &AProjectNo1Character::ReCounterDamage, DamagebackCountdown, false); // 데미지 복구 타이머 시작
 		UE_LOG(LogTemp, Log, TEXT("GuardCounter"));
 		if (Attributes && SlashOverlay)
 		{
@@ -417,6 +459,10 @@ void AProjectNo1Character::GuardCounterPressed()
 void AProjectNo1Character::DeactivateGuardCounterEffect()
 {
 	EquippedWeapon->DeactivateGuardCounterEffect(); // 카운터 공격 이펙트 비활성화
+}
+
+void AProjectNo1Character::ReCounterDamage()
+{
 	EquippedWeapon->RestoreCounterDamage(); // 공격력 복구
 }
 
@@ -425,13 +471,19 @@ void AProjectNo1Character::ActivateGuardCounterEffect()
 	EquippedWeapon->ActivateGuardCounterEffect(); // 카운터 공격 이펙트 활성화
 }
 
+void AProjectNo1Character::EnableGuardCountdown()
+{
+	bIsGuardCountdownEnabled = true;// 가드 카운터 공격 활성화
+}
+
 void AProjectNo1Character::EnableGuardCounter()
 {
 	FTimerHandle GuardCounterCountdown;
-
-	bIsGuardCounterAttackEnabled = true;// 가드 카운터 활성화
-	GetWorldTimerManager().SetTimer(GuardCounterCountdown, this, &AProjectNo1Character::DisableGuardCounter, GuardCounterDisableTimer, false);
-	//일정 시간 내에 가드 카운터 공격하지 않을 시 비활성화
+	if (bIsGuardCountdownEnabled) {
+		bIsGuardCounterAttackEnabled = true;// 가드 카운터 활성화
+		GetWorldTimerManager().SetTimer(GuardCounterCountdown, this, &AProjectNo1Character::DisableGuardCounter, GuardCounterDisableTimer, false);
+		//일정 시간 내에 가드 카운터 공격하지 않을 시 비활성화
+	}
 }
 
 void AProjectNo1Character::DisableGuardCounter()
@@ -442,8 +494,10 @@ void AProjectNo1Character::DisableGuardCounter()
 void AProjectNo1Character::SmallSkillPressed()
 {
 	FTimerHandle SmallSkillCountdown;
+	FTimerHandle EnableHitTimer;
+	FTimerHandle StunDamageTimer;
 
-	if (CanNeckSkill() && HasEnoughSkillStamina() && bCanSmallSkill)
+	if (!Dead() && CanNeckSkill() && HasEnoughSkillStamina() && bCanSmallSkill)
 	{
 		PlaySmallSkillMontage();
 		ActionState = EActionState::EAS_AttackSkill;
@@ -452,6 +506,8 @@ void AProjectNo1Character::SmallSkillPressed()
 		EquippedWeapon->IncreaseStunDamage();// 공격력 증가
 		UE_LOG(LogTemp, Log, TEXT("StunAttack"));
 		GetWorldTimerManager().SetTimer(SmallSkillCountdown, this, &AProjectNo1Character::EnableSmallSkill, SmallSkillCooldown, false); // 쿨타임 타이머 시작
+		GetWorldTimerManager().SetTimer(EnableHitTimer, this, &AProjectNo1Character::EnableHit, EnableHitCountdown, false); // 카운트다운 타이머 시작
+		GetWorldTimerManager().SetTimer(StunDamageTimer, this, &AProjectNo1Character::ReStunDamage, DamagebackCountdown, false); // 카운트다운 타이머 시작
 		if (Attributes && SlashOverlay)
 		{
 			Attributes->UseStamina(Attributes->GetSkillCost());
@@ -463,13 +519,22 @@ void AProjectNo1Character::SmallSkillPressed()
 void AProjectNo1Character::EndSmallSkill()
 {
 	ActionState = EActionState::EAS_Unoccupied;
-	EquippedWeapon->RestoreStunDamage(); // 공격력 복구
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//무적 해제
+}
+
+void AProjectNo1Character::ReStunDamage()
+{
+	EquippedWeapon->RestoreStunDamage(); // 공격력 복구
 }
 
 void AProjectNo1Character::EnableSmallSkill()
 {
 	bCanSmallSkill = true;// 약공격 활성화
+}
+
+void AProjectNo1Character::EnableHit()
+{
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//무적 해제
 }
 
 void AProjectNo1Character::ActivateSmallSkillEffect()
@@ -494,7 +559,7 @@ void AProjectNo1Character::OnSwordSkillPressed()
 	FTimerHandle SwordSkillCountdown;
 	FTimerHandle SwordSkillAGITime;
 
-	if (CanNeckSkill() && HasEnoughSkillStamina() && bCanSwordSkill)
+	if (!Dead() && CanNeckSkill() && HasEnoughSkillStamina() && bCanSwordSkill)
 	{
 		PlaySwordSkillMontage();
 		ActionState = EActionState::EAS_AttackSkill;
@@ -552,21 +617,6 @@ void AProjectNo1Character::ActivateSkillParticles()
 	}
 }
 
-void AProjectNo1Character::ActivateLevelParticles()
-{
-	if (SkillParticles && GetWorld())
-	{
-		FVector SpawnLocation = GetActorLocation() - FVector(0.0f, 0.0f, GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
-		//플레이어 발바닥에 생성되도록
-
-		UGameplayStatics::SpawnEmitterAtLocation(
-			GetWorld(),
-			SkillParticles,
-			SpawnLocation
-		);
-	}
-}
-
 void AProjectNo1Character::EquipNeck(AWeapon* NewNeck)
 {
 	EquippedNeck = NewNeck;
@@ -574,7 +624,7 @@ void AProjectNo1Character::EquipNeck(AWeapon* NewNeck)
 
 void AProjectNo1Character::Jump()
 {
-	if (IsUnoccupied())
+	if (!Dead() && IsUnoccupied())
 	{
 		Super::Jump();
 	}
@@ -583,7 +633,7 @@ void AProjectNo1Character::Jump()
 
 void AProjectNo1Character::Sprint()//달리기
 {
-	if (HasEnoughStamina() && ActionState == EActionState::EAS_Unoccupied) {
+	if (!Dead() && HasEnoughStamina() && ActionState == EActionState::EAS_Unoccupied) {
 		GetCharacterMovement()->MaxWalkSpeed = 450.f;
 
 		ActionState = EActionState::EAS_Sprint;
@@ -636,7 +686,7 @@ void AProjectNo1Character::LookUpAtRate(float Rate)
 void AProjectNo1Character::MoveForward(float Value)
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (IsAttackSkill()) return; //공격중일때 이동 불가
+	if (Dead() || IsAttackSkill()) return; //공격중일때 이동 불가
 	if ((Controller != nullptr) && (Value != 0.0f))
 	{
 		// find out which way is forward
@@ -652,7 +702,7 @@ void AProjectNo1Character::MoveForward(float Value)
 void AProjectNo1Character::MoveRight(float Value)
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (IsAttackSkill()) return; //공격중일때 이동 불가
+	if (Dead() || IsAttackSkill()) return; //공격중일때 이동 불가
 	if ((Controller != nullptr) && (Value != 0.0f))
 	{
 		// find out which way is right
@@ -668,7 +718,8 @@ void AProjectNo1Character::MoveRight(float Value)
 
 void AProjectNo1Character::RMKeyPressed()
 {
-	if (!(HasEnoughShieldStamina()) || ActionState == EActionState::EAS_Sprint)return; //쉴드에 충분한 스태미너가 아니거나 달리기 상태 일때 리턴
+	if (BlockCantState()) return;
+	if (!HasEnoughShieldStamina()) return; //쉴드에 충분한 스태미너가 아니거나 달리기 상태, 스킬 사용 중일때 리턴
 	if (CanBlock())
 	{
 		DisBlock();
@@ -683,9 +734,23 @@ void AProjectNo1Character::RMKeyReleased()
 	}
 }
 
+bool AProjectNo1Character::BlockCantState()
+{
+	return ActionState == EActionState::EAS_AttackSkill ||
+		ActionState == EActionState::EAS_NeckSkillDo ||
+		ActionState == EActionState::EAS_Attacking ||
+		ActionState == EActionState::EAS_Parrying ||
+		ActionState == EActionState::EAS_Sprint ||
+		ActionState == EActionState::EAS_Drink ||
+		ActionState == EActionState::EAS_LargeAttack ||
+		ActionState == EActionState::EAS_Dive ||
+		ActionState == EActionState::EAS_LevelUp ||
+		ActionState == EActionState::EAS_Dead;
+}
+
 void AProjectNo1Character::IfAttack()
 {
-	if (ActionState == EActionState::EAS_Unoccupied)
+	if (!Dead() && ActionState == EActionState::EAS_Unoccupied)
 	{
 		Attack();
 		ActionState = EActionState::EAS_Attacking;
@@ -873,6 +938,7 @@ void AProjectNo1Character::SetHUDHealth()
 void AProjectNo1Character::AttackEnd()
 {
 	ActionState = EActionState::EAS_Unoccupied;
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//무적 해제
 }
 
 void AProjectNo1Character::BlockEnd()
@@ -885,7 +951,7 @@ void AProjectNo1Character::Parry()
 	FTimerHandle ParryCount;
 
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (CanAttack() && HasEnoughAttackStamina())
+	if (!Dead() && CanAttack() && HasEnoughAttackStamina())
 	{
 		AnimInstance->Montage_Play(ParryMontage);
 		bCanParry= false; // 패리 한 후 연속 패리 x
@@ -965,7 +1031,7 @@ void AProjectNo1Character::Attack()
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	Super::Attack();
 	
-	if (CanAttack() && HasEnoughAttackStamina())
+	if (!Dead() && CanAttack() && HasEnoughAttackStamina())
 	{
 		FName SectionName = ComboSectionNames[CurrentComboStep];
 		AnimInstance->Montage_Play(AttackMontage);
@@ -998,7 +1064,7 @@ void AProjectNo1Character::Dive()
 {
 	FTimerHandle DiveCountdown;
 
-	if (CanAttack() && HasEnoughStamina() && bCanDive) {
+	if (!Dead() && CanAttack() && HasEnoughStamina() && bCanDive) {
 		PlayDiveMontage();
 		ActionState = EActionState::EAS_Dive;
 		UE_LOG(LogTemp, Log, TEXT("Dive"));
@@ -1039,7 +1105,7 @@ void AProjectNo1Character::DrinkPotion()//포션 마시기
 	FTimerHandle PotionCountdown;
 	FTimerHandle PotionEffectEndTimerHandle;
 
-	if (Unequipoccupied() && HasEnoughPotionStamina() && bCanDrinkPotion)
+	if (!Dead() && Unequipoccupied() && HasEnoughPotionStamina() && bCanDrinkPotion)
 	{
 		// 포션을 마시는 로직 추가
 		PlayDrinkMontage();
@@ -1107,6 +1173,12 @@ bool AProjectNo1Character::Unequipoccupied()//무장해제 상태
 	
 }
 
+bool AProjectNo1Character::Dead()//죽은 상태
+{
+	return ActionState == EActionState::EAS_Dead;
+
+}
+
 bool AProjectNo1Character::IsArm()
 {
 	return CharacterState == ECharacterState::ECS_EquippedOneHandedWeapon;
@@ -1132,6 +1204,20 @@ void AProjectNo1Character::PlayEquip(const FName& SectionName)
 		AnimInstance->Montage_Play(EquipUnEquipMontage);
 		AnimInstance->Montage_JumpToSection(SectionName, EquipUnEquipMontage);
 	}
+}
+
+void AProjectNo1Character::Die()
+{
+	Super::Die();
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	if (PlayerController) {
+		PlayerController->SetIgnoreMoveInput(true);
+		PlayerController->SetIgnoreLookInput(true);
+		PlayerController->bShowMouseCursor = true;
+	}
+	GetCharacterMovement()->Deactivate();
+	ActionState = EActionState::EAS_Dead;
+	DisableMeshCollision();
 }
 
 void AProjectNo1Character::EndAttacking()

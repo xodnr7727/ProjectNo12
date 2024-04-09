@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Interfaces/HitInterface.h"
+#include "CharacterTypes.h"
 #include "BaseCharacter.generated.h"
 class AShield;
 class APotion;
@@ -69,6 +70,7 @@ protected:
 	bool IsStun();
 
 	bool IsAttacking();
+	void DisableMeshCollision();
 
 	bool HasEnoughShieldStamina();
 	void PlayHitReactMontage(const FName& SectionName);
@@ -173,6 +175,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = Combat)
 		double WarpTargetDistance = 75.f;
 
+	UPROPERTY(BlueprintReadOnly)
+		TEnumAsByte<EDeathPose> DeathPose;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
 		float MaxParryAngle = 100;
 
@@ -232,6 +237,8 @@ protected:
 	/*
 	* Components
 	*/
+public:
+	FORCEINLINE TEnumAsByte<EDeathPose> GetDeathPose() const { return DeathPose; }
 
 private:
 	void PlayMontageSection(UAnimMontage* Montage, const FName& SectionName);

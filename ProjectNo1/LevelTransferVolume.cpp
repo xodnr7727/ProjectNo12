@@ -3,6 +3,9 @@
 
 #include "LevelTransferVolume.h"
 #include "ProjectNo1/ProjectNo1Character.h"
+#include "ProjectNo1/LichEnemy.h"
+#include "BossCharacter.h"
+#include "Goblin.h"
 #include "Characters/BaseCharacter.h"
 #include "CharacterTypes.h"
 #include "Engine/Classes/Components/BoxComponent.h"
@@ -28,7 +31,6 @@ ALevelTransferVolume::ALevelTransferVolume()
 void ALevelTransferVolume::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 
@@ -41,8 +43,10 @@ void ALevelTransferVolume::Tick(float DeltaTime)
 void ALevelTransferVolume::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	AProjectNo1Character* ProjectNo1Character = Cast<AProjectNo1Character>(OtherActor);
+
 	if (ProjectNo1Character) {
 		UGameplayStatics::OpenLevel(GetWorld(), FName(TransferLevelName));
 	}
+
 }
 

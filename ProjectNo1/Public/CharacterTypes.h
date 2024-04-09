@@ -33,7 +33,9 @@ enum class EActionState : uint8
 	EAS_Drink UMETA(DisplayName = "Drink"),
 	EAS_Sprint UMETA(DisplayName = "Sprint"),
 	EAS_AttackSkill UMETA(DisplayName = "AttackSkill"),
-	EAS_LargeAttack UMETA(DisplayName = "LargeAttack")
+	EAS_LargeAttack UMETA(DisplayName = "LargeAttack"),
+	EAS_LevelUp UMETA(DisplayName = "LevelUp"),
+	EAS_Dead UMETA(DisplayName = "Dead")
 };
 
 UENUM(BlueprintType)
@@ -41,6 +43,9 @@ enum EDeathPose
 {
 	EDP_Alive UMETA(DisplayName = "Alive"),
 	EDP_Death UMETA(DisplayName = "Death"),
+	EDP_Death1 UMETA(DisplayName = "Death1"),
+	EDP_Death2 UMETA(DisplayName = "Death2"),
+	EDP_Death3 UMETA(DisplayName = "Death3"),
 
 	EDP_MAX UMETA(DisplayName = "DefaultMAX")
 };

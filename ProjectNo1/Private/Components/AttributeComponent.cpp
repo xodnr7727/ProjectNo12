@@ -6,6 +6,9 @@
 #include "ProjectNo1/ProjectNo1Character.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "Engine/World.h"
+#include "GameFramework/Actor.h"
 
 UAttributeComponent::UAttributeComponent()
 {
@@ -120,7 +123,7 @@ void UAttributeComponent::AddSouls(int32 NumberOfSouls)
 {
 	Souls += NumberOfSouls;
 	Experience = FMath::Clamp(Experience + Souls, 0.f, MaxExperience);
-	if (Experience >= MaxExperience) {
+	if (Experience >= MaxExperience) { //레벨 업
 		Experience = 0.0f;
 		Level += 1;
 		MaxHealth += 10;
@@ -128,19 +131,28 @@ void UAttributeComponent::AddSouls(int32 NumberOfSouls)
 		MaxStamina += 10;
 		HealthRegenRate += 1;
 		StaminaRegenRate += 2;
+		Health += MaxHealth; //체력 회복
+		Stamina += MaxStamina; //스태미너 회복
 		//최대 체력, 경험치, 스태미너 증가 추가 and 리젠량.
 		AProjectNo1Character* ProjectNo1Character = Cast<AProjectNo1Character>(GetOwner());
 		if (ProjectNo1Character)
 		{
-			FVector SpawnLocation = ProjectNo1Character->GetActorLocation();
-			//UParticleSystemComponent* LevelUpEffect = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), LevelUpParticle, SpawnLocation, FRotator::ZeroRotator, true);
+			FVector SpawnLocation = ProjectNo1Character->GetActorLocation() - FVector(0.0f, 0.0f, ProjectNo1Character->GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
 			if (LevelUpParticle && GetWorld()) {
 				UGameplayStatics::SpawnEmitterAtLocation(
 					GetWorld(),
 					LevelUpParticle,
 					SpawnLocation
-				); //레벨업 이펙트, 사운드
+				); 
 			}
+			if (LevelUpSound){
+				UGameplayStatics::PlaySoundAtLocation(
+					this,
+					LevelUpSound,
+					ProjectNo1Character->GetActorLocation()
+				);
+			}//레벨업 이펙트, 사운드
+			ProjectNo1Character->LevelUpAll();
 		}
 	}
 }

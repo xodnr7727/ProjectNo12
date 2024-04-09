@@ -5,6 +5,7 @@
 #include "ProjectNo1/ProjectNo1Character.h"
 #include "ProjectNo1/LichEnemy.h"
 #include "BossCharacter.h"
+#include "Goblin.h"
 #include "CharacterTypes.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -15,6 +16,7 @@ void UMyProAnimInstance::NativeInitializeAnimation()
 	ProjectNo1Character = Cast<AProjectNo1Character>(TryGetPawnOwner());
 	LichEnemy = Cast<ALichEnemy>(TryGetPawnOwner());
 	BossCharacter = Cast<ABossCharacter>(TryGetPawnOwner());
+	Goblin = Cast<AGoblin>(TryGetPawnOwner());
 	if (ProjectNo1Character)
 	{
 		ProjectNo1CharacterMovement = ProjectNo1Character->GetCharacterMovement();
@@ -24,6 +26,9 @@ void UMyProAnimInstance::NativeInitializeAnimation()
 	}
 	if (BossCharacter) {
 		BossCharacterMovement = BossCharacter->GetCharacterMovement();
+	}
+	if (Goblin) {
+		GoblinMovement = Goblin->GetCharacterMovement();
 	}
 }
 void UMyProAnimInstance::NativeUpdateAnimation(float DeltaTime)
@@ -38,6 +43,9 @@ void UMyProAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	}
 	if (BossCharacter == nullptr) {
 		BossCharacter = Cast<ABossCharacter>(TryGetPawnOwner());
+	}
+	if (Goblin == nullptr) {
+		Goblin = Cast<AGoblin>(TryGetPawnOwner());
 	}
 	if (ProjectNo1Character) {
 		FVector Velocity{ ProjectNo1Character->GetVelocity() };
@@ -62,12 +70,16 @@ void UMyProAnimInstance::NativeUpdateAnimation(float DeltaTime)
 		IsFalling = ProjectNo1CharacterMovement->IsFalling();
 		CharacterState = ProjectNo1Character->GetCharacterState();
 		ActionState = ProjectNo1Character->GetActionState();
+		DeathPose = ProjectNo1Character->GetDeathPose();
 	}
 	if (LichEnemyMovement) {
 		EnemyState = LichEnemy->GetEnemyState();
 	}
 	if (BossCharacterMovement) {
 		EnemyState = BossCharacter->GetEnemyState();
+	}
+	if (GoblinMovement) {
+		EnemyState = Goblin->GetEnemyState();
 	}
 
 	auto Pawn = TryGetPawnOwner();

@@ -91,6 +91,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Skill")
 		UParticleSystem* LevelUpParticle;
 
+	UPROPERTY(EditAnywhere, Category = "Skill")
+		USoundBase* LevelUpSound;
+
 public:
 	void ReceiveDamage(float Damage);
 	void ReceiveStun(float Damage);
