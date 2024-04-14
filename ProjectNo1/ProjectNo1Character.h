@@ -177,6 +177,18 @@ protected:
 
 	void ActivateSkillParticles();
 
+	void WeaponSpellAttack();
+	void WeaponSpellLineTrace();
+	void ExecuteGetHit(FHitResult& HitResult);
+	void EnableWeaponSpell();
+	void PlayWeaponSpellHitSound(const FVector& ImpactPoint);
+
+	UFUNCTION(BlueprintCallable)
+	void DeactivateWeaponSpellEffect();
+
+	UFUNCTION(BlueprintCallable)
+	void ActivateWeaponSpellEffect();
+
 	void OnNeckSkillPressed();
 	void LargeSkillPressed();
 	void GuardCounterPressed();
@@ -331,6 +343,13 @@ private:
 		bool bCanSwordSkill; // 스킬 사용할 수 있는지 여부
 
 		UPROPERTY(EditAnywhere, Category = "Skill")
+		float WeaponSpellCooldown; // 스킬 쿨타임 변수
+		UPROPERTY(EditAnywhere, Category = "Skill")
+		float WeaponSpellDuration; // 스킬 지속 시간
+		bool bCanWeaponSpell; // 스킬 사용할 수 있는지 여부
+		bool AttackWeaponSpell; // 스킬 사용할 수 있는지 여부
+
+		UPROPERTY(EditAnywhere, Category = "Skill")
 		float RageDuration;// 분노 지속 시간 (초)
 
 		UPROPERTY(EditAnywhere, Category = "Skill")
@@ -344,6 +363,15 @@ private:
 
 		UPROPERTY(EditAnywhere, Category = "Skill")
 		UParticleSystem* SkillParticles;
+
+		UPROPERTY(EditAnywhere, Category = "Skill")
+		UParticleSystem* ImpactEffect;
+
+		UPROPERTY(EditAnywhere, Category = "Skill")
+		UParticleSystem* EndPointEffect;
+
+		UPROPERTY(EditAnywhere, Category = "Skill")
+		USoundBase* WeaponSpellSound;
 		 
 		// Range to detect stunned enemies in front of the player
 		UPROPERTY(EditDefaultsOnly, Category = "SpecialTargeting")

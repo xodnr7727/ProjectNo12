@@ -57,6 +57,12 @@ AWeapon::AWeapon()
 	TeethSkillBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
 	TeethSkillBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
 
+	LeftCastSkillBox = CreateDefaultSubobject<UBoxComponent>(TEXT("LeftCastSkill Box"));
+	LeftCastSkillBox->SetupAttachment(GetRootComponent());
+	LeftCastSkillBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	LeftCastSkillBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
+	LeftCastSkillBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+
 	BoxTraceStart = CreateDefaultSubobject<USceneComponent>(TEXT("Box Trace Start"));
 	BoxTraceStart->SetupAttachment(GetRootComponent());
 
@@ -80,6 +86,12 @@ AWeapon::AWeapon()
 
 	LaserSkillEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("LaserSkillEffect"));
 	LaserSkillEffect->SetupAttachment(RootComponent); // 이펙트 위치 설정
+
+	LeftCastEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("LeftCastEffect"));
+	LeftCastEffect->SetupAttachment(RootComponent); // 이펙트 위치 설정
+
+	WeaponSpellAttackEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("WeaponSpellAttackEffect"));
+	WeaponSpellAttackEffect->SetupAttachment(GetRootComponent());
 
 }
 
@@ -214,6 +226,40 @@ void AWeapon::ActivateLargeSkillEffect()
 	}
 }
 
+
+void AWeapon::DeactivateLeftCastSkillEffect()
+{
+	if (LeftCastEffect)
+	{
+		UE_LOG(LogTemp, Log, TEXT("DeactivateLeft"));
+		LeftCastEffect->DeactivateSystem();
+	}
+}
+
+void AWeapon::ActivateLeftCastSkillEffect()
+{
+	if (LeftCastEffect)
+	{
+		LeftCastEffect->ActivateSystem();
+	}
+}
+
+void AWeapon::DeactivateWeaponSpellEffect()
+{
+	if (WeaponSpellAttackEffect)
+	{
+		WeaponSpellAttackEffect->Deactivate();
+	}
+}
+
+void AWeapon::ActivateWeaponSpellEffect()
+{
+	if (WeaponSpellAttackEffect)
+	{
+		WeaponSpellAttackEffect->Activate();
+	}
+}
+
 void AWeapon::DeactivateSmallSkillEffect()
 {
 	if (SmallSkillEffect)
@@ -277,14 +323,22 @@ void AWeapon::BeginPlay()
 		GuardCounterEffect->DeactivateSystem(); // ''
 	}
 	if (LaserSkillEffect) {
-		LaserSkillEffect->Deactivate(); // ''
+		LaserSkillEffect->DeactivateSystem(); // ''
 	}
+	if (LeftCastEffect) {
+		LeftCastEffect->DeactivateSystem(); // ''
+	}
+	if (WeaponSpellAttackEffect) {
+		WeaponSpellAttackEffect->Deactivate();
+	}
+
 	WeaponBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnBoxOverlap);
 	SkillBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnSkillBoxOverlap);
 	LaserSkillBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnLaserSkillBoxOverlap);
 	RushSkillBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnRushSkillBoxOverlap);
 	TeethSkillBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnBoxOverlap);
 	ClawSkillBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnBoxOverlap);
+	LeftCastSkillBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnBoxOverlap);
 }
 
 void AWeapon::IncreaseDamage()

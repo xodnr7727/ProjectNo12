@@ -17,6 +17,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "AIController.h"
+#include "Engine/World.h"
 #include "Soul.h"
 #include "Items/Treasure.h"
 #include "HUD/SlashOverlay.h"
@@ -90,12 +91,12 @@ void ABossCharacter::BeginPlay()
 
 	if (HasExistPlayerInFront())//일정 거리 멀리에 플레이어가 있다면
 	{
-		UE_LOG(LogTemp, Log, TEXT("PrepareOnLaserSkill")); //확인완료
+		//UE_LOG(LogTemp, Log, TEXT("PrepareOnLaserSkill")); //확인완료
 		OnLaserSkill();//스킬 공격
 	}
 	if (HasExistRushPlayerInFront())//일정 거리에 플레이어가 있다면
 	{
-		UE_LOG(LogTemp, Log, TEXT("PrepareRushSkill")); //확인완료
+		//UE_LOG(LogTemp, Log, TEXT("PrepareRushSkill")); //확인완료
 		RushSkill();//스킬 공격
 	}
 }
@@ -120,12 +121,12 @@ void ABossCharacter::Tick(float DeltaTime)
 	}
 	if (HasExistPlayerInFront())//일정 거리 멀리에 플레이어가 있다면
 	{
-		UE_LOG(LogTemp, Log, TEXT("PrepareOnLaserSkill")); //확인완료
+		//UE_LOG(LogTemp, Log, TEXT("PrepareOnLaserSkill")); //확인완료
 		OnLaserSkill();//스킬 공격
 	}
 	if (HasExistRushPlayerInFront())//일정 거리에 플레이어가 있다면
 	{
-		UE_LOG(LogTemp, Log, TEXT("PrepareRushSkill")); //확인완료
+		//UE_LOG(LogTemp, Log, TEXT("PrepareRushSkill")); //확인완료
 		RushSkill();//스킬 공격
 	}
 }
@@ -183,7 +184,7 @@ bool ABossCharacter::HasExistPlayerInFront()//플레이어 체크 함수
 
 				if (ProjectNo1Character)
 				{
-					UE_LOG(LogTemp, Log, TEXT("ProjectNo1CharacterCheck")); //확인완료
+					//UE_LOG(LogTemp, Log, TEXT("ProjectNo1CharacterCheck")); //확인완료
 					return true;
 				}
 			}
@@ -215,7 +216,7 @@ bool ABossCharacter::HasExistRushPlayerInFront()//플레이어 체크 함수
 
 				if (ProjectNo1Character)
 				{
-					UE_LOG(LogTemp, Log, TEXT("ProjectNo1CharacterCheck")); //확인완료
+					//UE_LOG(LogTemp, Log, TEXT("ProjectNo1CharacterCheck")); //확인완료
 					return true;
 				}
 			}
@@ -237,11 +238,11 @@ void ABossCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* H
 	}
 	ClearPatrolTimer();
 	ClearAttackTimer();
-	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
+	//SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetCharacterMovement()->Activate();
-	EnemyState = EEnemyState::EES_Attacking;
-	StopAttackMontage();
-
+	//EnemyState = EEnemyState::EES_Attacking;
+	//StopAttackMontage();
+	bAttack = true;
 	if (IsInsideAttackRadius())
 	{
 		if (!IsDead()) StartAttackTimer();
@@ -349,6 +350,67 @@ void ABossCharacter::RushSkill()
 	}
 }
 
+// 플레이어가 발사할 수 있는 라인 트레이스를 나타내는 함수
+void ABossCharacter::RushSpellSweepTrace()
+{
+	FVector Start = GetActorLocation() + GetActorForwardVector() * 100.0f; // 보스 바로 앞 위치에서 시작
+	FVector ForwardVector = GetActorForwardVector(); // 보스가 향하는 방향
+	FVector End = Start + ForwardVector * 300.0f; // 일정 거리만큼 스윕 트레이스
+	FVector SpawnLocation = GetActorLocation();
+	//FHitResult HitResult;
+	FHitResult HitResult;
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.AddIgnoredActor(this); // 보스는 무시
+	bool bResult = GetWorld()->LineTraceSingleByChannel(
+		HitResult,
+		Start,
+		End,
+		ECollisionChannel::ECC_Visibility,
+		CollisionParams);
+	UE_LOG(LogTemp, Log, TEXT("RushSpellSweepTrace")); //확인완료
+	// 라인 트레이스의 시작점에 이펙트를 생성하여 표시
+
+	//UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), EndPointEffect, SpawnLocation, FRotator::ZeroRotator);
+	// 라인 트레이스 실행
+	if (bResult) {
+		if (AActor* Actor = HitResult.GetActor()) {
+			if (HitResult.GetActor()->ActorHasTag("EngageableTarget"))
+			{
+				UE_LOG(LogTemp, Log, TEXT("Hit Actor : %s"), *HitResult.GetActor()->GetName());
+				DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.f, 0, 1.f);
+				// 라인 트레이스의 타격점에 이펙트를 생성하여 표시
+				//UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, HitResult.ImpactPoint, FRotator::ZeroRotator);
+				//PlayWeaponSpellHitSound(HitResult.ImpactPoint);
+				FDamageEvent DamageEvent;
+
+				UGameplayStatics::ApplyDamage(HitResult.GetActor(), 20, GetInstigatorController(), this, UDamageType::StaticClass());
+				ExecuteGetHit(HitResult);
+				ExecuteGetBlock(HitResult);
+			}
+		}
+	}
+	else {
+		DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.f, 0, 1.f);
+	}
+}
+void ABossCharacter::ExecuteGetHit(FHitResult& HitResult)
+{
+	IHitInterface* HitInterface = Cast<IHitInterface>(HitResult.GetActor());
+	if (HitInterface)
+	{
+		HitInterface->Execute_GetHit(HitResult.GetActor(), HitResult.ImpactPoint, GetOwner());
+	}
+}
+
+void ABossCharacter::ExecuteGetBlock(FHitResult& HitResult)
+{
+	IHitInterface* HitInterface = Cast<IHitInterface>(HitResult.GetActor());
+	if (HitInterface)
+	{
+		HitInterface->Execute_GetBlock(HitResult.GetActor(), HitResult.ImpactPoint, GetOwner());
+	}
+}
+
 void ABossCharacter::EndRushSkill()
 {
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//무적 해제
@@ -419,16 +481,17 @@ void ABossCharacter::SpawnRightWeapon()
 	}
 }
 
-void ABossCharacter::SpawnRushSkillWeapon()
+void ABossCharacter::SpawnRightWeaponTwo()
 {
 	UWorld* World = GetWorld();
 	if (World && WeaponClass)
 	{
 		AWeapon* DefaultWeapon = World->SpawnActor<AWeapon>(WeaponClass);
-		DefaultWeapon->Equip(GetMesh(), FName("RushSkillWeapon"), this, this);
+		DefaultWeapon->Equip(GetMesh(), FName("RightHandWeaponTwo"), this, this);
 		EquippedWeapon = DefaultWeapon;
 	}
 }
+
 
 void ABossCharacter::Die()
 {
@@ -695,7 +758,7 @@ void ABossCharacter::InitializeEnemy()
 	SpawnDefaultWeapon();
 	SpawnLeftWeapon();
 	SpawnRightWeapon();
-	SpawnRushSkillWeapon();
+	SpawnRightWeaponTwo();
 }
 
 void ABossCharacter::HideHealthBar()

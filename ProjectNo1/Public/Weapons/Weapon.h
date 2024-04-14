@@ -37,6 +37,12 @@ public:
 	void DeactivateLargeSkillEffect();
 	void ActivateLargeSkillEffect();
 
+	void DeactivateLeftCastSkillEffect();
+	void ActivateLeftCastSkillEffect();
+
+	void DeactivateWeaponSpellEffect();
+	void ActivateWeaponSpellEffect();
+
 	void DeactivateSmallSkillEffect();
 	void ActivateSmallSkillEffect();
 
@@ -128,6 +134,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 		 UBoxComponent* TeethSkillBox;
+   
+	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
+		 UBoxComponent* LeftCastSkillBox;
 
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	    USkeletalMeshComponent* SwordMesh;
@@ -173,6 +182,15 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Skill")
 	    UParticleSystemComponent* LaserSkillEffect;
 
+	UPROPERTY(VisibleAnywhere, Category = "Skill")
+	  UParticleSystemComponent* LeftCastEffect;
+
+	UPROPERTY(EditAnywhere, Category = "Skill")
+		USoundBase* CastSkillSound;
+
+	UPROPERTY(VisibleAnywhere, Category = "Skill")
+		UNiagaraComponent* WeaponSpellAttackEffect;
+
 public:
 	FORCEINLINE UBoxComponent* GetWeaponBox() const { return WeaponBox; }
 	FORCEINLINE UBoxComponent* GetSkillBox() const { return SkillBox; }
@@ -180,4 +198,5 @@ public:
 	FORCEINLINE UBoxComponent* GetRushSkillBox() const { return RushSkillBox; }
 	FORCEINLINE UBoxComponent* GetClawSkillBox() const { return ClawSkillBox; }
 	FORCEINLINE UBoxComponent* GetTeethSkillBox() const { return TeethSkillBox; }
+	FORCEINLINE UBoxComponent* GetLeftCastSkillBox() const { return LeftCastSkillBox; }
 };

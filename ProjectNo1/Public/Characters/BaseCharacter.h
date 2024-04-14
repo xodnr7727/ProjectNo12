@@ -82,6 +82,7 @@ protected:
 	virtual void PlayDiveMontage();
 	virtual void PlayDrinkMontage();
 	virtual void PlayNeckSkillMontage();
+	virtual void PlayWeaponSpellSkillMontage();
 	virtual void PlayLargeSkillMontage();
 	virtual void PlayGuardCounterMontage();
 	virtual void PlaySmallSkillMontage();
@@ -139,8 +140,11 @@ protected:
 	UFUNCTION(BlueprintCallable)
 		void SetTeethSkillCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
 
-		UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable)
 		void SetShieldCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
+
+	UFUNCTION(BlueprintCallable)
+		void SetLeftCastSkillCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Weapon)
 		AWeapon* EquippedWeapon;
@@ -222,6 +226,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
 		UAnimMontage* DrinkMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat)
+		UAnimMontage* WeaponSpellSkillMontage;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 		TArray<FName> AttackMontageSections;

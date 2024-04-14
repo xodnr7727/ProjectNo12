@@ -58,6 +58,13 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void ActivateLaserSkillEffect();
 
+	UFUNCTION(BlueprintCallable)
+	void RushSpellSweepTrace();
+
+	void ExecuteGetHit(FHitResult& HitResult);
+
+	void ExecuteGetBlock(FHitResult& HitResult);
+
 	void RushSkill();
 	virtual void EndRushSkill() override;
 	void EnableRushSkill();
@@ -114,6 +121,8 @@ public:
 	void Stun();
 	void ProjectileAttack();
 	void InitializeEnemy();
+	void ShowHealthBar();
+	void ShowStunBar();
 
 	FORCEINLINE EEnemyState GetEnemyState() const { return EnemyState; }
 
@@ -180,9 +189,7 @@ private:
 
 	/** AI behavior */
 	void HideHealthBar();
-	void ShowHealthBar();
 	void HideStunBar();
-	void ShowStunBar();
 	void LoseInterest();
 	void StartPatrolling();
 	void ChaseTarget();
@@ -206,7 +213,7 @@ private:
 	void SpawnDefaultWeapon();
 	void SpawnLeftWeapon();
 	void SpawnRightWeapon();
-	void SpawnRushSkillWeapon();
+	void SpawnRightWeaponTwo();
 
 	/** Combat */
 	void StartAttackTimer();

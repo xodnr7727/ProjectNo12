@@ -390,6 +390,11 @@ void ABaseCharacter::PlayNeckSkillMontage()
 	PlayMontageSection(NeckSkillMontage, FName("Skill"));
 }
 
+void ABaseCharacter::PlayWeaponSpellSkillMontage()
+{
+	PlayMontageSection(WeaponSpellSkillMontage, FName("WeaponSpellSkill"));
+}
+
 void ABaseCharacter::PlayLargeSkillMontage()
 {
 	PlayMontageSection(LargeSkillMontage, FName("LargeSkill"));
@@ -591,6 +596,15 @@ void ABaseCharacter::SetShieldCollisionEnabled(ECollisionEnabled::Type Collision
 		EquippedShield->IgnoreActors.Empty();
 	}
 }
+void ABaseCharacter::SetLeftCastSkillCollisionEnabled(ECollisionEnabled::Type CollisionEnabled)
+{
+	if (EquippedWeapon && EquippedWeapon->GetLeftCastSkillBox())
+	{
+		EquippedWeapon->GetLeftCastSkillBox()->SetCollisionEnabled(CollisionEnabled);
+		EquippedWeapon->IgnoreActors.Empty();
+	}
+}
+
 
 
 

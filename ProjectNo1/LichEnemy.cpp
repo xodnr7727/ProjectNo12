@@ -13,6 +13,7 @@
 #include "Weapons/EnemyWeapon.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Engine/World.h"
 #include "AIController.h"
 #include "Weapons/Shield.h"
 #include "Soul.h"
@@ -41,6 +42,7 @@ ALichEnemy::ALichEnemy()
 	PawnSensing->SightRadius = 4000.f;
 	PawnSensing->SetPeripheralVisionAngle(45.f);
 	HitNumberDestroyTime = 1.5f;
+	LeftCastSkillCount = 0.1f;
 
 	static ConstructorHelpers::FClassFinder<AProjectileWeapon> ProjectileAsset(TEXT("Blueprint'/Game/ThirdPerson/Blueprints/Enemy/Weapon/EnemyProjectileWeapon'"));
 
@@ -138,6 +140,7 @@ void ALichEnemy::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitte
 	ClearPatrolTimer();
 	ClearAttackTimer();
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
+	EquippedWeapon->DeactivateLeftCastSkillEffect(); // 주문검 공격 이펙트 비활성화
 	GetCharacterMovement()->Activate();
 	EnemyState = EEnemyState::EES_Attacking;
 	bAttack = true;
@@ -160,6 +163,7 @@ void ALichEnemy::GetStun_Implementation(const FVector& ImpactPoint, AActor* Hitt
 	ClearPatrolTimer();
 	ClearAttackTimer();
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
+	EquippedWeapon->DeactivateLeftCastSkillEffect(); // 주문검 공격 이펙트 비활성화
 	EnemyState = EEnemyState::EES_Stunned;
 	StopAttackMontage();
 
@@ -204,6 +208,17 @@ void ALichEnemy::SpawnDefaultWeapon()
 	{
 		AWeapon* DefaultWeapon = World->SpawnActor<AWeapon>(WeaponClass);
 		DefaultWeapon->Equip(GetMesh(), FName("WeaponSocket"), this, this);
+		EquippedWeapon = DefaultWeapon;
+	}
+}
+
+void ALichEnemy::SpawnDefaultWeaponTwo()
+{
+	UWorld* World = GetWorld();
+	if (World && WeaponClass)
+	{
+		AWeapon* DefaultWeapon = World->SpawnActor<AWeapon>(WeaponClass);
+		DefaultWeapon->Equip(GetMesh(), FName("LeftCastWeapon"), this, this);
 		EquippedWeapon = DefaultWeapon;
 	}
 }
@@ -368,6 +383,21 @@ AActor* ALichEnemy::ChoosePatrolTarget()
 	return nullptr;
 }
 
+void ALichEnemy::DeactivateLeftCastEffect()
+{
+	UE_LOG(LogTemp, Log, TEXT("DeactivateLeftCastEffect"));
+	EquippedWeapon->DeactivateLeftCastSkillEffect(); // 주문검 공격 이펙트 비활성화
+}
+
+
+void ALichEnemy::ActivateLeftCastEffect()
+{
+	FTimerHandle LeftCastSkillCountdown;
+
+	EquippedWeapon->ActivateLeftCastSkillEffect(); // 주문검  공격 이펙트 활성화
+	GetWorldTimerManager().SetTimer(LeftCastSkillCountdown, this, &ALichEnemy::DeactivateLeftCastEffect, LeftCastSkillCount, false); // 쿨타임 타이머 시작
+}
+
 void ALichEnemy::Attack()
 {
 	Super::Attack();
@@ -434,6 +464,7 @@ void ALichEnemy::InitializeEnemy()
 	MoveToTarget(PatrolTarget);
 	HideHealthBar();
 	SpawnDefaultWeapon();
+	SpawnDefaultWeaponTwo();
 }
 
 void ALichEnemy::HideHealthBar()

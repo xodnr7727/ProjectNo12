@@ -42,6 +42,12 @@ protected:
 	virtual void StunEnd() override;
 	virtual void StunStart() override;
 
+	UFUNCTION(BlueprintCallable)
+	void DeactivateLeftCastEffect();
+
+	UFUNCTION(BlueprintCallable)
+	void ActivateLeftCastEffect();
+
 	UFUNCTION()
 	void DestroyHitNumber(UUserWidget* HitNumber);
 
@@ -88,6 +94,7 @@ public:
 	bool IsEngaged();//전투중
 	void ProjectileAttack();
 	void InitializeEnemy();
+	void ShowHealthBar();
 
 	FORCEINLINE EEnemyState GetEnemyState() const { return EnemyState; }
 
@@ -150,7 +157,6 @@ private:
 	/** AI behavior */
 
 	void HideHealthBar();
-	void ShowHealthBar();
 	void LoseInterest();//추적 X
 	void StartPatrolling();
 	void ChaseTarget();
@@ -162,6 +168,7 @@ private:
 	bool IsDead();//죽음
 	void ClearPatrolTimer();
 	void SpawnDefaultWeapon();
+	void SpawnDefaultWeaponTwo();
 
 	/** Combat */
 	void StartAttackTimer();
@@ -190,5 +197,7 @@ private:
 	UPROPERTY(EditAnywhere)
 		bool bAttack;
 
+	UPROPERTY(EditAnywhere, Category = "Skill")
+		float LeftCastSkillCount;//  지속 시간
 
 };

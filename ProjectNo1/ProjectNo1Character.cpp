@@ -4,6 +4,7 @@
 #include "MyProAnimInstance.h"
 #include "LichEnemy.h"
 #include "BossCharacter.h"
+#include "Goblin.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -111,6 +112,11 @@ AProjectNo1Character::AProjectNo1Character()
 	SwordSkillCooldown = 8.0f; // 초기 쿨타임 설정 (예: 8초)
 	SwordSkillDuration = 6.0f; // 초기 지속시간 설정 (예: 6초)
 	bCanSwordSkill = true; // 초기에 검 공격 사용할 수 있도록 설정
+
+	WeaponSpellCooldown = 12.0f; // 초기 쿨타임 설정 (예: 8초)
+	WeaponSpellDuration = 8.0f; // 초기 지속시간 설정 (예: 6초)
+	bCanWeaponSpell = true; // 초기에 주문 공격 사용할 수 있도록 설정
+	AttackWeaponSpell = false; // 초기에 주문 공격 투사체가 나가지 않도록 설정
 
 	LargeSkillCooldown = 8.0f; // 초기 쿨타임 설정 (예: 8초)
 	bCanLargeSkill = true; // 초기에 강공격 사용할 수 있도록 설정
@@ -325,6 +331,8 @@ void AProjectNo1Character::SetupPlayerInputComponent(class UInputComponent* Play
 	PlayerInputComponent->BindAction(FName("SpecialTargetingAttack"), IE_Pressed, this, &AProjectNo1Character::SpecialTargetingAttackInput);
 
 	PlayerInputComponent->BindAction(FName("GuardCounter"), IE_Pressed, this, &AProjectNo1Character::GuardCounterPressed);
+
+	PlayerInputComponent->BindAction(FName("WeaponSpellAttack"), IE_Pressed, this, &AProjectNo1Character::WeaponSpellAttack);
 }
 
 void AProjectNo1Character::OnNeckSkillPressed()
@@ -613,6 +621,145 @@ void AProjectNo1Character::ActivateSkillParticles()
 			GetWorld(),
 			SkillParticles,
 			SpawnLocation
+		);
+	}
+}
+
+void AProjectNo1Character::WeaponSpellAttack()
+{
+	FTimerHandle WeaponSpellSkillCountdown;
+
+	if (!Dead() && CanNeckSkill() && HasEnoughSkillStamina() && bCanWeaponSpell)
+	{
+		PlayWeaponSpellSkillMontage();
+		ActionState = EActionState::EAS_AttackSkill;
+		bCanWeaponSpell = false;//연속 사용 불가
+		AttackWeaponSpell = true;//검기 활성화
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);//주문검 공격 시 무적
+		GetWorldTimerManager().SetTimer(WeaponSpellSkillCountdown, this, &AProjectNo1Character::EnableWeaponSpell, WeaponSpellCooldown, false); // 쿨타임 타이머 시작
+	
+		if (Attributes && SlashOverlay)
+		{
+			Attributes->UseStamina(Attributes->GetSkillCost());
+			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+		}
+	}
+}
+
+
+// 플레이어가 발사할 수 있는 라인 트레이스를 나타내는 함수
+void AProjectNo1Character::WeaponSpellLineTrace()
+{
+	FVector Start = GetActorLocation(); // 플레이어 위치에서 시작
+	FVector ForwardVector = GetActorForwardVector(); // 플레이어가 향하는 방향
+	FVector End = Start + ForwardVector * 10000.0f; // 일정 거리만큼 라인 트레이스
+	FVector SpawnLocation = GetActorLocation() - FVector(0.0f, -90.0f, GetCapsuleComponent()->GetScaledCapsuleHalfHeight()) + (ForwardVector.RotateAngleAxis(180.0f, FVector::UpVector) * 100.0f);;
+	//FHitResult HitResult;
+	TArray<FHitResult> HitResults;
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.AddIgnoredActor(this); // 플레이어는 무시
+	CollisionParams.OwnerTag = "EngageableTarget";
+	bool bResult = GetWorld()->LineTraceMultiByChannel(
+		HitResults,
+		Start,
+		End,
+		ECollisionChannel::ECC_Visibility,
+		CollisionParams);
+
+	// 라인 트레이스의 시작점에 이펙트를 생성하여 표시
+
+	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), EndPointEffect, SpawnLocation, FRotator::ZeroRotator);
+	// 라인 트레이스 실행
+	if (bResult) {
+		for (FHitResult& HitResult : HitResults) {
+			if (AActor* Actor = HitResult.GetActor()) {
+				if (HitResult.GetActor()->ActorHasTag("Enemy"))
+				{
+				UE_LOG(LogTemp, Log, TEXT("Hit Actor : %s"), *Actor->GetName());
+				DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.f, 0, 1.f);
+				// 라인 트레이스의 타격점에 이펙트를 생성하여 표시
+				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, HitResult.ImpactPoint, FRotator::ZeroRotator);
+				PlayWeaponSpellHitSound(HitResult.ImpactPoint);
+				FDamageEvent DamageEvent;
+
+				ALichEnemy* HitEnemy = Cast<ALichEnemy>(HitResult.GetActor());
+				AGoblin* Goblin = Cast<AGoblin>(HitResult.GetActor());
+				ABossCharacter* BossCharacter = Cast<ABossCharacter>(HitResult.GetActor());
+
+				UGameplayStatics::ApplyDamage(HitResult.GetActor(), 100, GetInstigatorController(), this, UDamageType::StaticClass());
+				ExecuteGetHit(HitResult);
+				if (HitEnemy) {
+					HitEnemy->ShowHitNumber(100, HitResult.Location);
+				}
+				if (Goblin) {
+					Goblin->ShowHitNumber(100, HitResult.Location);
+				}
+				if (BossCharacter) {
+					BossCharacter->ShowHitNumber(100, HitResult.Location);
+				}
+			}
+		}
+	}
+}
+	else {
+				DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.f, 0, 1.f);
+}
+	/*
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_GameTraceChannel1, CollisionParams)) // ECC_GameTraceChannel1을 사용하여 플레이어는 무시
+	{
+		// 라인 트레이스가 적에게 닿았을 때 실행할 코드
+		AActor* HitActor = HitResult.GetActor();
+		if (HitActor && HitActor != this) // 플레이어가 아니면서 유효한 액터인 경우에만
+		{
+			// 여기에 적을 공격하는 코드를 추가하세요
+			//HitActor->TakeDamage(DamageAmount, DamageType, InstigatedBy, this);
+			UE_LOG(LogTemp, Log, TEXT("WeaponSpellHit"));
+			// 이펙트를 생성하여 적의 위치에 표시
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, HitResult.ImpactPoint, FRotator::ZeroRotator);
+			PlayWeaponSpellHitSound(HitResult.ImpactPoint);
+		}
+	}
+	*/
+}
+
+// 호출하는 곳에서 ShootLineTrace() 함수를 호출하면 됩니다.
+void AProjectNo1Character::ExecuteGetHit(FHitResult& HitResult)
+{
+	IHitInterface* HitInterface = Cast<IHitInterface>(HitResult.GetActor());
+	if (HitInterface)
+	{
+		HitInterface->Execute_GetHit(HitResult.GetActor(), HitResult.ImpactPoint, GetOwner());
+	}
+}
+
+void AProjectNo1Character::EnableWeaponSpell()
+{
+	bCanWeaponSpell = true;
+}
+
+
+void AProjectNo1Character::DeactivateWeaponSpellEffect()
+{
+	EquippedWeapon->DeactivateWeaponSpellEffect(); // 주문공격 이펙트 비활성화
+	AttackWeaponSpell = false;
+}
+
+void AProjectNo1Character::ActivateWeaponSpellEffect()
+{
+	FTimerHandle WeaponSpellAttackEffectEndTimerHandle;
+	EquippedWeapon->ActivateWeaponSpellEffect(); // 주문공격 이펙트 활성화
+
+	GetWorldTimerManager().SetTimer(WeaponSpellAttackEffectEndTimerHandle, this, &AProjectNo1Character::DeactivateWeaponSpellEffect, WeaponSpellDuration, false);//주문검 지속시간 타이머 시작
+}
+
+void AProjectNo1Character::PlayWeaponSpellHitSound(const FVector& ImpactPoint)
+{
+	if (WeaponSpellSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			WeaponSpellSound,
+			ImpactPoint
 		);
 	}
 }
@@ -1044,6 +1191,9 @@ void AProjectNo1Character::Attack()
 			Attributes->UseStamina(Attributes->GetAttackCost());
 			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
 		}
+		if (AttackWeaponSpell) {
+			WeaponSpellLineTrace();//주문검 공격
+		}
 	}
 }
 void AProjectNo1Character::AttackComboResetCountDown()
@@ -1105,7 +1255,7 @@ void AProjectNo1Character::DrinkPotion()//포션 마시기
 	FTimerHandle PotionCountdown;
 	FTimerHandle PotionEffectEndTimerHandle;
 
-	if (!Dead() && Unequipoccupied() && HasEnoughPotionStamina() && bCanDrinkPotion)
+	if (!Dead() && Unequipoccupied() && IsArm() && HasEnoughPotionStamina() && bCanDrinkPotion)
 	{
 		// 포션을 마시는 로직 추가
 		PlayDrinkMontage();
@@ -1167,7 +1317,7 @@ void AProjectNo1Character::DrinkHealthPotion() {
 	Attributes->RecoveryHealth();//체력 재생률 증가
 }
 
-bool AProjectNo1Character::Unequipoccupied()//무장해제 상태
+bool AProjectNo1Character::Unequipoccupied()//어느 행동도 하지않을 때
 {
 	return ActionState == EActionState::EAS_Unoccupied;
 	

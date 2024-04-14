@@ -79,6 +79,7 @@ public:
 
 	void ProjectileAttack();
 	void InitializeEnemy();
+	void ShowHealthBar();
 
 	FORCEINLINE EEnemyState GetEnemyState() const { return EnemyState; }
 private:
@@ -144,7 +145,6 @@ private:
 
 	/** AI behavior */
 	void HideHealthBar();
-	void ShowHealthBar();
 	void LoseInterest();
 	void StartPatrolling();
 	void ChaseTarget();
