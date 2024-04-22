@@ -28,12 +28,15 @@ void ABaseCharacter::BeginPlay()
 
 void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) //타격 받는 함수
 {
-	if (IsAlive() && !IsStun() && Hitter)
+	if (IsAlive() && !IsStun() && !NotEnoughStamina() && Hitter)
 	{
 		DirectionalHitReact(Hitter->GetActorLocation());
 	}
 	else if (IsAlive() && IsStun() && Hitter) {
 		DirectionalHitStun(Hitter->GetActorLocation());
+	}
+	else if (IsAlive() && !IsStun() && NotEnoughStamina() && Hitter) {
+		DirectionalHitFall(Hitter->GetActorLocation());
 	}
 	else Die();
 
@@ -126,6 +129,16 @@ void ABaseCharacter::PlayStunReactMontage(const FName& SectionName)
 	}
 }
 
+void ABaseCharacter::PlayFallReactMontage(const FName& SectionName)
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && FallReactMontage)
+	{
+		AnimInstance->Montage_Play(FallReactMontage);
+		AnimInstance->Montage_JumpToSection(SectionName, FallReactMontage);
+	}
+}
+
 void ABaseCharacter::PlayBlockReactMontage()
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
@@ -133,6 +146,41 @@ void ABaseCharacter::PlayBlockReactMontage()
 	{
 	AnimInstance->Montage_Play(BlockMontage);
 	}
+}
+
+void ABaseCharacter::DirectionalHitFall(const FVector& ImpactPoint)
+{
+	const FVector Forward = GetActorForwardVector();
+	// Lower Impact Point to the Enemy's Actor Location Z
+	const FVector ImpactLowered(ImpactPoint.X, ImpactPoint.Y, GetActorLocation().Z);
+	const FVector ToHit = (ImpactLowered - GetActorLocation()).GetSafeNormal();
+	// Forward * ToHit = |Forward||ToHit| * cos(theta)
+	// |Forward| = 1, |ToHit| = 1, so Forward * ToHit = cos(theta)
+	const double CosTheta = FVector::DotProduct(Forward, ToHit);
+	// Take the inverse cosine (arc-cosine) of cos(theta) to get theta
+	double Theta = FMath::Acos(CosTheta);
+	// convert from radians to degrees
+	Theta = FMath::RadiansToDegrees(Theta);
+	// if CrossProduct points down, Theta should be negative
+	const FVector CrossProduct = FVector::CrossProduct(Forward, ToHit);
+	if (CrossProduct.Z < 0)
+	{
+		Theta *= -1.f;
+	}
+	FName Section("FromBack");
+	if (Theta >= -45.f && Theta < 45.f)
+	{
+		Section = FName("FromFront");
+	}
+	else if (Theta >= -135.f && Theta < -45.f)
+	{
+		Section = FName("FromLeft");
+	}
+	else if (Theta >= 45.f && Theta < 135.f)
+	{
+		Section = FName("FromRight");
+	}
+	PlayFallReactMontage(Section);
 }
 
 void ABaseCharacter::DirectionalHitStun(const FVector& ImpactPoint)
@@ -425,6 +473,18 @@ void ABaseCharacter::PlayRushSkillMontage()
 	PlayMontageSection(RushSkillMontage, FName("RushSkill"));
 }
 
+void ABaseCharacter::PlaySmashSkillMontage()
+{
+	PlayMontageSection(SmashSkillMontage, FName("SmashSkill"));
+}
+
+void ABaseCharacter::PlaySwingSkillMontage()
+{
+	PlayMontageSection(SwingSkillMontage, FName("SwingSkill"));
+}
+
+
+
 void ABaseCharacter::StopAttackMontage()
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
@@ -482,6 +542,18 @@ bool ABaseCharacter::CanRushAttack()
 	return false;
 }
 
+bool ABaseCharacter::CanSwingAttack()
+{
+	return false;
+}
+
+bool ABaseCharacter::CanSmashAttack()
+{
+	return false;
+}
+
+
+
 bool ABaseCharacter::CanNeckSkill()
 {
 	return false;
@@ -496,6 +568,12 @@ bool ABaseCharacter::IsStun()
 {
 	return Attributes && Attributes->IsStun();
 }
+
+bool ABaseCharacter::NotEnoughStamina()
+{
+	return Attributes && Attributes->NotEnoughStamina();
+}
+
 
 bool ABaseCharacter::IsAttacking()
 {
@@ -536,6 +614,14 @@ void ABaseCharacter::EndLaserSkill()
 }
 
 void ABaseCharacter::EndRushSkill()
+{
+}
+
+void ABaseCharacter::EndSmashSkill()
+{
+}
+
+void ABaseCharacter::EndSwingSkill()
 {
 }
 

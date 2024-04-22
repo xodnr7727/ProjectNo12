@@ -76,6 +76,11 @@ bool UAttributeComponent::IsStun()
 	return Stun < 0.1f;
 }
 
+bool UAttributeComponent::NotEnoughStamina()
+{
+	return Stamina < MaxStamina/2;
+}
+
 void UAttributeComponent::RecoveryStun()
 {
 	Stun += MaxStun;
@@ -83,7 +88,7 @@ void UAttributeComponent::RecoveryStun()
 
 void UAttributeComponent::RecoveryHealth()
 {
-	HealthRegenRate = 12.f;
+	HealthRegenRate = 32.f;
 	/*float RestoreAmount = MaxHealth * 0.3f;
 
 	Health += RestoreAmount;

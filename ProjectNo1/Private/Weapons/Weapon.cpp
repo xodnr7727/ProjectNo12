@@ -87,11 +87,14 @@ AWeapon::AWeapon()
 	LaserSkillEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("LaserSkillEffect"));
 	LaserSkillEffect->SetupAttachment(RootComponent); // 이펙트 위치 설정
 
-	LeftCastEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("LeftCastEffect"));
-	LeftCastEffect->SetupAttachment(RootComponent); // 이펙트 위치 설정
+	LeftCastEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("LeftCastEffect"));
+	LeftCastEffect->SetupAttachment(GetRootComponent()); // 이펙트 위치 설정
 
 	WeaponSpellAttackEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("WeaponSpellAttackEffect"));
 	WeaponSpellAttackEffect->SetupAttachment(GetRootComponent());
+
+	LichSwingAttackEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("LichSwingAttackEffect"));
+	LichSwingAttackEffect->SetupAttachment(GetRootComponent());
 
 }
 
@@ -232,7 +235,7 @@ void AWeapon::DeactivateLeftCastSkillEffect()
 	if (LeftCastEffect)
 	{
 		UE_LOG(LogTemp, Log, TEXT("DeactivateLeft"));
-		LeftCastEffect->DeactivateSystem();
+		LeftCastEffect->Deactivate();
 	}
 }
 
@@ -240,7 +243,7 @@ void AWeapon::ActivateLeftCastSkillEffect()
 {
 	if (LeftCastEffect)
 	{
-		LeftCastEffect->ActivateSystem();
+		LeftCastEffect->Activate();
 	}
 }
 
@@ -257,6 +260,22 @@ void AWeapon::ActivateWeaponSpellEffect()
 	if (WeaponSpellAttackEffect)
 	{
 		WeaponSpellAttackEffect->Activate();
+	}
+}
+
+void AWeapon::DeactivateLichSwingAttackEffect()
+{
+	if (LichSwingAttackEffect)
+	{
+		LichSwingAttackEffect->Deactivate();
+	}
+}
+
+void AWeapon::ActivateLichSwingAttackEffect()
+{
+	if (LichSwingAttackEffect)
+	{
+		LichSwingAttackEffect->Activate();
 	}
 }
 
@@ -326,10 +345,13 @@ void AWeapon::BeginPlay()
 		LaserSkillEffect->DeactivateSystem(); // ''
 	}
 	if (LeftCastEffect) {
-		LeftCastEffect->DeactivateSystem(); // ''
+		LeftCastEffect->Deactivate(); // ''
 	}
 	if (WeaponSpellAttackEffect) {
 		WeaponSpellAttackEffect->Deactivate();
+	}
+	if (LichSwingAttackEffect) {
+		LichSwingAttackEffect->Deactivate();
 	}
 
 	WeaponBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnBoxOverlap);

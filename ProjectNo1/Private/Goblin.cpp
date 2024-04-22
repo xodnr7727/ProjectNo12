@@ -4,6 +4,7 @@
 #include "Goblin.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "ProjectNo1/ProjectNo1Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Perception/PawnSensingComponent.h"
 #include "Components/AttributeComponent.h"
@@ -139,7 +140,6 @@ void AGoblin::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)/
 
 	ClearPatrolTimer();
 	ClearAttackTimer();
-	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetCharacterMovement()->Activate();
 	EnemyState = EEnemyState::EES_Attacking;
 	StopAttackMontage();
@@ -191,7 +191,6 @@ void AGoblin::Die()
 	DisableCapsule();
 	SetLifeSpan(DeathLifeSpan);
 	GetCharacterMovement()->bOrientRotationToMovement = false;
-	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	SetActorEnableCollision(false);
 	SpawnEx();
 	SpawnGd();
@@ -343,6 +342,69 @@ AActor* AGoblin::ChoosePatrolTarget()
 	return nullptr;
 }
 
+void AGoblin::AttackSweepTrace()
+{
+	FVector Start = GetActorLocation() + GetActorForwardVector() * 100.0f; // 보스 바로 앞 위치에서 시작
+	FVector ForwardVector = GetActorForwardVector(); // 몬스터가 향하는 방향
+	FVector End = Start + ForwardVector * 100.0f; // 일정 거리만큼 스윕 트레이스
+	FVector SpawnLocation = GetActorLocation();
+	//FHitResult HitResult;
+	FHitResult HitResult;
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.AddIgnoredActor(this); // 보스는 무시
+	bool bResult = GetWorld()->SweepSingleByChannel(
+		HitResult,
+		Start,
+		End,
+		FQuat::Identity,
+		ECollisionChannel::ECC_Visibility,
+		FCollisionShape::MakeSphere(50.0f),
+		CollisionParams);
+	UE_LOG(LogTemp, Log, TEXT("GoblinAttackSweepTrace")); //확인완료
+	// 라인 트레이스의 시작점에 이펙트를 생성하여 표시
+
+	//UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), EndPointEffect, SpawnLocation, FRotator::ZeroRotator);
+	// 라인 트레이스 실행
+	if (bResult) {
+		if (AActor* Actor = HitResult.GetActor()) {
+			if (HitResult.GetActor()->ActorHasTag("EngageableTarget"))
+			{
+				UE_LOG(LogTemp, Log, TEXT("Hit Actor : %s"), *HitResult.GetActor()->GetName());
+				DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.f, 0, 1.f);
+				// 라인 트레이스의 타격점에 이펙트를 생성하여 표시
+				//UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, HitResult.ImpactPoint, FRotator::ZeroRotator);
+				//PlayWeaponSpellHitSound(HitResult.ImpactPoint);
+				FDamageEvent DamageEvent;
+
+				UGameplayStatics::ApplyDamage(HitResult.GetActor(), GoblinDamage, GetInstigatorController(), this, UDamageType::StaticClass());
+				ExecuteGetHit(HitResult);
+				ExecuteGetBlock(HitResult);
+			}
+		}
+	}
+	else {
+		DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.f, 0, 1.f);
+	}
+}
+
+void AGoblin::ExecuteGetHit(FHitResult& HitResult)
+{
+	IHitInterface* HitInterface = Cast<IHitInterface>(HitResult.GetActor());
+	if (HitInterface)
+	{
+		HitInterface->Execute_GetHit(HitResult.GetActor(), HitResult.ImpactPoint, GetOwner());
+	}
+}
+
+void AGoblin::ExecuteGetBlock(FHitResult& HitResult)
+{
+	IHitInterface* HitInterface = Cast<IHitInterface>(HitResult.GetActor());
+	if (HitInterface)
+	{
+		HitInterface->Execute_GetBlock(HitResult.GetActor(), HitResult.ImpactPoint, GetOwner());
+	}
+}
+
 void AGoblin::Attack()
 {
 	Super::Attack();
@@ -422,6 +484,14 @@ void AGoblin::ChaseTarget()
 	EnemyState = EEnemyState::EES_Chasing;
 	GetCharacterMovement()->MaxWalkSpeed = ChasingSpeed;
 	MoveToTarget(CombatTarget);
+}
+
+void AGoblin::CombatTargetPlayer()
+{
+	EnemyState = EEnemyState::EES_Chasing;
+	UE_LOG(LogTemp, Log, TEXT("PlayerCombat"));
+	GetCharacterMovement()->MaxWalkSpeed = ChasingSpeed;
+	MoveToTarget(ProjectNo1Character);
 }
 
 bool AGoblin::IsOutsideCombatRadius()

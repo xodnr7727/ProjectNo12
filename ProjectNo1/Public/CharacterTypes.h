@@ -35,6 +35,7 @@ enum class EActionState : uint8
 	EAS_AttackSkill UMETA(DisplayName = "AttackSkill"),
 	EAS_LargeAttack UMETA(DisplayName = "LargeAttack"),
 	EAS_LevelUp UMETA(DisplayName = "LevelUp"),
+	EAS_WeaponSpell UMETA(DisplayName = "WeaponSpell"),
 	EAS_Dead UMETA(DisplayName = "Dead")
 };
 

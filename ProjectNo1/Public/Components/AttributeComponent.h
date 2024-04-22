@@ -102,6 +102,7 @@ public:
 	bool IsAlive();
 	bool IsCanLaserSkill();
 	bool IsStun();
+	bool NotEnoughStamina();
 
 	void UseStamina(float StaminaCost);
 	float GetStaminaPercent();

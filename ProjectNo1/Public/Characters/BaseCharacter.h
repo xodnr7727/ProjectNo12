@@ -34,6 +34,7 @@ protected:
 	virtual void Die();
 	void DirectionalHitReact(const FVector& ImpactPoint);
 	void DirectionalHitStun(const FVector& ImpactPoint);
+	void DirectionalHitFall(const FVector& ImpactPoint);
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void HitReactBlock();
@@ -61,6 +62,8 @@ protected:
 	virtual bool CanAttack();
 	virtual bool CanLaserAttack();
 	virtual bool CanRushAttack();
+	virtual bool CanSmashAttack();
+	virtual bool CanSwingAttack();
 	virtual bool CanNeckSkill();
 
 	UFUNCTION(BlueprintCallable)
@@ -69,12 +72,16 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	bool IsStun();
 
+	UFUNCTION(BlueprintCallable)
+	bool NotEnoughStamina();
+
 	bool IsAttacking();
 	void DisableMeshCollision();
 
 	bool HasEnoughShieldStamina();
 	void PlayHitReactMontage(const FName& SectionName);
 	void PlayStunReactMontage(const FName& SectionName);
+	void PlayFallReactMontage(const FName& SectionName);
 	void PlayBlockReactMontage();
 	virtual int32 PlayAttackMontage();
 	virtual int32 PlayDeathMontage();
@@ -89,6 +96,8 @@ protected:
 	virtual void PlaySwordSkillMontage();
 	virtual void PlayLaserSkillMontage();
 	virtual void PlayRushSkillMontage();
+	virtual void PlaySmashSkillMontage();
+	virtual void PlaySwingSkillMontage();
 	void StopAttackMontage();
 
 	void SpawnEffect(const FVector& ImpactPoint);
@@ -124,6 +133,12 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	virtual void EndRushSkill();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void EndSmashSkill();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void EndSwingSkill();
 
 	UFUNCTION(BlueprintCallable)
 		void SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
@@ -198,6 +213,9 @@ protected:
 		UAnimMontage* StunMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
+		UAnimMontage* FallReactMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat)
 		UAnimMontage* NeckSkillMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
@@ -217,6 +235,12 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
 		UAnimMontage* RushSkillMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat)
+		UAnimMontage* SmashSkillMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat)
+		UAnimMontage* SwingSkillMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
 		UAnimMontage* DeathMontage;

@@ -35,6 +35,7 @@
 #include "HUD/SlashOverlay.h"
 #include "MyPlayerController.h"
 #include "Soul.h"
+#include "NiagaraFunctionLibrary.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AProjectNo1Character
@@ -107,14 +108,14 @@ AProjectNo1Character::AProjectNo1Character()
 
 	RageCooldown = 15.0f; // 초기 쿨타임 설정 (예: 15초)
 	bCanRage = true; // 초기에 분노 사용할 수 있도록 설정
-	RageDuration = 8.0f;// 분노 지속 시간
+	RageDuration = 11.0f;// 분노 지속 시간
 
-	SwordSkillCooldown = 8.0f; // 초기 쿨타임 설정 (예: 8초)
-	SwordSkillDuration = 6.0f; // 초기 지속시간 설정 (예: 6초)
+	SwordSkillCooldown = 10.0f; // 초기 쿨타임 설정 (예: 10초)
+	SwordSkillDuration = 8.0f; // 초기 지속시간 설정 (예: 8초)
 	bCanSwordSkill = true; // 초기에 검 공격 사용할 수 있도록 설정
 
-	WeaponSpellCooldown = 12.0f; // 초기 쿨타임 설정 (예: 8초)
-	WeaponSpellDuration = 8.0f; // 초기 지속시간 설정 (예: 6초)
+	WeaponSpellCooldown = 20.0f; // 초기 쿨타임 설정 (예: 20초)
+	WeaponSpellDuration = 14.0f; // 초기 지속시간 설정 (예: 14초)
 	bCanWeaponSpell = true; // 초기에 주문 공격 사용할 수 있도록 설정
 	AttackWeaponSpell = false; // 초기에 주문 공격 투사체가 나가지 않도록 설정
 
@@ -347,6 +348,7 @@ void AProjectNo1Character::OnNeckSkillPressed()
 		ActionState = EActionState::EAS_NeckSkillDo;
 		bCanRage = false;//연속 사용 불가
 		EquippedWeapon->IncreaseDamage();// 공격력 증가
+		IncreaseSpellDamage();
 		RageSkillEffect->ActivateSystem();//분노 이펙트 활성화
 		GetWorldTimerManager().SetTimer(NeckSkillCountdown, this, &AProjectNo1Character::EnableRage, RageCooldown, false); // 쿨타임 타이머 시작
 		GetWorldTimerManager().SetTimer(RageEndTimerHandle, this, &AProjectNo1Character::RestoreDamage, RageDuration, false);//분노 지속시간 타이머 시작
@@ -367,6 +369,20 @@ void AProjectNo1Character::DeactivateSkillEffect()
 void AProjectNo1Character::RestoreDamage()
 {
 	EquippedWeapon->RestoreDamage();// 공격력 복구
+	RestoreSpellDamage();
+}
+
+void AProjectNo1Character::IncreaseSpellDamage()
+{
+	// 공격력을 증가시키는 코드
+	SpellDamage += 20.0f;
+}
+
+void AProjectNo1Character::RestoreSpellDamage()
+{
+	// 공격력을 원래대로 복구시키는 코드
+	// 예를 들어, CharacterDamage = BaseDamage;
+	SpellDamage -= 20.0f;
 }
 
 void AProjectNo1Character::EnableRage()
@@ -632,7 +648,7 @@ void AProjectNo1Character::WeaponSpellAttack()
 	if (!Dead() && CanNeckSkill() && HasEnoughSkillStamina() && bCanWeaponSpell)
 	{
 		PlayWeaponSpellSkillMontage();
-		ActionState = EActionState::EAS_AttackSkill;
+		ActionState = EActionState::EAS_WeaponSpell;
 		bCanWeaponSpell = false;//연속 사용 불가
 		AttackWeaponSpell = true;//검기 활성화
 		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);//주문검 공격 시 무적
@@ -645,81 +661,90 @@ void AProjectNo1Character::WeaponSpellAttack()
 		}
 	}
 }
+void AProjectNo1Character::WeaponSpellSlashEffect()
+{
+	FRotator PlayerRotation = GetActorRotation();
+	FRotator DesiredRotation = PlayerRotation + FRotator(-45.0f, 100.0f, 45.0f);
+	FVector ForwardVector = GetActorForwardVector(); // 플레이어 전방
+	FVector SpawnLocationA = GetActorLocation() + (ForwardVector * 200.0f);
+	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), ImpactEffect, SpawnLocationA, DesiredRotation);
+}
 
 
 // 플레이어가 발사할 수 있는 라인 트레이스를 나타내는 함수
 void AProjectNo1Character::WeaponSpellLineTrace()
 {
-	FVector Start = GetActorLocation(); // 플레이어 위치에서 시작
-	FVector ForwardVector = GetActorForwardVector(); // 플레이어가 향하는 방향
-	FVector End = Start + ForwardVector * 10000.0f; // 일정 거리만큼 라인 트레이스
-	FVector SpawnLocation = GetActorLocation() - FVector(0.0f, -90.0f, GetCapsuleComponent()->GetScaledCapsuleHalfHeight()) + (ForwardVector.RotateAngleAxis(180.0f, FVector::UpVector) * 100.0f);;
-	//FHitResult HitResult;
-	TArray<FHitResult> HitResults;
-	FCollisionQueryParams CollisionParams;
-	CollisionParams.AddIgnoredActor(this); // 플레이어는 무시
-	CollisionParams.OwnerTag = "EngageableTarget";
-	bool bResult = GetWorld()->LineTraceMultiByChannel(
-		HitResults,
-		Start,
-		End,
-		ECollisionChannel::ECC_Visibility,
-		CollisionParams);
+	if (AttackWeaponSpell) {
+		FVector ForwardVector = GetActorForwardVector(); // 플레이어 전방
+		FVector RightVector = GetActorRightVector(); // 플레이어 측면
+		FVector Start = GetActorLocation() + (ForwardVector * 200.0f);// 플레이어 앞 위치에서 시작
+		FVector End = Start + ForwardVector * 100.0f; // 일정 거리만큼 라인 트레이스
+		FRotator PlayerRotation = GetActorRotation();
+		FVector SpawnLocationA = GetActorLocation() + (ForwardVector * 200.0f);
+		FVector SpawnLocationB = SpawnLocationA + (RightVector * 80.0f) + (RightVector * 30.0f) + (ForwardVector * 30.0f);
+		SpawnLocationB.Z += 100.0f;
+		FVector SpawnLocationC = SpawnLocationA - (RightVector * 80.0f) + (RightVector * 30.0f) - (ForwardVector * 30.0f);
+		SpawnLocationC.Z -= 100.0f;
+     	//FHitResult HitResult;
+		//TArray<FHitResult> HitResults;
+		FHitResult HitResult;
+		FCollisionQueryParams CollisionParams;
+		CollisionParams.AddIgnoredActor(this); // 플레이어는 무시
+		CollisionParams.OwnerTag = "EngageableTarget";
+		bool bResult = GetWorld()->SweepSingleByChannel(
+			HitResult,
+			Start,
+			End,
+			FQuat::Identity,
+			ECollisionChannel::ECC_Visibility,
+			FCollisionShape::MakeSphere(50.0f),
+			CollisionParams);
 
-	// 라인 트레이스의 시작점에 이펙트를 생성하여 표시
-
-	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), EndPointEffect, SpawnLocation, FRotator::ZeroRotator);
-	// 라인 트레이스 실행
-	if (bResult) {
-		for (FHitResult& HitResult : HitResults) {
+		// 라인 트레이스의 시작점에 이펙트를 생성하여 표시
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), EndPointEffect, SpawnLocationA, PlayerRotation);
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), SpellEffectA, SpawnLocationA, PlayerRotation);
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), SpellEffectB, SpawnLocationB, PlayerRotation);
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), SpellEffectC, SpawnLocationC, PlayerRotation);
+		PlayWeaponSpellHitSound(SpawnLocationA);
+		// 라인 트레이스 실행
+		if (bResult) {
+			//for (FHitResult& HitResult : HitResults) {
 			if (AActor* Actor = HitResult.GetActor()) {
 				if (HitResult.GetActor()->ActorHasTag("Enemy"))
 				{
-				UE_LOG(LogTemp, Log, TEXT("Hit Actor : %s"), *Actor->GetName());
-				DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.f, 0, 1.f);
-				// 라인 트레이스의 타격점에 이펙트를 생성하여 표시
-				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, HitResult.ImpactPoint, FRotator::ZeroRotator);
-				PlayWeaponSpellHitSound(HitResult.ImpactPoint);
-				FDamageEvent DamageEvent;
+					UE_LOG(LogTemp, Log, TEXT("Hit Actor : %s"), *Actor->GetName());
+					DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.f, 0, 1.f);
+					// 라인 트레이스의 타격점에 이펙트를 생성하여 표시
+					FDamageEvent DamageEvent;
 
-				ALichEnemy* HitEnemy = Cast<ALichEnemy>(HitResult.GetActor());
-				AGoblin* Goblin = Cast<AGoblin>(HitResult.GetActor());
-				ABossCharacter* BossCharacter = Cast<ABossCharacter>(HitResult.GetActor());
+					ALichEnemy* HitEnemy = Cast<ALichEnemy>(HitResult.GetActor());
+					AGoblin* Goblin = Cast<AGoblin>(HitResult.GetActor());
+					ABossCharacter* BossCharacter = Cast<ABossCharacter>(HitResult.GetActor());
 
-				UGameplayStatics::ApplyDamage(HitResult.GetActor(), 100, GetInstigatorController(), this, UDamageType::StaticClass());
-				ExecuteGetHit(HitResult);
-				if (HitEnemy) {
-					HitEnemy->ShowHitNumber(100, HitResult.Location);
-				}
-				if (Goblin) {
-					Goblin->ShowHitNumber(100, HitResult.Location);
-				}
-				if (BossCharacter) {
-					BossCharacter->ShowHitNumber(100, HitResult.Location);
+					Actor->SetOwner(this);
+					Actor->SetInstigator(this);
+					UGameplayStatics::ApplyDamage(HitResult.GetActor(), SpellDamage, GetInstigatorController(), this, UDamageType::StaticClass());
+					ExecuteGetHit(HitResult);
+					if (HitEnemy) {
+						HitEnemy->ShowHitNumber(SpellDamage, HitResult.Location);
+						HitEnemy->CombatTargetPlayer();
+					}
+					if (Goblin) {
+						Goblin->ShowHitNumber(SpellDamage, HitResult.Location);
+						Goblin->CombatTargetPlayer();
+					}
+					if (BossCharacter) {
+						BossCharacter->ShowHitNumber(SpellDamage, HitResult.Location);
+						BossCharacter->CombatTargetPlayer();
+					}
 				}
 			}
 		}
-	}
-}
-	else {
-				DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.f, 0, 1.f);
-}
-	/*
-	if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_GameTraceChannel1, CollisionParams)) // ECC_GameTraceChannel1을 사용하여 플레이어는 무시
-	{
-		// 라인 트레이스가 적에게 닿았을 때 실행할 코드
-		AActor* HitActor = HitResult.GetActor();
-		if (HitActor && HitActor != this) // 플레이어가 아니면서 유효한 액터인 경우에만
-		{
-			// 여기에 적을 공격하는 코드를 추가하세요
-			//HitActor->TakeDamage(DamageAmount, DamageType, InstigatedBy, this);
-			UE_LOG(LogTemp, Log, TEXT("WeaponSpellHit"));
-			// 이펙트를 생성하여 적의 위치에 표시
-			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, HitResult.ImpactPoint, FRotator::ZeroRotator);
-			PlayWeaponSpellHitSound(HitResult.ImpactPoint);
+		//}
+		else {
+			DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.f, 0, 1.f);
 		}
 	}
-	*/
 }
 
 // 호출하는 곳에서 ShootLineTrace() 함수를 호출하면 됩니다.
@@ -796,7 +821,8 @@ void AProjectNo1Character::StopSprinting()
 
 float AProjectNo1Character::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	if (ActionState == EActionState::EAS_Blocking && HasEnoughShieldStamina()) { //막기 상태일때 데미지 0
+	float AngleToMonster = CalculateAngleBetweenPlayerAndMonster(this, DamageCauser);
+	if (ActionState == EActionState::EAS_Blocking && HasEnoughShieldStamina() && AngleToMonster <= MaxParryAngle) { //막기 상태일때 데미지 0
 		HandleDamage(0);
 		SetHUDHealth();
 		return 0;
@@ -820,12 +846,14 @@ void AProjectNo1Character::TouchStopped(ETouchIndex::Type FingerIndex, FVector L
 
 void AProjectNo1Character::TurnAtRate(float Rate)
 {
+	if (Dead() || IsAttackSkill() || HitReact()) return;
 	// calculate delta for this frame from the rate information
 	AddControllerYawInput(Rate * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
 }
 
 void AProjectNo1Character::LookUpAtRate(float Rate)
 {
+	if (Dead() || IsAttackSkill() || HitReact()) return;
 	// calculate delta for this frame from the rate information
 	AddControllerPitchInput(Rate * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
 }
@@ -884,6 +912,7 @@ void AProjectNo1Character::RMKeyReleased()
 bool AProjectNo1Character::BlockCantState()
 {
 	return ActionState == EActionState::EAS_AttackSkill ||
+		ActionState == EActionState::EAS_WeaponSpell ||
 		ActionState == EActionState::EAS_NeckSkillDo ||
 		ActionState == EActionState::EAS_Attacking ||
 		ActionState == EActionState::EAS_Parrying ||
@@ -892,6 +921,7 @@ bool AProjectNo1Character::BlockCantState()
 		ActionState == EActionState::EAS_LargeAttack ||
 		ActionState == EActionState::EAS_Dive ||
 		ActionState == EActionState::EAS_LevelUp ||
+		ActionState == EActionState::EAS_HitReaction ||
 		ActionState == EActionState::EAS_Dead;
 }
 
@@ -1045,9 +1075,15 @@ void AProjectNo1Character::FinishEquipping()
 	ActionState = EActionState::EAS_Unoccupied;
 }
 
+bool AProjectNo1Character::HitReact()
+{
+	return ActionState == EActionState::EAS_HitReaction;
+}
+
 void AProjectNo1Character::HitReactEnd()
 {
 	ActionState = EActionState::EAS_Unoccupied;
+	UE_LOG(LogTemp, Log, TEXT("HitReactEnd"));
 }
 
 bool AProjectNo1Character::IsUnoccupied()
@@ -1192,7 +1228,7 @@ void AProjectNo1Character::Attack()
 			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
 		}
 		if (AttackWeaponSpell) {
-			WeaponSpellLineTrace();//주문검 공격
+			WeaponSpellSlashEffect();
 		}
 	}
 }
@@ -1366,6 +1402,7 @@ void AProjectNo1Character::Die()
 		PlayerController->bShowMouseCursor = true;
 	}
 	GetCharacterMovement()->Deactivate();
+	UE_LOG(LogTemp, Log, TEXT("Dead"));
 	ActionState = EActionState::EAS_Dead;
 	DisableMeshCollision();
 }

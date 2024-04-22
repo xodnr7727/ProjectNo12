@@ -236,9 +236,10 @@ void ABossCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* H
 		ShowHealthBar();
 		ShowStunBar();
 	}
-	ClearPatrolTimer();
-	ClearAttackTimer();
-	//SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
+	if (!IsEngaged()) {
+		ClearPatrolTimer();
+		ClearAttackTimer();
+	}
 	GetCharacterMovement()->Activate();
 	//EnemyState = EEnemyState::EES_Attacking;
 	//StopAttackMontage();
@@ -246,6 +247,13 @@ void ABossCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* H
 	if (IsInsideAttackRadius())
 	{
 		if (!IsDead()) StartAttackTimer();
+	}
+	else if (IsOutsideAttackRadius() && !IsChasing())
+	{
+		// Outside attack range, chase character
+		EnemyState = EEnemyState::EES_Chasing;
+		GetCharacterMovement()->MaxWalkSpeed = 300.f;
+		MoveToTarget(CombatTarget);
 	}
 }
 
@@ -261,7 +269,6 @@ void ABossCharacter::BallHit_Implementation(const FVector& ImpactPoint, AActor* 
 
 	ClearPatrolTimer();
 	ClearAttackTimer();
-	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	EnemyState = EEnemyState::EES_Attacking;
 	StopAttackMontage();
 }
@@ -275,7 +282,6 @@ void ABossCharacter::GetStun_Implementation(const FVector& ImpactPoint, AActor* 
 
 	ClearPatrolTimer();
 	ClearAttackTimer();
-	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	EnemyState = EEnemyState::EES_Stunned;
 	StopAttackMontage();
 }
@@ -300,7 +306,7 @@ void ABossCharacter::OnLaserSkill()
 		EnemyState = EEnemyState::EES_Engaged;
 		bCanLaserSkill = false;//연속 사용 X
 		bAttack = false;
-		EquippedWeapon->IncreaseLaserSkillDamage();// 공격력 증가
+		IncreaseDamage();// 공격력 증가
 		GetCharacterMovement()->Deactivate();
 		GetWorldTimerManager().SetTimer(LaserSkillCountdown, this, &ABossCharacter::EnableLaserSkill, LaserSkillCooldown, false); // 쿨타임 타이머 시작
 		GetWorldTimerManager().SetTimer(AllSkillCountdown, this, &ABossCharacter::EnableSkill, AllSkillCooldown, false); // 쿨타임 타이머 시작
@@ -310,11 +316,24 @@ void ABossCharacter::OnLaserSkill()
 	}
 }
 
+void ABossCharacter::IncreaseDamage()
+{
+	// 공격력을 증가시키는 코드
+	BossDamage += 20.0f;
+}
+
+void ABossCharacter::RestoreDamage()
+{
+	// 공격력을 원래대로 복구시키는 코드
+	// 예를 들어, CharacterDamage = BaseDamage;
+	BossDamage -= 20.0f;
+}
+
 void ABossCharacter::EndLaserSkill()
 {
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//무적 해제
 	LaserSkillEffect->DeactivateSystem();// 레이저 버프 이펙트 비활성화
-	EquippedWeapon->RestoreLaserSkillDamage(); // 공격력 복구
+	RestoreDamage(); // 공격력 복구
 }
 
 void ABossCharacter::EnableLaserSkill()
@@ -340,7 +359,6 @@ void ABossCharacter::RushSkill()
 		bCanRushSkill = false;//돌진 연속 사용 X
 		bCanSkill = false;//스킬 연속 사용 X
 		bAttack = false;
-		//EquippedWeapon->IncreaseLaserSkillDamage();// 공격력 증가
 		GetCharacterMovement()->Deactivate();
 		GetWorldTimerManager().SetTimer(RushSkillCountdown, this, &ABossCharacter::EnableRushSkill, RushSkillCooldown, false); // 쿨타임 타이머 시작
 		GetWorldTimerManager().SetTimer(SkillCountdown, this, &ABossCharacter::EnableSkill, AllSkillCooldown, false); // 쿨타임 타이머 시작
@@ -350,22 +368,23 @@ void ABossCharacter::RushSkill()
 	}
 }
 
-// 플레이어가 발사할 수 있는 라인 트레이스를 나타내는 함수
 void ABossCharacter::RushSpellSweepTrace()
 {
 	FVector Start = GetActorLocation() + GetActorForwardVector() * 100.0f; // 보스 바로 앞 위치에서 시작
 	FVector ForwardVector = GetActorForwardVector(); // 보스가 향하는 방향
-	FVector End = Start + ForwardVector * 300.0f; // 일정 거리만큼 스윕 트레이스
+	FVector End = Start + ForwardVector * 150.0f; // 일정 거리만큼 스윕 트레이스
 	FVector SpawnLocation = GetActorLocation();
 	//FHitResult HitResult;
 	FHitResult HitResult;
 	FCollisionQueryParams CollisionParams;
 	CollisionParams.AddIgnoredActor(this); // 보스는 무시
-	bool bResult = GetWorld()->LineTraceSingleByChannel(
+	bool bResult = GetWorld()->SweepSingleByChannel(
 		HitResult,
 		Start,
 		End,
+		FQuat::Identity,
 		ECollisionChannel::ECC_Visibility,
+		FCollisionShape::MakeSphere(80.0f),
 		CollisionParams);
 	UE_LOG(LogTemp, Log, TEXT("RushSpellSweepTrace")); //확인완료
 	// 라인 트레이스의 시작점에 이펙트를 생성하여 표시
@@ -383,7 +402,7 @@ void ABossCharacter::RushSpellSweepTrace()
 				//PlayWeaponSpellHitSound(HitResult.ImpactPoint);
 				FDamageEvent DamageEvent;
 
-				UGameplayStatics::ApplyDamage(HitResult.GetActor(), 20, GetInstigatorController(), this, UDamageType::StaticClass());
+				UGameplayStatics::ApplyDamage(HitResult.GetActor(), BossDamage, GetInstigatorController(), this, UDamageType::StaticClass());
 				ExecuteGetHit(HitResult);
 				ExecuteGetBlock(HitResult);
 			}
@@ -414,11 +433,6 @@ void ABossCharacter::ExecuteGetBlock(FHitResult& HitResult)
 void ABossCharacter::EndRushSkill()
 {
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//무적 해제
-	if (EquippedWeapon && EquippedWeapon->GetRushSkillBox())
-	{
-		EquippedWeapon->GetRushSkillBox()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		EquippedWeapon->IgnoreActors.Empty();
-	}
 }
 
 void ABossCharacter::EnableRushSkill()
@@ -439,59 +453,12 @@ void ABossCharacter::DisableRushSkill()
 void ABossCharacter::DeactivateRushSkillEffect()
 {
 	RushSkillEffect->DeactivateSystem(); // 돌진 이펙트 비활성화
-	//EquippedWeapon->RestoreLaserSkillDamage(); // 공격력 복구
 }
 
 void ABossCharacter::ActivateRushSkillEffect()
 {
 	RushSkillEffect->ActivateSystem(); // 돌진 이펙트 활성화
 }
-
-
-void ABossCharacter::SpawnDefaultWeapon()
-{
-	UWorld* World = GetWorld();
-	if (World && WeaponClass)
-	{
-		AWeapon* DefaultWeapon = World->SpawnActor<AWeapon>(WeaponClass);
-		DefaultWeapon->Equip(GetMesh(), FName("MouthWeapon"), this, this);
-		EquippedWeapon = DefaultWeapon;
-	}
-}
-
-void ABossCharacter::SpawnLeftWeapon()
-{
-	UWorld* World = GetWorld();
-	if (World && WeaponClass)
-	{
-		AWeapon* DefaultWeapon = World->SpawnActor<AWeapon>(WeaponClass);
-		DefaultWeapon->Equip(GetMesh(), FName("LeftHandWeapon"), this, this);
-		EquippedWeapon = DefaultWeapon;
-	}
-}
-
-void ABossCharacter::SpawnRightWeapon()
-{
-	UWorld* World = GetWorld();
-	if (World && WeaponClass)
-	{
-		AWeapon* DefaultWeapon = World->SpawnActor<AWeapon>(WeaponClass);
-		DefaultWeapon->Equip(GetMesh(), FName("RightHandWeapon"), this, this);
-		EquippedWeapon = DefaultWeapon;
-	}
-}
-
-void ABossCharacter::SpawnRightWeaponTwo()
-{
-	UWorld* World = GetWorld();
-	if (World && WeaponClass)
-	{
-		AWeapon* DefaultWeapon = World->SpawnActor<AWeapon>(WeaponClass);
-		DefaultWeapon->Equip(GetMesh(), FName("RightHandWeaponTwo"), this, this);
-		EquippedWeapon = DefaultWeapon;
-	}
-}
-
 
 void ABossCharacter::Die()
 {
@@ -503,7 +470,6 @@ void ABossCharacter::Die()
 	DisableCapsule();
 	SetLifeSpan(DeathLifeSpan);
 	GetCharacterMovement()->bOrientRotationToMovement = false;
-	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	SetActorEnableCollision(false);
 	SpawnEx();
 	SpawnGd();
@@ -514,7 +480,6 @@ void ABossCharacter::Stun()
 	EnemyState = EEnemyState::EES_Stunned;
 	PlayStunMontage();
 	ClearAttackTimer();
-	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void ABossCharacter::SpawnEx()
@@ -572,14 +537,6 @@ float ABossCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 		ChaseTarget();
 	}
 	return DamageAmount;
-}
-
-void ABossCharacter::Destroyed()
-{
-	if (EquippedWeapon)
-	{
-		EquippedWeapon->Destroy();
-	}
 }
 
 void ABossCharacter::StoreHitNumber(UUserWidget* HitNubmer, FVector Location)
@@ -664,6 +621,7 @@ void ABossCharacter::Attack() //공격 함수
 {
 	FTimerHandle AttackCollisonCountdown;
 	Super::Attack();
+	if (CanAttack()) return;
 	if (CombatTarget == nullptr) return;
 	if (bAttack == false) return;
 	GetCharacterMovement()->Deactivate();
@@ -739,11 +697,11 @@ void ABossCharacter::HandleDamage(float DamageAmount)
 {
 	Super::HandleDamage(DamageAmount);
 
-	if (Attributes && HealthBarWidget)
+	if (Attributes && HealthBarWidget)//데미지 적용
 	{
 		HealthBarWidget->SetHealthPercent(Attributes->GetHealthPercent());
 	}
-		if (Attributes && StunBarWidget)
+		if (Attributes && StunBarWidget)//무력화 데미지 적용
 		{
 			StunBarWidget->SetStunPercent(Attributes->GetStunPercent());
 		}
@@ -755,10 +713,6 @@ void ABossCharacter::InitializeEnemy()
 	MoveToTarget(PatrolTarget);
 	HideHealthBar();
 	HideStunBar();
-	SpawnDefaultWeapon();
-	SpawnLeftWeapon();
-	SpawnRightWeapon();
-	SpawnRightWeaponTwo();
 }
 
 void ABossCharacter::HideHealthBar()
@@ -811,6 +765,15 @@ void ABossCharacter::ChaseTarget()
 	GetCharacterMovement()->MaxWalkSpeed = ChasingSpeed;
 	MoveToTarget(CombatTarget);
 }
+
+void ABossCharacter::CombatTargetPlayer()
+{
+	EnemyState = EEnemyState::EES_Chasing;
+	UE_LOG(LogTemp, Log, TEXT("PlayerCombat"));
+	GetCharacterMovement()->MaxWalkSpeed = ChasingSpeed;
+	MoveToTarget(ProjectNo1Character);
+}
+
 
 bool ABossCharacter::IsOutsideCombatRadius()
 {

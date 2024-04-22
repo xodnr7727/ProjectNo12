@@ -14,6 +14,7 @@
 #include "LichEnemy.generated.h"
 class UHealthBarComponent;
 class UPawnSensingComponent;
+class AProjectNo1Character;
 UCLASS()
 class PROJECTNO1_API ALichEnemy : public ABaseCharacter
 {
@@ -36,6 +37,8 @@ protected:
 	AActor* ChoosePatrolTarget();
 	virtual void Attack() override;
 	virtual bool CanAttack() override;
+	virtual bool CanSwingAttack() override;
+	virtual bool CanSmashAttack() override;
 	virtual void HandleDamage(float DamageAmount) override;
 	virtual void AttackEnd() override;
 	virtual void HitEnd() override;
@@ -48,13 +51,38 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void ActivateLeftCastEffect();
 
+	UFUNCTION(BlueprintCallable)
+	void AttackSweepTrace();
+
+	void ExecuteGetHit(FHitResult& HitResult);
+
+	void ExecuteGetBlock(FHitResult& HitResult);
+
+	void SwingSkill();
+
+	UFUNCTION(BlueprintCallable)
+	void SwingSpellSweepTrace();
+
+	void EndSwingSkill();
+	void EnableSwingSkill();
+	void EnableSkill();
+	void DisableSwingSkill();
+
+	UFUNCTION(BlueprintCallable)
+	void DeactivateSwingSkillEffect();
+
+	UFUNCTION(BlueprintCallable)
+	void ActivateSwingSkillEffect();
+
+	void PlayLichSwingHitSound(const FVector& ImpactPoint);
+
 	UFUNCTION()
 	void DestroyHitNumber(UUserWidget* HitNumber);
 
 	void UpdateHitNumbers();
 
 	UPROPERTY(EditAnywhere, Category = Combat)
-		float DeathLifeSpan = 8.f;
+		float DeathLifeSpan = 1.0f;
 
 	UFUNCTION()
 		void PawnSeen(APawn* SeenPawn);
@@ -73,7 +101,6 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	void CheckPatrolTarget();
 	void CheckCombatTarget();
-
 
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;//히트 함수
 	virtual void GetStun_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;//스턴 함수
@@ -95,6 +122,7 @@ public:
 	void ProjectileAttack();
 	void InitializeEnemy();
 	void ShowHealthBar();
+	void CombatTargetPlayer();
 
 	FORCEINLINE EEnemyState GetEnemyState() const { return EnemyState; }
 
@@ -170,6 +198,12 @@ private:
 	void SpawnDefaultWeapon();
 	void SpawnDefaultWeaponTwo();
 
+	UFUNCTION(BlueprintPure, Category = "Skill")
+	bool HasExistPlayerInFront();
+
+	UFUNCTION(BlueprintPure, Category = "Skill")
+	bool HasExistRushPlayerInFront();
+
 	/** Combat */
 	void StartAttackTimer();
 	void ClearAttackTimer();
@@ -188,16 +222,47 @@ private:
 	UPROPERTY(EditAnywhere, Category = Combat)
 		float ChasingSpeed = 300.f;
 
+	UPROPERTY(EditAnywhere, Category = "Attack Properties")
+		float LichDamage;
+
 	UPROPERTY(EditAnywhere, Category = Combat)
 		TSubclassOf<class ASoul> ExClass;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 		TSubclassOf<class ATreasure> GdClass;
 
+	UPROPERTY(VisibleAnywhere, Category = Player)
+		AProjectNo1Character* ProjectNo1Character;
+
+	UPROPERTY(EditAnywhere, Category = "Skill")
+		bool bCanSkill; // 스킬 사용할 수 있는지 여부
+		float AllSkillCooldown; // 스킬 쿨타임 변수
+		float CollisonTimer; // 콜리전 해제 타이머
+
 	UPROPERTY(EditAnywhere)
 		bool bAttack;
 
 	UPROPERTY(EditAnywhere, Category = "Skill")
 		float LeftCastSkillCount;//  지속 시간
+
+	UPROPERTY(EditAnywhere, Category = "Skill")
+	float SmashSkillCooldown; // 스매시 스킬 쿨타임 변수
+	bool bCanSmashSkill; // 스매시 스킬 사용할 수 있는지 여부
+
+	UPROPERTY(EditDefaultsOnly, Category = "Skill")
+	float SmashSkillEnableRange;  // Range to detect player in front of the enemie
+
+	UPROPERTY(EditAnywhere, Category = "Skill")
+	float SwingSkillCooldown; // 스윙 스킬 쿨타임 변수
+	bool bCanSwingSkill; // 스윙 스킬 사용할 수 있는지 여부
+
+	UPROPERTY(EditAnywhere, Category = "Skill")
+	USoundBase* LichSwingHitSound;
+
+	UPROPERTY(EditAnywhere, Category = "Skill")
+	UNiagaraSystem* LichSwingHitEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Skill")
+	float SwingSkillEnableRange;  // Range to detect player in front of the enemie
 
 };

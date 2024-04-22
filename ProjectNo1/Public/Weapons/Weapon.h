@@ -43,6 +43,9 @@ public:
 	void DeactivateWeaponSpellEffect();
 	void ActivateWeaponSpellEffect();
 
+	void DeactivateLichSwingAttackEffect();
+	void ActivateLichSwingAttackEffect();
+
 	void DeactivateSmallSkillEffect();
 	void ActivateSmallSkillEffect();
 
@@ -183,13 +186,16 @@ private:
 	    UParticleSystemComponent* LaserSkillEffect;
 
 	UPROPERTY(VisibleAnywhere, Category = "Skill")
-	  UParticleSystemComponent* LeftCastEffect;
+	   UNiagaraComponent* LeftCastEffect;
 
 	UPROPERTY(EditAnywhere, Category = "Skill")
 		USoundBase* CastSkillSound;
 
 	UPROPERTY(VisibleAnywhere, Category = "Skill")
 		UNiagaraComponent* WeaponSpellAttackEffect;
+
+	UPROPERTY(VisibleAnywhere, Category = "Skill")
+		UNiagaraComponent* LichSwingAttackEffect;
 
 public:
 	FORCEINLINE UBoxComponent* GetWeaponBox() const { return WeaponBox; }

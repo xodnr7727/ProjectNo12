@@ -14,6 +14,7 @@
 #include "Goblin.generated.h"
 class UHealthBarComponent;
 class UPawnSensingComponent;
+class AProjectNo1Character;
 UCLASS()
 class PROJECTNO1_API AGoblin : public ABaseCharacter
 {
@@ -39,13 +40,20 @@ protected:
 	virtual void HandleDamage(float DamageAmount) override;
 	virtual void AttackEnd() override;
 
+	UFUNCTION(BlueprintCallable)
+	void AttackSweepTrace();
+
+	void ExecuteGetHit(FHitResult& HitResult);
+
+	void ExecuteGetBlock(FHitResult& HitResult);
+
 	UFUNCTION()
 	void DestroyHitNumber(UUserWidget* HitNumber);
 
 	void UpdateHitNumbers();
 
 	UPROPERTY(EditAnywhere, Category = Combat)
-	float DeathLifeSpan = 8.f;
+	float DeathLifeSpan = 1.0f;
 
 	UFUNCTION()
 	void PawnSeen(APawn* SeenPawn);
@@ -80,6 +88,7 @@ public:
 	void ProjectileAttack();
 	void InitializeEnemy();
 	void ShowHealthBar();
+	void CombatTargetPlayer();
 
 	FORCEINLINE EEnemyState GetEnemyState() const { return EnemyState; }
 private:
@@ -180,10 +189,16 @@ private:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	float ChasingSpeed = 300.f;
 
+	UPROPERTY(EditAnywhere, Category = "Attack Properties")
+	float GoblinDamage;
+
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TSubclassOf<class ASoul> ExClass;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TSubclassOf<class ATreasure> GdClass;
+
+	UPROPERTY(VisibleAnywhere, Category = Player)
+	AProjectNo1Character* ProjectNo1Character;
 
 };

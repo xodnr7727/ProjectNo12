@@ -36,7 +36,6 @@ protected:
 	void SpawnEx();
 	void SpawnGd();
 	bool InTargetRange(AActor* Target, double Radius);
-	void MoveToTarget(AActor* Target);
 	AActor* ChoosePatrolTarget();
 	virtual void Attack() override;
 	virtual bool CanAttack() override;
@@ -52,6 +51,8 @@ protected:
 	void RecoveryStunState();
 
 	void OnLaserSkill();
+	void IncreaseDamage();
+	void RestoreDamage();
 	virtual void EndLaserSkill() override;
 	void EnableLaserSkill();
 
@@ -83,7 +84,7 @@ protected:
 	void UpdateHitNumbers();
 
 	UPROPERTY(EditAnywhere, Category = Combat)
-	float DeathLifeSpan = 8.f;
+	float DeathLifeSpan = 1.0f;
 
 	UFUNCTION()
 	void PawnSeen(APawn* SeenPawn);
@@ -109,8 +110,6 @@ public:
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
-	virtual void Destroyed() override;
-
 	UFUNCTION(BlueprintImplementableEvent)
 	void ShowHitNumber(int32 Damage, FVector HitLocation);
 
@@ -123,6 +122,9 @@ public:
 	void InitializeEnemy();
 	void ShowHealthBar();
 	void ShowStunBar();
+	void MoveToTarget(AActor* Target);
+	void ChaseTarget();
+	void CombatTargetPlayer();
 
 	FORCEINLINE EEnemyState GetEnemyState() const { return EnemyState; }
 
@@ -192,7 +194,6 @@ private:
 	void HideStunBar();
 	void LoseInterest();
 	void StartPatrolling();
-	void ChaseTarget();
 	bool IsOutsideCombatRadius();
 	bool IsOutsideAttackRadius();
 	bool IsInsideAttackRadius();
@@ -209,11 +210,6 @@ private:
 
 	UFUNCTION(BlueprintPure, Category = "Skill")
 	bool HasExistRushPlayerInFront();
-
-	void SpawnDefaultWeapon();
-	void SpawnLeftWeapon();
-	void SpawnRightWeapon();
-	void SpawnRightWeaponTwo();
 
 	/** Combat */
 	void StartAttackTimer();
@@ -236,6 +232,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	bool bAttack;
 
+	UPROPERTY(EditAnywhere, Category = "Attack Properties")
+	float BossDamage;
+
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TSubclassOf<class ASoul> ExClass;
 
@@ -247,7 +246,7 @@ private:
 
 	bool bCanSkill; // 스킬 사용할 수 있는지 여부
 	float AllSkillCooldown; // 스킬 쿨타임 변수
-	float CollisonTimer; // 무기 콜리전 해제 타이머
+	float CollisonTimer; // 콜리전 해제 타이머
 
 	UPROPERTY(EditAnywhere, Category = "Skill")
 	float LaserSkillCooldown; // 레이저 스킬 쿨타임 변수

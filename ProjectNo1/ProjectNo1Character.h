@@ -16,6 +16,7 @@ class UCameraComponent;
 class UAnimMontage;
 class USlashOverlay;
 class AMyPlayerController;
+class UNiagaraSystem;
 class USoundBase;
 class UParticleSystemComponent;
 UCLASS()
@@ -111,6 +112,8 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void FinishEquipping();
+
+	bool HitReact();
 	 
 	UFUNCTION(BlueprintCallable)
 	void HitReactEnd();
@@ -177,8 +180,10 @@ protected:
 
 	void ActivateSkillParticles();
 
-	void WeaponSpellAttack();
+	UFUNCTION(BlueprintCallable)
 	void WeaponSpellLineTrace();
+	void WeaponSpellAttack();
+	void WeaponSpellSlashEffect();
 	void ExecuteGetHit(FHitResult& HitResult);
 	void EnableWeaponSpell();
 	void PlayWeaponSpellHitSound(const FVector& ImpactPoint);
@@ -206,6 +211,9 @@ protected:
 	void OnSwordSkillPressed();
 	void DeactivateSkillEffect(); //이펙트 해제
 	void RestoreDamage(); //공격력 복구
+
+	void IncreaseSpellDamage();
+	void RestoreSpellDamage();
 
 	void EquipNeck(AWeapon* NewNeck);
 
@@ -349,6 +357,9 @@ private:
 		bool bCanWeaponSpell; // 스킬 사용할 수 있는지 여부
 		bool AttackWeaponSpell; // 스킬 사용할 수 있는지 여부
 
+		UPROPERTY(EditAnywhere, Category = "Attack Properties")
+		float SpellDamage;
+
 		UPROPERTY(EditAnywhere, Category = "Skill")
 		float RageDuration;// 분노 지속 시간 (초)
 
@@ -365,7 +376,16 @@ private:
 		UParticleSystem* SkillParticles;
 
 		UPROPERTY(EditAnywhere, Category = "Skill")
-		UParticleSystem* ImpactEffect;
+		UNiagaraSystem* ImpactEffect;
+
+		UPROPERTY(EditAnywhere, Category = "Skill")
+		UNiagaraSystem* SpellEffectA;
+
+		UPROPERTY(EditAnywhere, Category = "Skill")
+		UNiagaraSystem* SpellEffectB;
+
+		UPROPERTY(EditAnywhere, Category = "Skill")
+		UNiagaraSystem* SpellEffectC;
 
 		UPROPERTY(EditAnywhere, Category = "Skill")
 		UParticleSystem* EndPointEffect;
