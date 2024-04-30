@@ -96,6 +96,9 @@ AWeapon::AWeapon()
 	LichSwingAttackEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("LichSwingAttackEffect"));
 	LichSwingAttackEffect->SetupAttachment(GetRootComponent());
 
+	LichSmashAttackEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("LichSmashAttackEffect"));
+	LichSmashAttackEffect->SetupAttachment(GetRootComponent());
+
 }
 
 void AWeapon::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator)
@@ -279,6 +282,23 @@ void AWeapon::ActivateLichSwingAttackEffect()
 	}
 }
 
+void AWeapon::DeactivateLichSmashAttackEffect()
+{
+	if (LichSmashAttackEffect)
+	{
+		LichSmashAttackEffect->Deactivate();
+	}
+}
+
+void AWeapon::ActivateLichSmashAttackEffect()
+{
+	if (LichSmashAttackEffect)
+	{
+		LichSmashAttackEffect->Activate();
+	}
+}
+
+
 void AWeapon::DeactivateSmallSkillEffect()
 {
 	if (SmallSkillEffect)
@@ -352,6 +372,9 @@ void AWeapon::BeginPlay()
 	}
 	if (LichSwingAttackEffect) {
 		LichSwingAttackEffect->Deactivate();
+	}
+	if (LichSmashAttackEffect) {
+		LichSmashAttackEffect->Deactivate();
 	}
 
 	WeaponBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnBoxOverlap);

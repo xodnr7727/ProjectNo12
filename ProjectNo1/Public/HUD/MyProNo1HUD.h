@@ -6,6 +6,7 @@
 #include "GameFramework/HUD.h"
 #include "MyProNo1HUD.generated.h"
 class USlashOverlay;
+class UInventoryUI;
 /**
  * 
  */
@@ -16,12 +17,23 @@ class PROJECTNO1_API AMyProNo1HUD : public AHUD
 
 protected:
 	virtual void BeginPlay() override;
+
+public:
+	void PlayerDeadUI();
 private:
 	UPROPERTY(EditDefaultsOnly, Category = Slash)
 		TSubclassOf<USlashOverlay> SlashOverlayClass;
 
 	UPROPERTY()
 		USlashOverlay* SlashOverlay;
+
+
+	UPROPERTY(EditDefaultsOnly, Category = Inventory)
+	TSubclassOf<UInventoryUI> InventoryUIClass;
+
+	UPROPERTY()
+	UInventoryUI* InventoryUI;
 public:
 	FORCEINLINE USlashOverlay* GetSlashOverlay() const { return SlashOverlay; }
+	FORCEINLINE UInventoryUI* GetInventoryUI() const { return InventoryUI; }
 };

@@ -396,7 +396,7 @@ void ABossCharacter::RushSpellSweepTrace()
 			if (HitResult.GetActor()->ActorHasTag("EngageableTarget"))
 			{
 				UE_LOG(LogTemp, Log, TEXT("Hit Actor : %s"), *HitResult.GetActor()->GetName());
-				DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.f, 0, 1.f);
+				//DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.f, 0, 1.f);
 				// 라인 트레이스의 타격점에 이펙트를 생성하여 표시
 				//UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, HitResult.ImpactPoint, FRotator::ZeroRotator);
 				//PlayWeaponSpellHitSound(HitResult.ImpactPoint);
@@ -409,7 +409,7 @@ void ABossCharacter::RushSpellSweepTrace()
 		}
 	}
 	else {
-		DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.f, 0, 1.f);
+		//DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.f, 0, 1.f);
 	}
 }
 void ABossCharacter::ExecuteGetHit(FHitResult& HitResult)

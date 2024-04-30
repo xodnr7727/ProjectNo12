@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/Button.h"
 #include "InventoryUI.generated.h"
-
 /**
  * 
  */
@@ -16,4 +16,15 @@ class PROJECTNO1_API UInventoryUI : public UUserWidget
 	
 public:
 	
+protected:
+
+	void NativeConstruct();
+
+	// 다시하기 버튼 클릭 이벤트 함수
+    UFUNCTION()
+    void OnRetryClicked();
+
+private:
+	UPROPERTY(meta = (BindWidget))
+	class UButton* RETRY;
 };

@@ -32,6 +32,7 @@
 #include "Weapons/Potion.h"
 #include "Weapons/ProjectileWeapon.h"
 #include "HUD/MyProNo1HUD.h"
+#include "HUD/InventoryUI.h"
 #include "HUD/SlashOverlay.h"
 #include "MyPlayerController.h"
 #include "Soul.h"
@@ -713,7 +714,7 @@ void AProjectNo1Character::WeaponSpellLineTrace()
 				if (HitResult.GetActor()->ActorHasTag("Enemy"))
 				{
 					UE_LOG(LogTemp, Log, TEXT("Hit Actor : %s"), *Actor->GetName());
-					DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.f, 0, 1.f);
+					//DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.f, 0, 1.f);
 					// 라인 트레이스의 타격점에 이펙트를 생성하여 표시
 					FDamageEvent DamageEvent;
 
@@ -742,7 +743,7 @@ void AProjectNo1Character::WeaponSpellLineTrace()
 		}
 		//}
 		else {
-			DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.f, 0, 1.f);
+			//DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.f, 0, 1.f);
 		}
 	}
 }
@@ -1400,11 +1401,27 @@ void AProjectNo1Character::Die()
 		PlayerController->SetIgnoreMoveInput(true);
 		PlayerController->SetIgnoreLookInput(true);
 		PlayerController->bShowMouseCursor = true;
+		AMyProNo1HUD* MyProNo1HUD = Cast<AMyProNo1HUD>(PlayerController->GetHUD());
 	}
 	GetCharacterMovement()->Deactivate();
 	UE_LOG(LogTemp, Log, TEXT("Dead"));
 	ActionState = EActionState::EAS_Dead;
 	DisableMeshCollision();
+	PlayerDieUI();
+}
+
+void AProjectNo1Character::PlayerDieUI()
+{
+	// 게임 종료 UI 생성
+	UWorld* World = GetWorld();
+	if (World)
+	{
+		if (World && InventoryUIClass)
+		{
+			InventoryUI = CreateWidget<UInventoryUI>(World, InventoryUIClass);
+			InventoryUI->AddToViewport();
+		}
+	}
 }
 
 void AProjectNo1Character::EndAttacking()

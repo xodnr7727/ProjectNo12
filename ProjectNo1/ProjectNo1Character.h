@@ -15,6 +15,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class UAnimMontage;
 class USlashOverlay;
+class UInventoryUI;
 class AMyPlayerController;
 class UNiagaraSystem;
 class USoundBase;
@@ -103,6 +104,8 @@ protected:
 	void AsBlock();
 	void PlayEquip(const FName& SectionName);
 	virtual void Die() override;
+
+	void PlayerDieUI();
 
 	UFUNCTION(BlueprintCallable)
 	void AttachWeaponToBack();
@@ -289,6 +292,12 @@ private:
 		UPROPERTY()
 		USlashOverlay* SlashOverlay;
 
+		UPROPERTY(EditDefaultsOnly, Category = Inventory)
+		TSubclassOf<UInventoryUI> InventoryUIClass;
+
+		UPROPERTY()
+		UInventoryUI* InventoryUI;
+
 		UPROPERTY()
 		AMyPlayerController* MyPlayerController;
 
@@ -418,5 +427,6 @@ private:
 public:
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
 	FORCEINLINE EActionState GetActionState() const { return ActionState; }
+
 };
 

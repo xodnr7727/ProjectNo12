@@ -59,14 +59,34 @@ protected:
 	void ExecuteGetBlock(FHitResult& HitResult);
 
 	void SwingSkill();
+	void SmashSkill();
+	void TeleportSkill();
+
+	UFUNCTION(BlueprintCallable)
+	void TeleportToPlayer();
+
+	UFUNCTION(BlueprintCallable)
+	void SmashSpellEffect();
+
+	UFUNCTION(BlueprintCallable)
+	void SmashSpellSweepTrace();
 
 	UFUNCTION(BlueprintCallable)
 	void SwingSpellSweepTrace();
 
 	void EndSwingSkill();
 	void EnableSwingSkill();
-	void EnableSkill();
 	void DisableSwingSkill();
+	void EndSmashSkill();
+	void EnableSmashSkill();
+	void DisableSmashSkill();
+	void EnableSkill();
+	void EndTeleportSkill();
+	void EnableTeleportSkill();
+	void DisableTeleportSkill();
+
+	UFUNCTION(BlueprintCallable)
+	void TeleportSpellEffect();
 
 	UFUNCTION(BlueprintCallable)
 	void DeactivateSwingSkillEffect();
@@ -74,6 +94,13 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void ActivateSwingSkillEffect();
 
+	UFUNCTION(BlueprintCallable)
+	void DeactivateSmashSkillEffect();
+
+	UFUNCTION(BlueprintCallable)
+	void ActivateSmashSkillEffect();
+
+	void PlayLichSmashHitSound(const FVector& ImpactPoint);
 	void PlayLichSwingHitSound(const FVector& ImpactPoint);
 
 	UFUNCTION()
@@ -202,7 +229,10 @@ private:
 	bool HasExistPlayerInFront();
 
 	UFUNCTION(BlueprintPure, Category = "Skill")
-	bool HasExistRushPlayerInFront();
+	bool HasExistSmashPlayerInFront();
+
+	UFUNCTION(BlueprintPure, Category = "Skill")
+	bool HasExistTeleportPlayerInFront();
 
 	/** Combat */
 	void StartAttackTimer();
@@ -249,12 +279,28 @@ private:
 	float SmashSkillCooldown; // 스매시 스킬 쿨타임 변수
 	bool bCanSmashSkill; // 스매시 스킬 사용할 수 있는지 여부
 
+	UPROPERTY(EditAnywhere, Category = "Skill")
+	USoundBase* LichSmashHitSound;
+
+	UPROPERTY(EditAnywhere, Category = "Skill")
+	UParticleSystem* LichSmashHitEffect;
+
+	UPROPERTY(EditAnywhere, Category = "Skill")
+	UParticleSystem* SmashImpactEffect;
+
+	UPROPERTY(EditAnywhere, Category = "Skill")
+	UParticleSystem* TeleportEffect;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Skill")
 	float SmashSkillEnableRange;  // Range to detect player in front of the enemie
 
 	UPROPERTY(EditAnywhere, Category = "Skill")
 	float SwingSkillCooldown; // 스윙 스킬 쿨타임 변수
 	bool bCanSwingSkill; // 스윙 스킬 사용할 수 있는지 여부
+
+	UPROPERTY(EditAnywhere, Category = "Skill")
+	float TeleportSkillCooldown; // 스윙 스킬 쿨타임 변수
+	bool bCanTeleportSkill;
 
 	UPROPERTY(EditAnywhere, Category = "Skill")
 	USoundBase* LichSwingHitSound;
@@ -265,4 +311,9 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Skill")
 	float SwingSkillEnableRange;  // Range to detect player in front of the enemie
 
+	UPROPERTY(EditDefaultsOnly, Category = "Skill")
+	float TeleportSkillEnableRange;  // Range to detect player in front of the enemie
+
+	UPROPERTY(EditDefaultsOnly, Category = "Skill")
+	float TeleportDistance;
 };

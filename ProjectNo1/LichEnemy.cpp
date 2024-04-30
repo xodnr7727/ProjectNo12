@@ -7,6 +7,7 @@
 #include "ProjectNo1/ProjectNo1Character.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/Controller.h"
+#include "Components/CapsuleComponent.h"
 #include "Perception/PawnSensingComponent.h"
 #include "Components/AttributeComponent.h"
 #include "HUD/HealthBarComponent.h"
@@ -51,21 +52,27 @@ ALichEnemy::ALichEnemy()
 	if (ProjectileAsset.Succeeded())
 		ProjectileWeaponClass = ProjectileAsset.Class;
 
-	SmashSkillCooldown = 20.0f; // 초기 쿨타임 설정 (예: 20초)
+	SmashSkillCooldown = 12.0f; // 초기 쿨타임 설정 (예: 20초)
 	bCanSmashSkill = true; //초기에 레이저 공격 사용할 수 있도록 설정
 
 	// Set the default value for the special targeting range
-	SmashSkillEnableRange = 800.0f;
+	SmashSkillEnableRange = 500.0f;
 
-	SwingSkillCooldown = 15.0f; // 초기 쿨타임 설정 (예: 20초)
+	SwingSkillCooldown = 9.0f; // 초기 쿨타임 설정 (예: 20초)
 	bCanSwingSkill = true; //초기에 돌진 공격 사용할 수 있도록 설정
-
-	AllSkillCooldown = 7.0f; // 스킬 쿨타임 설정 (예: 7초)
-	bCanSkill = true;  //초기에 스킬 사용할 수 있도록 설정
-	CollisonTimer = 1.0f; // 스킬 쿨타임 설정 (예: 1초)
 
 	// Set the default value for the special targeting range
 	SwingSkillEnableRange = 300.0f;
+
+	TeleportSkillCooldown = 5.0f; // 텔레포트 스킬 쿨타임 변수
+	bCanTeleportSkill = true;
+
+	TeleportSkillEnableRange = 700.0f;
+	TeleportDistance = 30.0f;
+
+	AllSkillCooldown = 4.0f; // 스킬 쿨타임 설정 (예: 7초)
+	bCanSkill = true;  //초기에 스킬 사용할 수 있도록 설정
+	CollisonTimer = 1.0f; // 스킬 쿨타임 설정 (예: 1초)
 
 }
 void ALichEnemy::BeginPlay()
@@ -80,6 +87,14 @@ void ALichEnemy::BeginPlay()
 		{
 			//UE_LOG(LogTemp, Log, TEXT("SwingSkill")); //확인완료
 			SwingSkill();//스킬 공격
+		}
+		if (HasExistSmashPlayerInFront())//일정 거리 멀리에 플레이어가 있다면
+		{
+			//UE_LOG(LogTemp, Log, TEXT("SmashSkill")); //확인완료
+			SmashSkill();//스킬 공격
+		}
+		if (HasExistTeleportPlayerInFront()) {
+			TeleportSkill();
 		}
 }
 
@@ -105,6 +120,14 @@ void ALichEnemy::Tick(float DeltaTime)
 	{
 		//UE_LOG(LogTemp, Log, TEXT("SwingSkill")); //확인완료
 		SwingSkill();//스킬 공격
+	}
+	if (HasExistSmashPlayerInFront())//일정 거리 멀리에 플레이어가 있다면
+	{
+		//UE_LOG(LogTemp, Log, TEXT("SmashSkill")); //확인완료
+		SmashSkill();//스킬 공격
+	}
+	if (HasExistTeleportPlayerInFront()) {
+		TeleportSkill();
 	}
 }
 
@@ -171,11 +194,43 @@ bool ALichEnemy::HasExistPlayerInFront()//플레이어 체크 함수
 	return false;
 }
 
-bool ALichEnemy::HasExistRushPlayerInFront()//플레이어 체크 함수
+bool ALichEnemy::HasExistSmashPlayerInFront()//플레이어 체크 함수
 {
 	TArray<FHitResult> HitResults;
 	FVector StartLocation = GetActorLocation();
 	FVector EndLocation = StartLocation + GetActorForwardVector() * SmashSkillEnableRange;
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.AddIgnoredActor(this); // Ignore the boss
+	CollisionParams.bTraceComplex = true;
+	bool bHit = GetWorld()->SweepMultiByChannel(HitResults, StartLocation, EndLocation, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(50.0f), CollisionParams);
+
+	if (bHit)
+	{
+		for (const FHitResult& HitResult : HitResults)
+		{
+			AActor* OverlappingActor = HitResult.GetActor();
+			// 액터의 클래스가 AProjectNo1Character인지 확인
+			if (OverlappingActor->IsA(AProjectNo1Character::StaticClass()))
+			{
+				ProjectNo1Character = Cast<AProjectNo1Character>(OverlappingActor);
+
+				if (ProjectNo1Character)
+				{
+					//UE_LOG(LogTemp, Log, TEXT("ProjectNo1CharacterCheck")); //확인완료
+					return true;
+				}
+			}
+		}
+	}
+	//DrawDebugLine(GetWorld(), StartLocation, EndLocation, FColor::Red, false, 2.0f); //확인완료
+	return false;
+}
+
+bool ALichEnemy::HasExistTeleportPlayerInFront()//플레이어 체크 함수
+{
+	TArray<FHitResult> HitResults;
+	FVector StartLocation = GetActorLocation();
+	FVector EndLocation = StartLocation + GetActorForwardVector() * TeleportSkillEnableRange;
 	FCollisionQueryParams CollisionParams;
 	CollisionParams.AddIgnoredActor(this); // Ignore the boss
 	CollisionParams.bTraceComplex = true;
@@ -273,7 +328,7 @@ void ALichEnemy::SwingSkill()
 	{
 		PlaySwingSkillMontage();
 		EnemyState = EEnemyState::EES_Engaged;
-		bCanSwingSkill = false;//돌진 연속 사용 X
+		bCanSwingSkill = false;//스윙 연속 사용 X
 		bCanSkill = false;//스킬 연속 사용 X
 		bAttack = false;
 		GetCharacterMovement()->Deactivate();
@@ -312,7 +367,7 @@ void ALichEnemy::SwingSpellSweepTrace()
 			if (HitResult.GetActor()->ActorHasTag("EngageableTarget"))
 			{
 				UE_LOG(LogTemp, Log, TEXT("Hit Actor : %s"), *HitResult.GetActor()->GetName());
-				DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.f, 0, 1.f);
+				//DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.f, 0, 1.f);
 				// 라인 트레이스의 타격점에 이펙트를 생성하여 표시
 				UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), LichSwingHitEffect, HitResult.ImpactPoint, FRotator::ZeroRotator);
 				PlayLichSwingHitSound(HitResult.ImpactPoint);
@@ -325,7 +380,7 @@ void ALichEnemy::SwingSpellSweepTrace()
 		}
 	}
 	else {
-		DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.f, 0, 1.f);
+		//DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.f, 0, 1.f);
 	}
 }
 
@@ -366,6 +421,195 @@ void ALichEnemy::PlayLichSwingHitSound(const FVector& ImpactPoint)
 		UGameplayStatics::PlaySoundAtLocation(
 			this,
 			LichSwingHitSound,
+			ImpactPoint
+		);
+	}
+}
+
+void ALichEnemy::TeleportSkill()
+{
+	FTimerHandle TeleportSkillCountdown;
+	FTimerHandle TeleAllSkillCountdown;
+	FTimerHandle TeleportCollisonCountdown;
+
+	if (CanSmashAttack() && !bCanSwingSkill && !bCanSmashSkill && bCanTeleportSkill && bCanSkill) //스킬 우선순위 설정
+	{
+		PlayTeleportSkillMontage();
+		EnemyState = EEnemyState::EES_Engaged;
+		bCanTeleportSkill = false;//텔레포트 연속 사용 X
+		bCanSkill = false;//스킬 연속 사용 X
+		GetCharacterMovement()->Deactivate();
+		GetWorldTimerManager().SetTimer(TeleportSkillCountdown, this, &ALichEnemy::EnableTeleportSkill, TeleportSkillCooldown, false); // 쿨타임 타이머 시작
+		GetWorldTimerManager().SetTimer(TeleAllSkillCountdown, this, &ALichEnemy::EnableSkill, AllSkillCooldown, false); // 쿨타임 타이머 시작
+		GetWorldTimerManager().SetTimer(TeleportCollisonCountdown, this, &ALichEnemy::EndTeleportSkill, CollisonTimer, false); // 쿨타임 타이머 시작
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);//텔레포트 공격 시 무적
+	}
+}
+
+void ALichEnemy::TeleportToPlayer()
+{
+	TArray<FHitResult> HitResults;
+	FVector StartLocation = GetActorLocation();
+	FVector ForwardVector = GetActorForwardVector();
+	FVector EndLocation = StartLocation + GetActorForwardVector() * TeleportSkillEnableRange;
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.AddIgnoredActor(this); // Ignore the boss
+	CollisionParams.bTraceComplex = true;
+	bool bHit = GetWorld()->SweepMultiByChannel(HitResults, StartLocation, EndLocation, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(50.0f), CollisionParams);
+
+	if (bHit)
+	{
+		for (const FHitResult& HitResult : HitResults)
+		{
+			AActor* OverlappingActor = HitResult.GetActor();
+			// 액터의 클래스가 AProjectNo1Character인지 확인
+			if (OverlappingActor->IsA(AProjectNo1Character::StaticClass()))
+			{
+				ProjectNo1Character = Cast<AProjectNo1Character>(OverlappingActor);
+
+				if (ProjectNo1Character)
+				{
+					FVector TeleportLocation = ProjectNo1Character->GetActorLocation() - (ForwardVector * TeleportDistance); // TeleportDistance는 텔레포트 거리를 나타냅니다.
+					SetActorLocation(TeleportLocation);
+				}
+			}
+		}
+	}
+}
+
+void ALichEnemy::EndTeleportSkill()
+{
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//무적 해제
+}
+
+void ALichEnemy::EnableTeleportSkill()
+{
+	bCanTeleportSkill = true;// 텔레포트 공격 사용 활성화
+}
+
+void ALichEnemy::DisableTeleportSkill()
+{
+	bCanTeleportSkill = false;// 텔레포트 공격 사용 비활성화
+}
+
+void ALichEnemy::TeleportSpellEffect()
+{
+	float CapsuleHalfHeight = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+	FRotator PlayerRotation = GetActorRotation();
+	FRotator DesiredRotation = PlayerRotation + FRotator(0.0f, 0.0f, 180.0f);
+	FVector SpawnLocation = GetActorLocation() - FVector(0.0f, 0.0f, CapsuleHalfHeight);
+	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), TeleportEffect, SpawnLocation, DesiredRotation);
+}
+
+void ALichEnemy::SmashSkill()
+{
+	FTimerHandle SmashSkillCountdown;
+	FTimerHandle CommonSkillCountdown;
+	FTimerHandle SmashCollisonCountdown;
+
+	if (CanSmashAttack() && !bCanSwingSkill && bCanSmashSkill && bCanSkill) //스킬 우선순위 설정
+	{
+		PlaySmashSkillMontage();
+		EnemyState = EEnemyState::EES_Engaged;
+		bCanSmashSkill = false;//스매쉬 연속 사용 X
+		bCanSkill = false;//스킬 연속 사용 X
+		bAttack = false;
+		GetCharacterMovement()->Deactivate();
+		GetWorldTimerManager().SetTimer(SmashSkillCountdown, this, &ALichEnemy::EnableSmashSkill, SmashSkillCooldown, false); // 쿨타임 타이머 시작
+		GetWorldTimerManager().SetTimer(CommonSkillCountdown, this, &ALichEnemy::EnableSkill, AllSkillCooldown, false); // 쿨타임 타이머 시작
+		GetWorldTimerManager().SetTimer(SmashCollisonCountdown, this, &ALichEnemy::EndSmashSkill, CollisonTimer, false); // 쿨타임 타이머 시작
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);//스매쉬 공격 시 무적
+	}
+}
+
+void ALichEnemy::SmashSpellEffect()
+{
+	float CapsuleHalfHeight = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+	FRotator PlayerRotation = GetActorRotation();
+	FRotator DesiredRotation = PlayerRotation + FRotator(0.0f, 0.0f, 0.0f);
+	FVector ForwardVector = GetActorForwardVector(); // 플레이어 전방
+	FVector SpawnLocationA = GetActorLocation() + (ForwardVector * 200.0f) - FVector(0.0f, 0.0f, CapsuleHalfHeight);;
+	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), SmashImpactEffect, SpawnLocationA, DesiredRotation);
+}
+
+void ALichEnemy::SmashSpellSweepTrace()
+{
+	float CapsuleHalfHeight = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();//발바닥 높이로 맞추기
+	FVector Start = GetActorLocation() + GetActorForwardVector() * 100.0f; // 보스 바로 앞 위치에서 시작
+	FVector ForwardVector = GetActorForwardVector(); // 보스가 향하는 방향
+	FVector End = Start + ForwardVector * 500.0f; // 일정 거리만큼 스윕 트레이스
+	FVector SpawnLocation = GetActorLocation();
+	//FHitResult HitResult;
+	FHitResult HitResult;
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.AddIgnoredActor(this); // 보스는 무시
+	bool bResult = GetWorld()->SweepSingleByChannel(
+		HitResult,
+		Start,
+		End,
+		FQuat::Identity,
+		ECollisionChannel::ECC_Visibility,
+		FCollisionShape::MakeSphere(80.0f),
+		CollisionParams);
+	UE_LOG(LogTemp, Log, TEXT("SmashSpellSweepTrace")); //확인완료
+	// 라인 트레이스의 시작점에 이펙트를 생성하여 표시
+
+	//UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), EndPointEffect, SpawnLocation, FRotator::ZeroRotator);
+	// 라인 트레이스 실행
+	if (bResult) {
+		if (AActor* Actor = HitResult.GetActor()) {
+			if (HitResult.GetActor()->ActorHasTag("EngageableTarget"))
+			{
+				UE_LOG(LogTemp, Log, TEXT("Hit Actor : %s"), *HitResult.GetActor()->GetName());
+				//DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.f, 0, 1.f);
+				// 라인 트레이스의 타격점에 이펙트를 생성하여 표시
+				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), LichSmashHitEffect, HitResult.ImpactPoint - FVector(0.0f, 0.0f, 80.0f), FRotator::ZeroRotator);
+				PlayLichSmashHitSound(HitResult.ImpactPoint);
+				FDamageEvent DamageEvent;
+
+				UGameplayStatics::ApplyDamage(HitResult.GetActor(), LichDamage, GetInstigatorController(), this, UDamageType::StaticClass());
+				ExecuteGetHit(HitResult);
+				//ExecuteGetBlock(HitResult); 막기 불가 공격
+			}
+		}
+	}
+	else {
+		//DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.f, 0, 1.f);
+	}
+}
+
+void ALichEnemy::EndSmashSkill()
+{
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//무적 해제
+}
+
+void ALichEnemy::EnableSmashSkill()
+{
+	bCanSmashSkill = true;// 스매쉬 공격 사용 활성화
+}
+
+void ALichEnemy::DisableSmashSkill()
+{
+	bCanSmashSkill = false;// 스매쉬 공격 사용 비활성화
+}
+
+void ALichEnemy::DeactivateSmashSkillEffect()
+{
+	EquippedWeapon->DeactivateLichSmashAttackEffect(); // 스매쉬 이펙트 비활성화
+}
+
+void ALichEnemy::ActivateSmashSkillEffect()
+{
+	EquippedWeapon->ActivateLichSmashAttackEffect(); // 스매쉬 이펙트 활성화
+}
+
+void ALichEnemy::PlayLichSmashHitSound(const FVector& ImpactPoint)
+{
+	if (LichSmashHitSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			LichSmashHitSound,
 			ImpactPoint
 		);
 	}
@@ -603,7 +847,7 @@ void ALichEnemy::AttackSweepTrace()
 			if (HitResult.GetActor()->ActorHasTag("EngageableTarget"))
 			{
 				UE_LOG(LogTemp, Log, TEXT("Hit Actor : %s"), *HitResult.GetActor()->GetName());
-				DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.f, 0, 1.f);
+				//DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.f, 0, 1.f);
 				// 라인 트레이스의 타격점에 이펙트를 생성하여 표시
 				//UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, HitResult.ImpactPoint, FRotator::ZeroRotator);
 				//PlayWeaponSpellHitSound(HitResult.ImpactPoint);
@@ -616,7 +860,7 @@ void ALichEnemy::AttackSweepTrace()
 		}
 	}
 	else {
-		DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.f, 0, 1.f);
+		//DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.f, 0, 1.f);
 	}
 }
 

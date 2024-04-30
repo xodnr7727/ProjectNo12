@@ -98,6 +98,7 @@ protected:
 	virtual void PlayRushSkillMontage();
 	virtual void PlaySmashSkillMontage();
 	virtual void PlaySwingSkillMontage();
+	virtual void PlayTeleportSkillMontage();
 	void StopAttackMontage();
 
 	void SpawnEffect(const FVector& ImpactPoint);
@@ -241,6 +242,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
 		UAnimMontage* SwingSkillMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat)
+		UAnimMontage* TeleportSkillMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
 		UAnimMontage* DeathMontage;

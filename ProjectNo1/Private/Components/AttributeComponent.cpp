@@ -88,7 +88,7 @@ void UAttributeComponent::RecoveryStun()
 
 void UAttributeComponent::RecoveryHealth()
 {
-	HealthRegenRate = 32.f;
+	HealthRegenRate = 100.f;
 	/*float RestoreAmount = MaxHealth * 0.3f;
 
 	Health += RestoreAmount;

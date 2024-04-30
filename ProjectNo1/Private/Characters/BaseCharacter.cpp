@@ -483,6 +483,10 @@ void ABaseCharacter::PlaySwingSkillMontage()
 	PlayMontageSection(SwingSkillMontage, FName("SwingSkill"));
 }
 
+void ABaseCharacter::PlayTeleportSkillMontage()
+{
+	PlayMontageSection(TeleportSkillMontage, FName("TeleportSkill"));
+}
 
 
 void ABaseCharacter::StopAttackMontage()

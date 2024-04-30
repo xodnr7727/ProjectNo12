@@ -46,6 +46,9 @@ public:
 	void DeactivateLichSwingAttackEffect();
 	void ActivateLichSwingAttackEffect();
 
+	void DeactivateLichSmashAttackEffect();
+	void ActivateLichSmashAttackEffect();
+
 	void DeactivateSmallSkillEffect();
 	void ActivateSmallSkillEffect();
 
@@ -196,6 +199,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Skill")
 		UNiagaraComponent* LichSwingAttackEffect;
+
+	UPROPERTY(VisibleAnywhere, Category = "Skill")
+		UNiagaraComponent* LichSmashAttackEffect;
 
 public:
 	FORCEINLINE UBoxComponent* GetWeaponBox() const { return WeaponBox; }
