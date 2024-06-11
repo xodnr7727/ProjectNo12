@@ -15,6 +15,11 @@
 class UHealthBarComponent;
 class UPawnSensingComponent;
 class AProjectNo1Character;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnSwingSkillDetected);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnSmashSkillDetected);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTeleportSkillDetected);
+
 UCLASS()
 class PROJECTNO1_API ALichEnemy : public ABaseCharacter
 {
@@ -23,6 +28,15 @@ class PROJECTNO1_API ALichEnemy : public ABaseCharacter
 public:
 
 	ALichEnemy();
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnSwingSkillDetected OnSwingSkillDetected;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnSmashSkillDetected OnSmashSkillDetected;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnTeleportSkillDetected OnTeleportSkillDetected;
 
 protected:
 
@@ -58,8 +72,13 @@ protected:
 
 	void ExecuteGetBlock(FHitResult& HitResult);
 
+	UFUNCTION(BlueprintCallable, Category = "SpecialSkill")
 	void SwingSkill();
+
+	UFUNCTION(BlueprintCallable, Category = "SpecialSkill")
 	void SmashSkill();
+
+	UFUNCTION(BlueprintCallable, Category = "SpecialSkill")
 	void TeleportSkill();
 
 	UFUNCTION(BlueprintCallable)
@@ -122,6 +141,10 @@ protected:
 
 		UPROPERTY(Category = ArrowAttack, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		TSubclassOf<AProjectileWeapon> ProjectileWeaponClass;
+
+		void CheckForSwing();
+		void CheckForSmash();
+		void CheckForTeleport();
 
 public:	
 

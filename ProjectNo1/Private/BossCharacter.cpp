@@ -89,16 +89,8 @@ void ABossCharacter::BeginPlay()
 	InitializeEnemy();
 	Tags.Add(FName("Enemy"));
 
-	if (HasExistPlayerInFront())//일정 거리 멀리에 플레이어가 있다면
-	{
-		//UE_LOG(LogTemp, Log, TEXT("PrepareOnLaserSkill")); //확인완료
-		OnLaserSkill();//스킬 공격
-	}
-	if (HasExistRushPlayerInFront())//일정 거리에 플레이어가 있다면
-	{
-		//UE_LOG(LogTemp, Log, TEXT("PrepareRushSkill")); //확인완료
-		RushSkill();//스킬 공격
-	}
+	OnLaserSkillDetected.AddDynamic(this, &ABossCharacter::OnLaserSkill);
+	OnRushSkillDetected.AddDynamic(this, &ABossCharacter::RushSkill);
 }
 
 void ABossCharacter::Tick(float DeltaTime)
@@ -119,17 +111,26 @@ void ABossCharacter::Tick(float DeltaTime)
 	{
 		CheckPatrolTarget();
 	}
+	CheckForLaser();
+	CheckForRush();
+}
+
+void ABossCharacter::CheckForLaser()
+{
 	if (HasExistPlayerInFront())//일정 거리 멀리에 플레이어가 있다면
 	{
-		//UE_LOG(LogTemp, Log, TEXT("PrepareOnLaserSkill")); //확인완료
-		OnLaserSkill();//스킬 공격
-	}
-	if (HasExistRushPlayerInFront())//일정 거리에 플레이어가 있다면
-	{
-		//UE_LOG(LogTemp, Log, TEXT("PrepareRushSkill")); //확인완료
-		RushSkill();//스킬 공격
+		OnLaserSkillDetected.Broadcast();
 	}
 }
+
+void ABossCharacter::CheckForRush()
+{
+	if (HasExistRushPlayerInFront())//일정 거리에 플레이어가 있다면
+	{
+		OnRushSkillDetected.Broadcast();
+	}
+}
+
 
 void ABossCharacter::CheckPatrolTarget()
 {

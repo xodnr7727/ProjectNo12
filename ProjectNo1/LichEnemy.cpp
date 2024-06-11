@@ -83,19 +83,36 @@ void ALichEnemy::BeginPlay()
 		InitializeEnemy();
 		Tags.Add(FName("Enemy"));
 
-		if (HasExistPlayerInFront())//일정 거리 멀리에 플레이어가 있다면
-		{
-			//UE_LOG(LogTemp, Log, TEXT("SwingSkill")); //확인완료
-			SwingSkill();//스킬 공격
-		}
-		if (HasExistSmashPlayerInFront())//일정 거리 멀리에 플레이어가 있다면
-		{
-			//UE_LOG(LogTemp, Log, TEXT("SmashSkill")); //확인완료
-			SmashSkill();//스킬 공격
-		}
-		if (HasExistTeleportPlayerInFront()) {
-			TeleportSkill();
-		}
+		OnSwingSkillDetected.AddDynamic(this, &ALichEnemy::SwingSkill);
+		OnSmashSkillDetected.AddDynamic(this, &ALichEnemy::SmashSkill);
+		OnTeleportSkillDetected.AddDynamic(this, &ALichEnemy::TeleportSkill);
+}
+
+void ALichEnemy::CheckForSwing()
+{
+	if (HasExistPlayerInFront())
+	{
+		// 델리게이트 호출
+		OnSwingSkillDetected.Broadcast();
+	}
+}
+
+void ALichEnemy::CheckForSmash()
+{
+	if (HasExistSmashPlayerInFront())
+	{
+		// 델리게이트 호출	
+		OnSmashSkillDetected.Broadcast();
+	}
+}
+
+void ALichEnemy::CheckForTeleport()
+{
+	if (HasExistTeleportPlayerInFront())
+	{
+		// 델리게이트 호출
+		OnTeleportSkillDetected.Broadcast();
+	}
 }
 
 void ALichEnemy::Tick(float DeltaTime)
@@ -116,19 +133,9 @@ void ALichEnemy::Tick(float DeltaTime)
 	{
 		CheckPatrolTarget();
 	}
-	if (HasExistPlayerInFront())//일정 거리 멀리에 플레이어가 있다면
-	{
-		//UE_LOG(LogTemp, Log, TEXT("SwingSkill")); //확인완료
-		SwingSkill();//스킬 공격
-	}
-	if (HasExistSmashPlayerInFront())//일정 거리 멀리에 플레이어가 있다면
-	{
-		//UE_LOG(LogTemp, Log, TEXT("SmashSkill")); //확인완료
-		SmashSkill();//스킬 공격
-	}
-	if (HasExistTeleportPlayerInFront()) {
-		TeleportSkill();
-	}
+	CheckForSwing();
+	CheckForSmash();
+	CheckForTeleport();
 }
 
 void ALichEnemy::CheckPatrolTarget()

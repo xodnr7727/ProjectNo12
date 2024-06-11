@@ -16,6 +16,9 @@ class UHealthBarComponent;
 class UStunBarComponent;
 class UPawnSensingComponent;
 class AProjectNo1Character;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLaserSkillDetected);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnRushSkillDetected);
 /**
  * 
  */
@@ -27,6 +30,12 @@ class PROJECTNO1_API ABossCharacter : public ABaseCharacter
 public:
 
 	ABossCharacter();
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnLaserSkillDetected OnLaserSkillDetected;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnRushSkillDetected OnRushSkillDetected;
 protected:
 
 	virtual void BeginPlay() override;
@@ -50,6 +59,7 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void RecoveryStunState();
 
+	UFUNCTION(BlueprintCallable, Category = "SpecialSkill")
 	void OnLaserSkill();
 	void IncreaseDamage();
 	void RestoreDamage();
@@ -66,11 +76,15 @@ protected:
 
 	void ExecuteGetBlock(FHitResult& HitResult);
 
+	UFUNCTION(BlueprintCallable, Category = "SpecialSkill")
 	void RushSkill();
 	virtual void EndRushSkill() override;
 	void EnableRushSkill();
 	void EnableSkill();
 	void DisableRushSkill();
+
+	void CheckForLaser();
+	void CheckForRush();
 
 	UFUNCTION(BlueprintCallable)
 	void ActivateRushSkillEffect();
