@@ -205,14 +205,8 @@ void AProjectNo1Character::Tick(float DeltaTime)
 		ActionState = EActionState::EAS_Unoccupied;
 	}
 
-	if (HasStunnedEnemyInFront())//플레이어 앞에 스턴된 적이 있다면
-	{
-		EnableSpecialTargetingAttack();//스턴 공격 허용
-	}
-	else if (!HasStunnedEnemyInFront()) //플레이어 앞에 스턴된 적이 없다면
-	{
-		DisableSpecialTargetingAttack();//스턴 공격 불가
-	}
+	CheckForStunnedEnemy();
+	CheckForNotStunnedEnemy();
 }
 
 void AProjectNo1Character::SetOverlappingItem(AItem* Item)
@@ -272,14 +266,9 @@ void AProjectNo1Character::BeginPlay()
 	SpawnDefaultWeaponTwo();//쉴드 장착
 	SpawnDefaultPotionOne();//포션 장착
 
-	if (HasStunnedEnemyInFront())//플레이어 앞에 스턴된 적이 있다면
-	{
-		EnableSpecialTargetingAttack();//스턴 공격 허용
-	}
-	else if (!HasStunnedEnemyInFront())//플레이어 앞에 스턴된 적이 없다면
-	{
-		DisableSpecialTargetingAttack();//스턴 공격 불가
-	}
+	OnStunnedEnemyDetected.AddDynamic(this, &AProjectNo1Character::EnableSpecialTargetingAttack);
+	OffStunnedEnemyDetected.AddDynamic(this, &AProjectNo1Character::DisableSpecialTargetingAttack);
+
 }
 
 void AProjectNo1Character::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -1190,9 +1179,27 @@ bool AProjectNo1Character::HasStunnedEnemyInFront()//플레이어 앞 적 스턴
 	return false;
 }
 
+void AProjectNo1Character::CheckForStunnedEnemy()
+{
+	if (HasStunnedEnemyInFront())
+	{
+		// 델리게이트 호출
+		OnStunnedEnemyDetected.Broadcast();
+	}
+}
+
 void AProjectNo1Character::EnableSpecialTargetingAttack()
 {
 	bIsSpecialTargetingEnabled = true; //스턴 공격 가능
+}
+
+void AProjectNo1Character::CheckForNotStunnedEnemy()
+{
+	if (!HasStunnedEnemyInFront())
+	{
+		// 델리게이트 호출
+		OffStunnedEnemyDetected.Broadcast();
+	}
 }
 
 void AProjectNo1Character::DisableSpecialTargetingAttack()

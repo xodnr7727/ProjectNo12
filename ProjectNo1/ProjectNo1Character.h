@@ -20,6 +20,10 @@ class AMyPlayerController;
 class UNiagaraSystem;
 class USoundBase;
 class UParticleSystemComponent;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnStunnedEnemyDetected);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOffStunnedEnemyDetected);
+
 UCLASS()
 class AProjectNo1Character : public ABaseCharacter, public IPickupInterface
 {
@@ -44,6 +48,12 @@ public:
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Input)
 		float TurnRateGamepad;
+
+		UPROPERTY(BlueprintAssignable, Category = "Events")
+		FOnStunnedEnemyDetected OnStunnedEnemyDetected;
+
+		UPROPERTY(BlueprintAssignable, Category = "Events")
+		FOffStunnedEnemyDetected OffStunnedEnemyDetected;
 
 protected:
 
@@ -220,6 +230,8 @@ protected:
 
 	void EquipNeck(AWeapon* NewNeck);
 
+	void CheckForStunnedEnemy();
+	void CheckForNotStunnedEnemy();
 	/** 
 	 * Called via input to turn at a given rate. 
 	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
