@@ -5,7 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "LevelTransferVolume.generated.h"
-
+class USoundBase;
+class UParticleSystemComponent;
 UCLASS()
 class PROJECTNO1_API ALevelTransferVolume : public AActor
 {
@@ -23,8 +24,26 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	UFUNCTION()
+	void CheckMonsters();
+
+	UFUNCTION()
+	void ActivateTransition();
+
+	void PlayLevelTransSound();
+
+	void PlayLevelOpenSound();
+
+	void DeactivateLevelEffect();
+
+	void ActivateLevelEffect();
+
 protected:
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
+
+	void ShowLoadingScreen();
+
+	void TransitionLevel();
 
 
 private:
@@ -33,4 +52,22 @@ private:
 
 	UPROPERTY()
 		class UBoxComponent* TransferVolume;
+
+		int32 RemainingMonsters;
+
+		bool bIsTransferVolumeActive;
+
+		UPROPERTY(EditAnywhere, Category = "UI")
+		TSubclassOf<class UUserWidget> LoadingScreenWidgetClass;
+
+		class UUserWidget* LoadingScreenWidget;
+
+		UPROPERTY(EditAnywhere, Category = "Level")
+		USoundBase* LevelTransSound;
+
+		UPROPERTY(EditAnywhere, Category = "Level")
+		USoundBase* LevelOpenSound;
+
+		UPROPERTY(VisibleAnywhere, Category = "Level")
+		UParticleSystemComponent* LevelOpenEffect;
 };

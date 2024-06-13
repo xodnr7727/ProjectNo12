@@ -667,7 +667,6 @@ void ALichEnemy::Die()
 	SpawnGd();
 }
 
-
 void ALichEnemy::SpawnEx()
 {
 	UWorld* World = GetWorld();
@@ -727,10 +726,12 @@ float ALichEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent
 
 void ALichEnemy::Destroyed()
 {
+	Super::Destroyed();
 	if (EquippedWeapon)
 	{
 		EquippedWeapon->Destroy();
 	}
+	OnDestroyedDetected.Broadcast();
 }
 
 void ALichEnemy::StoreHitNumber(UUserWidget* HitNubmer, FVector Location)

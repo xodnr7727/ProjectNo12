@@ -10,7 +10,8 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "ProjectileWeapon.generated.h"
 class UProjectileMovementComponent;
-class USphereComponent;
+class UBoxComponent;
+
 UCLASS()
 class PROJECTNO1_API AProjectileWeapon : public AItem
 {
@@ -20,23 +21,36 @@ public:
 	// Sets default values for this actor's properties
 	AProjectileWeapon();
 
-	void ThrowInDirection(const FVector& ShootDirection);
-
 	void ProjectileEquip(USceneComponent* InParent, AActor* NewOwner, APawn* NewInstigator);
 
 	virtual void Tick(float DeltaTime) override;
+
+	void InitializeVelocity(FVector Direction, AActor* Target);
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	void ExecuteBallHit(FHitResult& BoxHit);
-
-	void DisableCapsuleCollision();
+	void ExecuteGetHit(FHitResult& BoxHit);
 
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	float Damage;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Movement")
+	float MaxDistance;
+
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	UBoxComponent* CollisionComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	class UStaticMeshComponent* SwordMesh;
+
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	class UParticleSystemComponent* ImpactEffect;
+
+	UPROPERTY(VisibleAnywhere,Category = "Components")
+	UProjectileMovementComponent* ProjectileMovement;
 
 	UPROPERTY(EditAnywhere, Category = "Skill Properties")
 	class USoundBase* HitSound;
@@ -44,33 +58,17 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Skill Properties")
 	class UParticleSystem* HitParticles;
 
+	FVector InitialLocation;
+
+	AActor* TargetActor;
+
 public:
-	UPROPERTY(VisibleAnywhere, Category = "State")
-	float MyInitialSpeed;
 
-	UPROPERTY(VisibleAnywhere, Category = "State")
-	float MyMaxSpeed;
-
-	UPROPERTY(VisibleAnywhere, Category = "Components")
-	USphereComponent* CollisionComponent;
-
-	UPROPERTY(VisibleAnywhere, Category = "Components")
-	class UStaticMeshComponent* SwordMesh;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	class UParticleSystemComponent* ImpactEffect;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UProjectileMovementComponent* ProjectileMovement;
-
-	UFUNCTION()
-	void OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
-	// 몬스터에게 타격을 입히는 함수 선언
 	UFUNCTION()
 	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
-	FORCEINLINE class USphereComponent* GetProjectileCollison() const { return CollisionComponent; }
+	void SpearSpellSweepTrace();
 
+	FORCEINLINE UBoxComponent* GetProjectileCollison() const { return CollisionComponent; }
 	FORCEINLINE class UProjectileMovementComponent* GetProjectileMovement() const { return ProjectileMovement; }
 };

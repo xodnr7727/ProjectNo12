@@ -19,6 +19,7 @@ class AProjectNo1Character;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnSwingSkillDetected);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnSmashSkillDetected);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTeleportSkillDetected);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDestroyedDelegate);
 
 UCLASS()
 class PROJECTNO1_API ALichEnemy : public ABaseCharacter
@@ -37,6 +38,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FOnTeleportSkillDetected OnTeleportSkillDetected;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnDestroyedDelegate OnDestroyedDetected;
 
 protected:
 

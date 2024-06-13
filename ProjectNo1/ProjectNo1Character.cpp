@@ -384,24 +384,24 @@ void AProjectNo1Character::LargeSkillPressed()
 {
 	FTimerHandle LargeSkillCountdown;
 
-	if (!Dead() && CanNeckSkill() && HasEnoughSkillStamina() && bCanLargeSkill)
-	{
-		PlayLargeSkillMontage();
-		ActionState = EActionState::EAS_LargeAttack;
-		bCanLargeSkill = false;//연속 사용 X
-		GetWorldTimerManager().SetTimer(LargeSkillCountdown, this, &AProjectNo1Character::EnableLargeSkill, LargeSkillCooldown, false); // 쿨타임 타이머 시작
-		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);//강공격 시 무적
-		
-		if (EquippedWeapon)
+		if (!Dead() && CanNeckSkill() && HasEnoughSkillStamina() && bCanLargeSkill)
 		{
-			EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("SpineSocket"));
-		}
+			PlayLargeSkillMontage();
+			ActionState = EActionState::EAS_LargeAttack;
+			bCanLargeSkill = false;//연속 사용 X
+			GetWorldTimerManager().SetTimer(LargeSkillCountdown, this, &AProjectNo1Character::EnableLargeSkill, LargeSkillCooldown, false); // 쿨타임 타이머 시작
+			GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);//강공격 시 무적
 
-		if (Attributes && SlashOverlay)
-		{
-			Attributes->UseStamina(Attributes->GetSkillCost());
-			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
-		}
+			if (EquippedWeapon)
+			{
+				EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("SpineSocket"));
+			}
+
+			if (Attributes && SlashOverlay)
+			{
+				Attributes->UseStamina(Attributes->GetSkillCost());
+				SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+			}
 	}
 }
 
@@ -423,25 +423,48 @@ void AProjectNo1Character::EnableLargeSkill()
 
 void AProjectNo1Character::SwingSword()
 {
-	if (EquippedProjectile) {
-		EquippedProjectile->SetActorHiddenInGame(true);
-	}
 	if (SwordProjectileClass)
 	{
-		UE_LOG(LogTemp, Log, TEXT("SwingSword"));
+		FVector SpawnLocation = GetActorLocation() + GetActorForwardVector() * 100.0f;
+		FRotator SpawnRotation = GetActorRotation();
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this;
+		SpawnParams.Instigator = GetInstigator();
 
-		const FRotator SpawnRotation = GetActorRotation();
-		const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(FVector(80.0f, 30.0f, 10.0f));
-		UWorld* const World = GetWorld();
-		if (World != NULL) {
-
-			AProjectileWeapon* SpawnedProjectile = World ->SpawnActor<AProjectileWeapon>(SwordProjectileClass, SpawnLocation, SpawnRotation);
-			UE_LOG(LogTemp, Log, TEXT("SpawnActor"));
-			if (SpawnedProjectile) {
-				SpawnedProjectile->GetProjectileMovement()->SetVelocityInLocalSpace(FVector::ForwardVector * 2000.0f);
+		AProjectileWeapon* Spear = GetWorld()->SpawnActor<AProjectileWeapon>(SwordProjectileClass, SpawnLocation, SpawnRotation, SpawnParams);
+		if (Spear) {
+			AActor* SpearTarget = FindClosestEnemy();
+			if (SpearTarget)
+			{
+				FVector Direction = (SpearTarget->GetActorLocation() - SpawnLocation).GetSafeNormal();
+				Spear->InitializeVelocity(Direction, SpearTarget);
+			}
+			else {
+				Spear->InitializeVelocity(GetActorForwardVector(), nullptr);
 			}
 		}
 	}
+}
+
+AActor* AProjectNo1Character::FindClosestEnemy()
+{
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsWithTag(GetWorld(), FName("Enemy"), FoundActors);
+
+	AActor* ClosestEnemy = nullptr;
+	float MinDistance = MAX_FLT;
+
+	for (AActor* Actor : FoundActors)
+	{
+		float Distance = FVector::Dist(Actor->GetActorLocation(), GetActorLocation());
+		if (Distance < MinDistance)
+		{
+			MinDistance = Distance;
+			ClosestEnemy = Actor;
+		}
+	}
+
+	return ClosestEnemy;
 }
 
 void AProjectNo1Character::GuardCounterPressed()
@@ -661,14 +684,14 @@ void AProjectNo1Character::WeaponSpellSlashEffect()
 }
 
 
-// 플레이어가 발사할 수 있는 라인 트레이스를 나타내는 함수
+// 플레이어가 발사할 수 있는 트레이스를 나타내는 함수
 void AProjectNo1Character::WeaponSpellLineTrace()
 {
 	if (AttackWeaponSpell) {
 		FVector ForwardVector = GetActorForwardVector(); // 플레이어 전방
 		FVector RightVector = GetActorRightVector(); // 플레이어 측면
 		FVector Start = GetActorLocation() + (ForwardVector * 200.0f);// 플레이어 앞 위치에서 시작
-		FVector End = Start + ForwardVector * 100.0f; // 일정 거리만큼 라인 트레이스
+		FVector End = Start + ForwardVector * 100.0f; // 일정 거리만큼 트레이스
 		FRotator PlayerRotation = GetActorRotation();
 		FVector SpawnLocationA = GetActorLocation() + (ForwardVector * 200.0f);
 		FVector SpawnLocationB = SpawnLocationA + (RightVector * 80.0f) + (RightVector * 30.0f) + (ForwardVector * 30.0f);
@@ -690,13 +713,13 @@ void AProjectNo1Character::WeaponSpellLineTrace()
 			FCollisionShape::MakeSphere(50.0f),
 			CollisionParams);
 
-		// 라인 트레이스의 시작점에 이펙트를 생성하여 표시
+		// 트레이스의 시작점에 이펙트를 생성하여 표시
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), EndPointEffect, SpawnLocationA, PlayerRotation);
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), SpellEffectA, SpawnLocationA, PlayerRotation);
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), SpellEffectB, SpawnLocationB, PlayerRotation);
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), SpellEffectC, SpawnLocationC, PlayerRotation);
 		PlayWeaponSpellHitSound(SpawnLocationA);
-		// 라인 트레이스 실행
+		// 트레이스 실행
 		if (bResult) {
 			//for (FHitResult& HitResult : HitResults) {
 			if (AActor* Actor = HitResult.GetActor()) {
@@ -704,7 +727,7 @@ void AProjectNo1Character::WeaponSpellLineTrace()
 				{
 					UE_LOG(LogTemp, Log, TEXT("Hit Actor : %s"), *Actor->GetName());
 					//DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.f, 0, 1.f);
-					// 라인 트레이스의 타격점에 이펙트를 생성하여 표시
+					// 트레이스의 타격점에 이펙트를 생성하여 표시
 					FDamageEvent DamageEvent;
 
 					ALichEnemy* HitEnemy = Cast<ALichEnemy>(HitResult.GetActor());

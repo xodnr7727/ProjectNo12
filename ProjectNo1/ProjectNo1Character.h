@@ -41,10 +41,10 @@ public:
 	virtual void GetBlock_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 	virtual void SetOverlappingItem(AItem* Item) override;
 	virtual void AddEx(ASoul* Soul) override;
+	virtual void AddGold(ATreasure* Treasure) override;
 	void LevelUpAll();
 	void LevelUpEC();
 	void LevelUpES();
-	virtual void AddGold(ATreasure* Treasure) override;
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Input)
 		float TurnRateGamepad;
@@ -273,6 +273,8 @@ public:
 	void SpecialTargetingAttackInput();
 
 	void InitializeSlashOverlay();
+
+	AActor* FindClosestEnemy();
 private:
 
 	    bool IsUnoccupied();
