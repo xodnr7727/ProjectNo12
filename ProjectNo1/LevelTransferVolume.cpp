@@ -32,6 +32,8 @@ ALevelTransferVolume::ALevelTransferVolume()
 
     LevelOpenEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("LevelOpenEffect"));
     LevelOpenEffect->SetupAttachment(RootComponent);
+
+    AttributeComponent = CreateDefaultSubobject<UAttributeComponent>(TEXT("AttributeComponent"));
 }
 
 // Called when the game starts or when spawned
@@ -61,6 +63,7 @@ void ALevelTransferVolume::NotifyActorBeginOverlap(AActor* OtherActor)
             PlayLevelTransSound();
             ShowLoadingScreen();
             // 타이머 설정: 2초 대기 후 레벨 전환
+
             GetWorld()->GetTimerManager().SetTimer(LevelTransitionTimerHandle, this, &ALevelTransferVolume::TransitionLevel, 2.0f, false);
         }
     }

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Components/AttributeComponent.h"
 #include "LevelTransferVolume.generated.h"
 class USoundBase;
 class UParticleSystemComponent;
@@ -38,13 +39,15 @@ public:
 
 	void ActivateLevelEffect();
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
+	UAttributeComponent* AttributeComponent;
+
 protected:
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 
 	void ShowLoadingScreen();
 
 	void TransitionLevel();
-
 
 private:
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
