@@ -7,7 +7,7 @@
 
 [**ProjectNo1Character](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/ProjectNo1Character.h) : **플레이어 파일****
 
-[**LichEnemy](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/LichEnemy.h) :**리치 몬스터 파일**
+[**LichEnemy](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/LichEnemy.h) : **리치 몬스터 파일**
 
 [**Goblin](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/Goblin.h) : **고블린 몬스터 파일****
 
