@@ -76,7 +76,7 @@ protected:
 	void IfAttack();
 	void Sprint(); //달리기
 	void StopSprinting(); 
-	
+
 	void EquipWeapon(AWeapon* Weapon);
 
 	void EquipProjectileWeapon(AProjectileWeapon* ProjectileWeapon);
@@ -87,8 +87,8 @@ protected:
 	void ParryCanDo(); //패리기능 사용 활성화
 	virtual void DiveEnd() override;
 	virtual void Attack() override;
-	void Dive();
-	bool IsDiving(); //구르기
+	void Dive(); //구르기
+	bool IsDiving(); 
 	void EnableDive();
 	void DrinkPotion(); //포션 마시기
 	void DeactivatePotionEffect();
@@ -99,17 +99,17 @@ protected:
 
 	bool CanDisarm();
 	bool CanArm();
-	bool CanBlock();
+	bool CanBlock(); 
 	bool HasEnoughStamina();
-	bool HasEnoughPotionStamina();
-	bool HasEnoughAttackStamina();
-	bool HasEnoughSkillStamina();
-	bool HasEnoughShieldStamina();
+	bool HasEnoughPotionStamina(); //포션 스태미너 유무
+	bool HasEnoughAttackStamina(); //공격 스태미너 유무
+	bool HasEnoughSkillStamina(); //스킬 스태미너 유무
+	bool HasEnoughShieldStamina(); //막기 스태미너 유무
 	bool IsOccupied();
 	virtual bool CanAttack() override;
 	virtual bool CanNeckSkill() override;
-	void Disarm();
-	void Arm();
+	void Disarm(); //무장 해제
+	void Arm(); //무장
 	void DisBlock();
 	void AsBlock();
 	void PlayEquip(const FName& SectionName);
@@ -221,16 +221,20 @@ protected:
 	bool IsAttackSkill();
 	void SmallSkillPressed();
 	void ReStunDamage();
+	void ExecuteHold();
 	void OnSwordSkillPressed();
 	void DeactivateSkillEffect(); //이펙트 해제
 	void RestoreDamage(); //공격력 복구
+
+	UFUNCTION(BlueprintCallable)
+	void PerformBack();
 
 	void IncreaseSpellDamage();
 	void RestoreSpellDamage();
 
 	void EquipNeck(AWeapon* NewNeck);
 
-	void CheckForStunnedEnemy();
+	void CheckForStunnedEnemy(); //스턴 몬스터 체크
 	void CheckForNotStunnedEnemy();
 	/** 
 	 * Called via input to turn at a given rate. 
@@ -282,7 +286,7 @@ private:
 		bool Dead();
 		void SetHUDHealth();
 
-		void SpawnDefaultWeapon();
+		void SpawnDefaultWeapon(); //기본 무기 장착
 		void SpawnDefaultWeaponTwo();
 		void SpawnDefaultPotionOne();
 
@@ -438,6 +442,9 @@ private:
 
 		UPROPERTY(EditAnywhere, Category = "Skill")
 		float DamagebackCountdown;
+
+		UPROPERTY(EditAnywhere, Category = "Combat")
+		float PushBackDistance;
 public:
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
 	FORCEINLINE EActionState GetActionState() const { return ActionState; }

@@ -85,7 +85,7 @@ void ALevelTransferVolume::TransitionLevel()
 {
     if (LoadingScreenWidget)
     {
-        LoadingScreenWidget->RemoveFromViewport();
+        LoadingScreenWidget->RemoveFromParent();
     }
     UGameplayStatics::OpenLevel(GetWorld(), FName(TransferLevelName));
 }

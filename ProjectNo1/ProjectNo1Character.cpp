@@ -145,6 +145,8 @@ AProjectNo1Character::AProjectNo1Character()
 	EnableHitCountdown = 2.0f;// 무적 시간 타이머
 
 	DamagebackCountdown = 2.0f;// 데미지 복구 타이머
+
+	PushBackDistance = 200.0f; // 원하는 거리로 설정
 }
 
 
@@ -177,6 +179,7 @@ void AProjectNo1Character::GetBlock_Implementation(const FVector& ImpactPoint, A
 		EnableGuardCounter(); //가드 카운터 활성화
 		ActionState = EActionState::EAS_Blocking;
 }
+
 
 void AProjectNo1Character::Tick(float DeltaTime)
 {
@@ -541,6 +544,7 @@ void AProjectNo1Character::SmallSkillPressed()
 		bCanSmallSkill = false;//연속 사용 X
 		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);//스턴 공격 시 무적
 		EquippedWeapon->IncreaseStunDamage();// 공격력 증가
+		ExecuteHold();
 		UE_LOG(LogTemp, Log, TEXT("StunAttack"));
 		GetWorldTimerManager().SetTimer(SmallSkillCountdown, this, &AProjectNo1Character::EnableSmallSkill, SmallSkillCooldown, false); // 쿨타임 타이머 시작
 		GetWorldTimerManager().SetTimer(EnableHitTimer, this, &AProjectNo1Character::EnableHit, EnableHitCountdown, false); // 카운트다운 타이머 시작
@@ -591,6 +595,60 @@ bool AProjectNo1Character::IsAttackSkill()
 		ActionState == EActionState::EAS_Parrying;
 }
 
+void AProjectNo1Character::ExecuteHold()
+{
+	TArray<FHitResult> HitResults;
+	FVector StartLocation = GetActorLocation();
+	FVector EndLocation = StartLocation + GetActorForwardVector() * SpecialTargetingRange;
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.AddIgnoredActor(this); // Ignore the player
+	CollisionParams.bTraceComplex = true;
+	bool bHit = GetWorld()->SweepMultiByChannel(HitResults, StartLocation, EndLocation, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(50.0f), CollisionParams);
+	if (bHit)
+	{
+		for (const FHitResult& HitResult : HitResults)
+		{
+			AActor* OverlappingActor = HitResult.GetActor();
+			// 액터의 클래스가 ALichEnemy인지 확인
+			if (OverlappingActor->IsA(ALichEnemy::StaticClass()))
+			{
+				LichEnemy = Cast<ALichEnemy>(OverlappingActor);
+
+				if (LichEnemy && LichEnemy->IsStunned())
+				{
+					LichEnemy->TakeExecutionHold();
+				}
+		    }
+	    }
+    }
+	PerformBack();
+}
+
+void AProjectNo1Character::PerformBack()
+{
+	TArray<FHitResult> HitResults;
+	FVector StartLocation = GetActorLocation();
+	FVector EndLocation = StartLocation + GetActorForwardVector() * SpecialTargetingRange;
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.AddIgnoredActor(this); // Ignore the player
+	CollisionParams.bTraceComplex = true;
+	bool bHit = GetWorld()->SweepMultiByChannel(HitResults, StartLocation, EndLocation, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(50.0f), CollisionParams);
+	if (bHit)
+	{
+		for (const FHitResult& HitResult : HitResults)
+		{
+			AActor* OverlappingActor = HitResult.GetActor();
+			if (OverlappingActor->IsA(ALichEnemy::StaticClass()))
+			{
+				LichEnemy = Cast<ALichEnemy>(OverlappingActor);
+				if (LichEnemy)
+				{
+					LichEnemy->TakeBack();
+				}
+			}
+		}
+	}
+}
 void AProjectNo1Character::OnSwordSkillPressed()
 {
 	FTimerHandle SwordSkillCountdown;
@@ -760,7 +818,6 @@ void AProjectNo1Character::WeaponSpellLineTrace()
 	}
 }
 
-// 호출하는 곳에서 ShootLineTrace() 함수를 호출하면 됩니다.
 void AProjectNo1Character::ExecuteGetHit(FHitResult& HitResult)
 {
 	IHitInterface* HitInterface = Cast<IHitInterface>(HitResult.GetActor());
