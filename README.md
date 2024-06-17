@@ -52,3 +52,4 @@
 **[MyProNo1HUD.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/HUD/MyProNo1HUD.h) : 플레이어 기본 베이스 UI**
 
 **[SlashOverlay.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/HUD/SlashOverlay.h) : 체력, 스태미너, 경험치, 골드 퍼센트 설정, 프로그래스바 선언 파일**
+[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fxodnr7727%2FTaeWook&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
