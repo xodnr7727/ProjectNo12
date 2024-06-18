@@ -1530,7 +1530,7 @@ void AProjectNo1Character::CheckBossMonsters()
 
 void AProjectNo1Character::GameClearUI()
 {
-	// 게임 종료 UI 생성
+	// 게임 승리 UI 생성
 	UWorld* World = GetWorld();
 	if (World)
 	{
