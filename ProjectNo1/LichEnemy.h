@@ -295,7 +295,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Skill")
 		bool bCanSkill; // 스킬 사용할 수 있는지 여부
+	UPROPERTY(EditAnywhere, Category = "Skill")
 		float AllSkillCooldown; // 스킬 쿨타임 변수
+	UPROPERTY(EditAnywhere, Category = "Skill")
 		float CollisonTimer; // 콜리전 해제 타이머
 
 	UPROPERTY(EditAnywhere)

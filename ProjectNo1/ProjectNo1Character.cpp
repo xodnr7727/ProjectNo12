@@ -1511,6 +1511,37 @@ void AProjectNo1Character::PlayerDieUI()
 	}
 }
 
+void AProjectNo1Character::CheckBossMonsters()
+{
+	TArray<AActor*> FoundBossCharacters;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABossCharacter::StaticClass(), FoundBossCharacters);
+	RemainingMonsters = FoundBossCharacters.Num();
+
+	// 몬스터들이 모두 사라질 때를 감지하는 이벤트를 등록
+	for (AActor* BossCharacter : FoundBossCharacters)
+	{
+		ABossCharacter* BossCharacterInstance = Cast<ABossCharacter>(BossCharacter);
+		if (BossCharacterInstance)
+		{
+			BossCharacterInstance->OnBossDestroyedDelegate.AddDynamic(this, &AProjectNo1Character::GameClearUI);
+		}
+	}
+}
+
+void AProjectNo1Character::GameClearUI()
+{
+	// 게임 종료 UI 생성
+	UWorld* World = GetWorld();
+	if (World)
+	{
+		if (World && ClearWidgetClass)
+		{
+			ClearWidget = CreateWidget<UUserWidget>(World, ClearWidgetClass);
+			ClearWidget->AddToViewport();
+		}
+	}
+}
+
 void AProjectNo1Character::EndAttacking()
 {
 	ActionState = EActionState::EAS_Unoccupied;

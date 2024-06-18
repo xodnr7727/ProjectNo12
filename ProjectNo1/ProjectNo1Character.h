@@ -59,64 +59,52 @@ protected:
 
 	virtual void BeginPlay() override;
 
-	/** Called for forwards/backward input */
+	/*기본 움직임*/
 	void MoveForward(float Value);
-
-	/** Called for side to side input */
 	void MoveRight(float Value);
-	void EKeyPressed();//장비 장착
-
-	UFUNCTION(BlueprintCallable)
-	void RMKeyPressed();
-
-	UFUNCTION(BlueprintCallable)
-	void RMKeyReleased();
-
-	bool BlockCantState();
-	void IfAttack();
 	void Sprint(); //달리기
-	void StopSprinting(); 
-
-	void EquipWeapon(AWeapon* Weapon);
-
-	void EquipProjectileWeapon(AProjectileWeapon* ProjectileWeapon);
-
-	virtual void AttackEnd() override;
-	virtual void BlockEnd() override;
+	void StopSprinting();
+	void Dive(); //구르기
+	virtual void DiveEnd() override;
+	bool IsDiving();
+	void EnableDive();
 	void Parry(); //패리 기능
 	void ParryCanDo(); //패리기능 사용 활성화
-	virtual void DiveEnd() override;
-	virtual void Attack() override;
-	void Dive(); //구르기
-	bool IsDiving(); 
-	void EnableDive();
 	void DrinkPotion(); //포션 마시기
 	void DeactivatePotionEffect();
 	void EnablePotion();
-	void EnableRage();
+	UFUNCTION(BlueprintCallable)
+	void DrinkEnd();
+	UFUNCTION(BlueprintCallable)
+	void DrinkHealthPotion();
+	bool HitReact();
 
-	bool IsArm();
+	UFUNCTION(BlueprintCallable)
+	void HitReactEnd();
 
-	bool CanDisarm();
-	bool CanArm();
-	bool CanBlock(); 
-	bool HasEnoughStamina();
-	bool HasEnoughPotionStamina(); //포션 스태미너 유무
-	bool HasEnoughAttackStamina(); //공격 스태미너 유무
-	bool HasEnoughSkillStamina(); //스킬 스태미너 유무
-	bool HasEnoughShieldStamina(); //막기 스태미너 유무
-	bool IsOccupied();
-	virtual bool CanAttack() override;
-	virtual bool CanNeckSkill() override;
-	void Disarm(); //무장 해제
-	void Arm(); //무장
+	/*방패 막기 관련*/
 	void DisBlock();
 	void AsBlock();
+	UFUNCTION(BlueprintCallable)
+	void RMKeyPressed();
+	UFUNCTION(BlueprintCallable)
+	void RMKeyReleased();
+	UFUNCTION(BlueprintCallable)
+	void EndBlocking();
+	bool CanBlock();
+	bool BlockCantState();
+	virtual void BlockEnd() override;
+	void IfAttack();
+
+	/*무기 장착 관련*/
+	void EKeyPressed();//장비 장착
 	void PlayEquip(const FName& SectionName);
-	virtual void Die() override;
-
-	void PlayerDieUI();
-
+	void EquipWeapon(AWeapon* Weapon);
+	void Disarm(); //무장 해제
+	void Arm(); //무장
+	bool IsArm();
+	bool CanDisarm();
+	bool CanArm();
 	UFUNCTION(BlueprintCallable)
 	void AttachWeaponToBack();
 
@@ -126,14 +114,12 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void FinishEquipping();
 
-	bool HitReact();
-	 
+	/*공격 관련*/
+	virtual void Attack() override;
+	virtual void AttackEnd() override;
+	virtual bool CanAttack() override;
 	UFUNCTION(BlueprintCallable)
-	void HitReactEnd();
-
-	UFUNCTION(BlueprintCallable)
-	void DrinkEnd();
-
+	void EndAttacking();
 	UFUNCTION(BlueprintCallable)
 	void AttackComboResetCountDown();
 
@@ -142,6 +128,22 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void AttackComboReset(); //콤보 리셋
+
+	/*행동 부울 조건 */
+	bool HasEnoughStamina();
+	bool HasEnoughPotionStamina(); //포션 스태미너 유무
+	bool HasEnoughAttackStamina(); //공격 스태미너 유무
+	bool HasEnoughSkillStamina(); //스킬 스태미너 유무
+	bool HasEnoughShieldStamina(); //막기 스태미너 유무
+	bool IsOccupied();
+	virtual bool CanNeckSkill() override;
+
+	virtual void Die() override;
+	void PlayerDieUI();
+	
+	UFUNCTION()
+	void CheckBossMonsters();
+	void GameClearUI();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Block")
 	class UAnimMontage* ShieldMontage;
@@ -152,52 +154,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Equip")
 	class UAnimMontage* EquipUnEquipMontage;
 
-	UFUNCTION(BlueprintCallable)
-	void EndAttacking();
-
-	UFUNCTION(BlueprintCallable)
-	void EndBlocking();
-
-	UFUNCTION(BlueprintCallable)
-	void EndLargeAttack();
-
-	UFUNCTION(BlueprintCallable)
-	void EndSwordSkill();
-
-	UFUNCTION(BlueprintCallable)
-	void EndSmallSkill();
-
-	UFUNCTION(BlueprintCallable)
-	void DrinkHealthPotion();
-
-	UFUNCTION(BlueprintCallable)
-	void DeactivateLargeSkillEffect();
-
-	UFUNCTION(BlueprintCallable)
-	void DeactivateSmallSkillEffect();
-
-	UFUNCTION(BlueprintCallable)
-	void ActivateLargeSkillEffect();
-
-	UFUNCTION(BlueprintCallable)
-	void ActivateSmallSkillEffect();
-
-	UFUNCTION(BlueprintCallable)
-	void DeactivateGuardCounterEffect();
-
-	UFUNCTION(BlueprintCallable)
-	void ActivateGuardCounterEffect();
-
+	/*스킬 관련 */
 	UFUNCTION(BlueprintCallable)
 	void SwingSword();
-
-	void ActivateSkillParticles();
 
 	UFUNCTION(BlueprintCallable)
 	void WeaponSpellLineTrace();
 	void WeaponSpellAttack();
 	void WeaponSpellSlashEffect();
-	void ExecuteGetHit(FHitResult& HitResult);
 	void EnableWeaponSpell();
 	void PlayWeaponSpellHitSound(const FVector& ImpactPoint);
 
@@ -206,36 +170,61 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void ActivateWeaponSpellEffect();
-
+	
 	void OnNeckSkillPressed();
+	void EnableRage();
+
 	void LargeSkillPressed();
+	void EnableLargeSkill();
+	UFUNCTION(BlueprintCallable)
+	void EndLargeAttack();
+	UFUNCTION(BlueprintCallable)
+	void DeactivateLargeSkillEffect();
+
+	UFUNCTION(BlueprintCallable)
+	void ActivateLargeSkillEffect();
+
 	void GuardCounterPressed();
-	void ReCounterDamage();
 	void EnableGuardCountdown();
 	void EnableGuardCounter();
 	void DisableGuardCounter();
-	void EnableSwordSkill();
-	void EnableLargeSkill();
-	void EnableSmallSkill();
-	void EnableHit();
-	bool IsAttackSkill();
-	void SmallSkillPressed();
-	void ReStunDamage();
-	void ExecuteHold();
-	void OnSwordSkillPressed();
-	void DeactivateSkillEffect(); //이펙트 해제
-	void RestoreDamage(); //공격력 복구
+	UFUNCTION(BlueprintCallable)
+	void ActivateGuardCounterEffect();
+	UFUNCTION(BlueprintCallable)
+	void DeactivateGuardCounterEffect();
 
+	void OnSwordSkillPressed();
+	void EnableSwordSkill();
+	UFUNCTION(BlueprintCallable)
+	void EndSwordSkill();
+
+	void SmallSkillPressed();
+	UFUNCTION(BlueprintCallable)
+	void EndSmallSkill();
+	void EnableSmallSkill();
+	UFUNCTION(BlueprintCallable)
+	void ActivateSmallSkillEffect();
+	UFUNCTION(BlueprintCallable)
+	void DeactivateSmallSkillEffect();
+	void ExecuteHold();//처형 홀드
 	UFUNCTION(BlueprintCallable)
 	void PerformBack();
+	void CheckForStunnedEnemy(); //스턴 몬스터 체크
+	void CheckForNotStunnedEnemy();
 
+	void EnableHit(); //무적해제
+	void ActivateSkillParticles();
+	void ExecuteGetHit(FHitResult& HitResult);
+	bool IsAttackSkill();
+	void DeactivateSkillEffect(); //이펙트 해제
+	void ReCounterDamage();
+	void ReStunDamage();//데미지 복구
+	void RestoreDamage(); //공격력 복구
 	void IncreaseSpellDamage();
 	void RestoreSpellDamage();
 
 	void EquipNeck(AWeapon* NewNeck);
-
-	void CheckForStunnedEnemy(); //스턴 몬스터 체크
-	void CheckForNotStunnedEnemy();
+	void EquipProjectileWeapon(AProjectileWeapon* ProjectileWeapon);
 	/** 
 	 * Called via input to turn at a given rate. 
 	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
@@ -310,11 +299,16 @@ private:
 		UPROPERTY()
 		USlashOverlay* SlashOverlay;
 
-		UPROPERTY(EditDefaultsOnly, Category = Inventory)
+		UPROPERTY(EditDefaultsOnly, Category = "UI")
 		TSubclassOf<UInventoryUI> InventoryUIClass;
 
 		UPROPERTY()
 		UInventoryUI* InventoryUI;
+
+		UPROPERTY(EditAnywhere, Category = "UI")
+		TSubclassOf<class UUserWidget> ClearWidgetClass;
+
+		class UUserWidget* ClearWidget;
 
 		UPROPERTY()
 		AMyPlayerController* MyPlayerController;
@@ -345,9 +339,11 @@ private:
 
 		int32 CurrentComboStep; //콤보 단계
 		TArray<FName> ComboSectionNames; //콤보 단계별 이름
+		UPROPERTY(EditAnywhere, Category = "Skill")
 		float AttackComboCount; //공격 콤보 초기화 변수
 		FTimerHandle AttackComboCountdown; //콤보 초기화 타이머
 
+		UPROPERTY(EditAnywhere, Category = "Skill")
 		float ParryCountdown; // 패리기능 쿨타임 변수
 		bool bCanParry;//패리기능 사용 가능 여부
 
@@ -445,6 +441,8 @@ private:
 
 		UPROPERTY(EditAnywhere, Category = "Combat")
 		float PushBackDistance;
+
+		int32 RemainingMonsters;
 public:
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
 	FORCEINLINE EActionState GetActionState() const { return ActionState; }
