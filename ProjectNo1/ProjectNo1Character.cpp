@@ -268,6 +268,7 @@ void AProjectNo1Character::BeginPlay()
 	SpawnDefaultWeapon();//주무기 장착
 	SpawnDefaultWeaponTwo();//쉴드 장착
 	SpawnDefaultPotionOne();//포션 장착
+	CheckBossMonsters();
 
 	OnStunnedEnemyDetected.AddDynamic(this, &AProjectNo1Character::EnableSpecialTargetingAttack);
 	OffStunnedEnemyDetected.AddDynamic(this, &AProjectNo1Character::DisableSpecialTargetingAttack);
