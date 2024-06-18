@@ -1524,7 +1524,11 @@ void AProjectNo1Character::CheckBossMonsters()
 		ABossCharacter* BossCharacterInstance = Cast<ABossCharacter>(BossCharacter);
 		if (BossCharacterInstance)
 		{
-			BossCharacterInstance->OnBossDestroyedDelegate.AddDynamic(this, &AProjectNo1Character::GameClearUI);
+			RemainingMonsters--;
+			if (RemainingMonsters <= 0)
+			{
+				BossCharacterInstance->OnBossDestroyedDelegate.AddDynamic(this, &AProjectNo1Character::GameClearUI);
+			}
 		}
 	}
 }

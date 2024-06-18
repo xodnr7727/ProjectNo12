@@ -143,6 +143,8 @@ protected:
 	
 	UFUNCTION()
 	void CheckBossMonsters();
+
+	UFUNCTION()
 	void GameClearUI();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Block")
