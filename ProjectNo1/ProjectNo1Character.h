@@ -164,10 +164,8 @@ protected:
 	void WeaponSpellSlashEffect();
 	void EnableWeaponSpell();
 	void PlayWeaponSpellHitSound(const FVector& ImpactPoint);
-
 	UFUNCTION(BlueprintCallable)
 	void DeactivateWeaponSpellEffect();
-
 	UFUNCTION(BlueprintCallable)
 	void ActivateWeaponSpellEffect();
 	

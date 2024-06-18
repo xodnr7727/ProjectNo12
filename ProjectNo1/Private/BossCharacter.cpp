@@ -476,6 +476,14 @@ void ABossCharacter::Die()
 	SpawnGd();
 }
 
+
+void ABossCharacter::Destroyed()
+{
+	Super::Destroyed();
+
+	OnBossDestroyedDelegate.Broadcast();
+}
+
 void ABossCharacter::Stun()
 {
 	EnemyState = EEnemyState::EES_Stunned;

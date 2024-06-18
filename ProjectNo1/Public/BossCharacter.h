@@ -47,6 +47,7 @@ protected:
 
 	/** <ABaseCharacter> */
 	virtual void Die() override;
+	virtual void Destroyed() override;
 	void SpawnEx();
 	void SpawnGd();
 	bool InTargetRange(AActor* Target, double Radius);
