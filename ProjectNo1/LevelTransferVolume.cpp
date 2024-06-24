@@ -60,11 +60,11 @@ void ALevelTransferVolume::NotifyActorBeginOverlap(AActor* OtherActor)
     if (bIsTransferVolumeActive)
     {
         if (ProjectNo1Character) {
+            ProjectNo1Character->SavePlayerState();
             PlayLevelTransSound();
             ShowLoadingScreen();
-            // 타이머 설정: 2초 대기 후 레벨 전환
-
-            GetWorld()->GetTimerManager().SetTimer(LevelTransitionTimerHandle, this, &ALevelTransferVolume::TransitionLevel, 2.0f, false);
+            // 타이머 설정: 1초 대기 후 레벨 전환
+            GetWorld()->GetTimerManager().SetTimer(LevelTransitionTimerHandle, this, &ALevelTransferVolume::TransitionLevel, 1.0f, false);
         }
     }
 }
@@ -86,23 +86,23 @@ void ALevelTransferVolume::TransitionLevel()
     if (LoadingScreenWidget)
     {
         LoadingScreenWidget->RemoveFromParent();
-    }
-    UGameplayStatics::OpenLevel(GetWorld(), FName(TransferLevelName));
+    }  
+        UGameplayStatics::OpenLevel(GetWorld(), FName(TransferLevelName));
 }
 
 void ALevelTransferVolume::CheckMonsters()
 {
-    TArray<AActor*> FoundLichEnemys;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ALichEnemy::StaticClass(), FoundLichEnemys);
-    RemainingMonsters = FoundLichEnemys.Num();
+    TArray<AActor*> FoundGoblins;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGoblin::StaticClass(), FoundGoblins);
+    RemainingMonsters = FoundGoblins.Num();
 
     // 몬스터들이 모두 사라질 때를 감지하는 이벤트를 등록
-    for (AActor* LichEnemy : FoundLichEnemys)
+    for (AActor* Goblin : FoundGoblins)
     {
-        ALichEnemy* LichEnemyInstance = Cast<ALichEnemy>(LichEnemy);
-        if (LichEnemyInstance)
+        AGoblin* GoblinInstance = Cast<AGoblin>(Goblin);
+        if (GoblinInstance)
         {
-            LichEnemyInstance->OnDestroyedDetected.AddDynamic(this, &ALevelTransferVolume::ActivateTransition);
+            GoblinInstance->OnDestroyedDetected.AddDynamic(this, &ALevelTransferVolume::ActivateTransition);
         }
     }
 }
@@ -112,7 +112,7 @@ void ALevelTransferVolume::ActivateTransition()
     RemainingMonsters--;
     if (RemainingMonsters <= 0)
     {
-        UE_LOG(LogTemp, Warning, TEXT("All monsters are defeated! Level transition is now active."));
+        UE_LOG(LogTemp, Warning, TEXT("All Key monsters are defeated! Level transition is now active."));
         bIsTransferVolumeActive = true;
         TransferVolume->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
         PlayLevelOpenSound();

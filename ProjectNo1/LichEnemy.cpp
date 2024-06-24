@@ -52,27 +52,27 @@ ALichEnemy::ALichEnemy()
 	if (ProjectileAsset.Succeeded())
 		ProjectileWeaponClass = ProjectileAsset.Class;
 
-	SmashSkillCooldown = 12.0f; // 초기 쿨타임 설정 (예: 20초)
+	SmashSkillCooldown = 21.0f; // 초기 쿨타임 설정 (예: 21초)
 	bCanSmashSkill = true; //초기에 레이저 공격 사용할 수 있도록 설정
 
 	// Set the default value for the special targeting range
 	SmashSkillEnableRange = 500.0f;
 
-	SwingSkillCooldown = 9.0f; // 초기 쿨타임 설정 (예: 20초)
+	SwingSkillCooldown = 17.0f; // 초기 쿨타임 설정 (예: 17초)
 	bCanSwingSkill = true; //초기에 돌진 공격 사용할 수 있도록 설정
 
 	// Set the default value for the special targeting range
 	SwingSkillEnableRange = 300.0f;
 
-	TeleportSkillCooldown = 5.0f; // 텔레포트 스킬 쿨타임 변수
+	TeleportSkillCooldown = 4.0f; // 텔레포트 스킬 쿨타임 변수
 	bCanTeleportSkill = true;
 
 	TeleportSkillEnableRange = 700.0f;
 	TeleportDistance = 30.0f;
 
-	AllSkillCooldown = 4.0f; // 스킬 쿨타임 설정 (예: 7초)
+	AllSkillCooldown = 3.0f; // 스킬 쿨타임 설정 (예: 7초)
 	bCanSkill = true;  //초기에 스킬 사용할 수 있도록 설정
-	CollisonTimer = 1.0f; // 스킬 쿨타임 설정 (예: 1초)
+	CollisonTimer = 1.0f; // 무적 쿨타임 설정 (예: 1초)
 
 }
 void ALichEnemy::BeginPlay()
@@ -279,7 +279,7 @@ void ALichEnemy::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitte
 	GetCharacterMovement()->Activate();
 	EnemyState = EEnemyState::EES_Attacking;
 	bAttack = true;
-	StopAttackMontage();
+	//StopAttackMontage();
 
 	if (IsInsideAttackRadius())
 	{
@@ -576,7 +576,7 @@ void ALichEnemy::SmashSpellSweepTrace()
 
 				UGameplayStatics::ApplyDamage(HitResult.GetActor(), LichDamage, GetInstigatorController(), this, UDamageType::StaticClass());
 				ExecuteGetHit(HitResult);
-				//ExecuteGetBlock(HitResult); 막기 불가 공격
+				ExecuteGetBlock(HitResult);
 			}
 		}
 	}
@@ -759,7 +759,7 @@ void ALichEnemy::Destroyed()
 	{
 		EquippedWeapon->Destroy();
 	}
-	OnDestroyedDetected.Broadcast();
+	OnBossDestroyedDelegate.Broadcast();
 }
 
 void ALichEnemy::StoreHitNumber(UUserWidget* HitNubmer, FVector Location)
@@ -924,7 +924,7 @@ void ALichEnemy::Attack()
 	if (CanAttack()) return;
 	if (CombatTarget == nullptr) return;
 	if (bAttack == false) return;
-	GetCharacterMovement()->Deactivate();
+	//GetCharacterMovement()->Deactivate();
 	EnemyState = EEnemyState::EES_Engaged;
 	PlayAttackMontage();
 }

@@ -27,7 +27,7 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-private:
+public:
 	UPROPERTY(EditAnywhere,  Category = "Actor Attributes")
 		float Health;
 

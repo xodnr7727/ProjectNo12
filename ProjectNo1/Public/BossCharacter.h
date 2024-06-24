@@ -19,7 +19,6 @@ class AProjectNo1Character;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLaserSkillDetected);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnRushSkillDetected);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnBossDestroyedDelegate);
 
 /**
  * 
@@ -39,8 +38,6 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FOnRushSkillDetected OnRushSkillDetected;
 
-	UPROPERTY(BlueprintAssignable, Category = "Events")
-	FOnBossDestroyedDelegate OnBossDestroyedDelegate;
 protected:
 
 	virtual void BeginPlay() override;

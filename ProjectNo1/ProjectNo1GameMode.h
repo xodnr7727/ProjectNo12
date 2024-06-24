@@ -13,6 +13,7 @@ class AProjectNo1GameMode : public AGameModeBase
 
 public:
 	AProjectNo1GameMode();
+	virtual void BeginPlay() override;
 };
 
 

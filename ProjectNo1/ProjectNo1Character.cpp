@@ -10,6 +10,8 @@
 #include "Components/InputComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/AttributeComponent.h"
+#include "MyProGameInstance.h"
+#include "MyProSaveGame.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
@@ -1189,6 +1191,49 @@ void AProjectNo1Character::SetHUDHealth()
 	}
 }
 
+void AProjectNo1Character::SavePlayerState()
+{
+	UMyProGameInstance* GameInstance = Cast<UMyProGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+	if (GameInstance)
+	{
+		GameInstance->PlayerHealth = Attributes->Health;
+		GameInstance->PlayerStamina = Attributes->Stamina;
+		GameInstance->PlayerMaxHealth = Attributes->MaxHealth;
+		GameInstance->PlayerMaxStamina = Attributes->MaxStamina;
+		GameInstance->PlayerExperience = Attributes->Experience;
+		GameInstance->PlayerMaxExperience = Attributes->MaxExperience;
+		GameInstance->PlayerHealthRegenRate = Attributes->HealthRegenRate;
+		GameInstance->PlayerStaminaRegenRate = Attributes->StaminaRegenRate;
+	}
+	else
+	{
+		// 로그 추가
+		UE_LOG(LogTemp, Error, TEXT("Failed to get SaveGameInstance"));
+	}
+	UE_LOG(LogTemp, Log, TEXT("SaveState"));
+}
+
+void AProjectNo1Character::LoadPlayerState()
+{
+	if (UMyProGameInstance* GameInstance = Cast<UMyProGameInstance>(UGameplayStatics::GetGameInstance(GetWorld())))
+	{
+		Attributes->Health = GameInstance->PlayerHealth;
+		Attributes->Stamina = GameInstance->PlayerStamina;
+		Attributes->MaxHealth = GameInstance->PlayerMaxHealth;
+		Attributes->MaxStamina = GameInstance->PlayerMaxStamina;
+		Attributes->Experience = GameInstance->PlayerExperience;
+		Attributes->MaxExperience = GameInstance->PlayerMaxExperience;
+		Attributes->HealthRegenRate = GameInstance->PlayerHealthRegenRate;
+		Attributes->StaminaRegenRate = GameInstance->PlayerStaminaRegenRate;
+		UE_LOG(LogTemp, Log, TEXT("LoadState"));
+	}
+	else
+	{
+		// 로그 추가
+		UE_LOG(LogTemp, Error, TEXT("Failed to get LoadGameInstance"));
+	}
+}
+
 void AProjectNo1Character::AttackEnd()
 {
 	ActionState = EActionState::EAS_Unoccupied;
@@ -1514,20 +1559,20 @@ void AProjectNo1Character::PlayerDieUI()
 
 void AProjectNo1Character::CheckBossMonsters()
 {
-	TArray<AActor*> FoundBossCharacters;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABossCharacter::StaticClass(), FoundBossCharacters);
-	RemainingMonsters = FoundBossCharacters.Num();
+	TArray<AActor*> FoundLichEnemies;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ALichEnemy::StaticClass(), FoundLichEnemies);
+	RemainingMonsters = FoundLichEnemies.Num();
 
 	// 몬스터들이 모두 사라질 때를 감지하는 이벤트를 등록
-	for (AActor* BossCharacter : FoundBossCharacters)
+	for (AActor* ChLichEnemy : FoundLichEnemies)
 	{
-		ABossCharacter* BossCharacterInstance = Cast<ABossCharacter>(BossCharacter);
-		if (BossCharacterInstance)
+		ALichEnemy* LichEnemyInstance = Cast<ALichEnemy>(ChLichEnemy);
+		if (LichEnemyInstance)
 		{
 			RemainingMonsters--;
 			if (RemainingMonsters <= 0)
 			{
-				BossCharacterInstance->OnBossDestroyedDelegate.AddDynamic(this, &AProjectNo1Character::GameClearUI);
+				LichEnemyInstance->OnBossDestroyedDelegate.AddDynamic(this, &AProjectNo1Character::GameClearUI);
 			}
 		}
 	}
@@ -1535,7 +1580,8 @@ void AProjectNo1Character::CheckBossMonsters()
 
 void AProjectNo1Character::GameClearUI()
 {
-	// 게임 승리 UI 생성
+	// 드래곤 처치 UI 생성
+	FTimerHandle LevelTransitionTimerHandle;
 	UWorld* World = GetWorld();
 	if (World)
 	{
@@ -1544,7 +1590,17 @@ void AProjectNo1Character::GameClearUI()
 			ClearWidget = CreateWidget<UUserWidget>(World, ClearWidgetClass);
 			ClearWidget->AddToViewport();
 		}
+		GetWorld()->GetTimerManager().SetTimer(LevelTransitionTimerHandle, this, &AProjectNo1Character::RemoveClearWidget, 1.0f, false);
 	}
+}
+
+void AProjectNo1Character::RemoveClearWidget()
+{
+	if (ClearWidget)
+	{
+		ClearWidget->RemoveFromParent();
+	}
+
 }
 
 void AProjectNo1Character::EndAttacking()

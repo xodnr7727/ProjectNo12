@@ -45,6 +45,9 @@ public:
 	void LevelUpAll();
 	void LevelUpEC();
 	void LevelUpES();
+	void SavePlayerState();//플레이어 데이터 저장
+	void LoadPlayerState();
+	//플레이어 데이터 로드
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Input)
 		float TurnRateGamepad;
@@ -67,12 +70,12 @@ protected:
 	void Dive(); //구르기
 	virtual void DiveEnd() override;
 	bool IsDiving();
-	void EnableDive();
+	void EnableDive();//구르기 활성화
 	void Parry(); //패리 기능
 	void ParryCanDo(); //패리기능 사용 활성화
 	void DrinkPotion(); //포션 마시기
 	void DeactivatePotionEffect();
-	void EnablePotion();
+	void EnablePotion();//포션 활성화
 	UFUNCTION(BlueprintCallable)
 	void DrinkEnd();
 	UFUNCTION(BlueprintCallable)
@@ -146,6 +149,9 @@ protected:
 
 	UFUNCTION()
 	void GameClearUI();
+
+	UFUNCTION()
+	void RemoveClearWidget();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Block")
 	class UAnimMontage* ShieldMontage;
@@ -245,6 +251,7 @@ protected:
 
 	UFUNCTION(BlueprintImplementableEvent)
 		void CreateFields(const FVector& FieldLocation);
+
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }

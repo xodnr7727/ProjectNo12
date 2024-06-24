@@ -15,6 +15,9 @@
 class UHealthBarComponent;
 class UPawnSensingComponent;
 class AProjectNo1Character;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDestroyedDelegate);
+
 UCLASS()
 class PROJECTNO1_API AGoblin : public ABaseCharacter
 {
@@ -23,6 +26,9 @@ class PROJECTNO1_API AGoblin : public ABaseCharacter
 public:
 	// Sets default values for this character's properties
 	AGoblin();
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnDestroyedDelegate OnDestroyedDetected;
 
 protected:
 

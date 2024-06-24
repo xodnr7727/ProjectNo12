@@ -481,7 +481,6 @@ void ABossCharacter::Destroyed()
 {
 	Super::Destroyed();
 
-	OnBossDestroyedDelegate.Broadcast();
 }
 
 void ABossCharacter::Stun()

@@ -263,6 +263,8 @@ void AGoblin::Destroyed()
 	{
 		EquippedShield->Destroy();
 	}
+
+	OnDestroyedDetected.Broadcast();
 }
 
 void AGoblin::StoreHitNumber(UUserWidget* HitNubmer, FVector Location)
