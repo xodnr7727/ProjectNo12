@@ -16,6 +16,7 @@
 ---
 
 **[LevelTransferVolume](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/LevelTransferVolume.h) : 레벨 이동 파일**
+**[Portal](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/Portal.h) : 레벨 내 이동 포탈 파일**
 
 ---
 
