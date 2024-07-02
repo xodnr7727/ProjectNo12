@@ -176,6 +176,21 @@ void UAttributeComponent::AddGold(int32 AmountOfGold)
 	Gold += AmountOfGold;
 }
 
+void UAttributeComponent::ICDamageMinusGold()
+{
+	Gold -= 2000.0f;
+}
+
+void UAttributeComponent::BossClearGold()
+{
+	Gold += 20000.0f;
+}
+
+bool UAttributeComponent::CanIncreaseDamage()
+{
+	return Gold >= 2000.0f;
+}
+
 
 
 

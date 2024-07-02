@@ -5,6 +5,21 @@
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 
+void USlashOverlay::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	// GoldText가 올바르게 바인딩되었는지 확인
+	if (!GoldText)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("GoldText is not bound!"));
+	}
+	if (!LevelText)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("LevelText is not bound!"));
+	}
+}
+
 void USlashOverlay::SetHealthBarPercent(float Percent)
 {
 	if (HealthProgressBar)

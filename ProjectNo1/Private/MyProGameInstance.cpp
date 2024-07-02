@@ -21,7 +21,7 @@ void UMyProGameInstance::InitializeDefaultValues()
         PlayerExperience = 120;
         PlayerMaxExperience = 500;
         PlayerHealthRegenRate = 1;
-        PlayerStaminaRegenRate = 35;
+        PlayerStaminaRegenRate = 55;
         PlayerGold = 0;
         PlayerLevel = 1;
 

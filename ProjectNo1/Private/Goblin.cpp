@@ -51,7 +51,7 @@ AGoblin::AGoblin()
 	if (MeshAsset.Succeeded())
 		GetMesh()->SetSkeletalMesh(MeshAsset.Object);
 
-
+	OriginalSpawnLocation = GetActorLocation(); // 원래 스폰 위치 저장
 }
 void AGoblin::BeginPlay()
 {
@@ -184,6 +184,7 @@ void AGoblin::SpawnDefaultAmor()
 
 void AGoblin::Die()
 {
+	FTimerHandle RespawnTimerHandle;
 	Super::Die();
 	EnemyState = EEnemyState::EES_Dead;
 	ClearAttackTimer();
@@ -195,6 +196,7 @@ void AGoblin::Die()
 	SpawnEx();
 	SpawnGd();
 }
+
 void AGoblin::SpawnEx()
 {
 	UWorld* World = GetWorld();

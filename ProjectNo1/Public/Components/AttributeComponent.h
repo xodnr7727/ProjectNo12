@@ -116,6 +116,9 @@ public:
 	void AddSouls(int32 NumberOfSouls);
 	void AddLevel(int32 AmountOfLevel);
 	void AddGold(int32 AmountOfGold);
+	void ICDamageMinusGold();
+	void BossClearGold();
+	bool CanIncreaseDamage();
 	void AddEx(float DropEx);
 	FORCEINLINE int32 GetGold() const { return Gold; }
 	FORCEINLINE float GetExperience() const { return Experience; }

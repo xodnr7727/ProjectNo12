@@ -386,6 +386,12 @@ void AWeapon::BeginPlay()
 	LeftCastSkillBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnBoxOverlap);
 }
 
+void AWeapon::GoldIncreaseDamage()
+{
+	// 공격력을 증가시키는 코드
+	Damage += 20.0f;
+}
+
 void AWeapon::IncreaseDamage()
 {
 	// 공격력을 증가시키는 코드

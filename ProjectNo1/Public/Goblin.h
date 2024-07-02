@@ -198,6 +198,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Attack Properties")
 	float GoblinDamage;
 
+	UPROPERTY(EditAnywhere, Category = "Spawn")
+	FVector OriginalSpawnLocation;
+
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TSubclassOf<class ASoul> ExClass;
 

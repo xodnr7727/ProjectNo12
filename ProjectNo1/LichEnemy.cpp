@@ -28,6 +28,7 @@ ALichEnemy::ALichEnemy()
 	PrimaryActorTick.bCanEverTick = true;
 
 	bAttack = true;
+	bAction = false;
 
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
@@ -58,22 +59,30 @@ ALichEnemy::ALichEnemy()
 	// Set the default value for the special targeting range
 	SmashSkillEnableRange = 500.0f;
 
+	MagicSkillCooldown = 8.0f; // 초기 쿨타임 설정 (예: 8초)
+	bCanMagicSkill = true; //초기에 레이저 공격 사용할 수 있도록 설정
+
+	// Set the default value for the special targeting range
+	MagicSkillEnableRange = 300.0f;
+
 	SwingSkillCooldown = 17.0f; // 초기 쿨타임 설정 (예: 17초)
 	bCanSwingSkill = true; //초기에 돌진 공격 사용할 수 있도록 설정
 
 	// Set the default value for the special targeting range
 	SwingSkillEnableRange = 300.0f;
 
-	TeleportSkillCooldown = 4.0f; // 텔레포트 스킬 쿨타임 변수
+	TeleportSkillCooldown = 7.0f; // 텔레포트 스킬 쿨타임 변수
 	bCanTeleportSkill = true;
 
 	TeleportSkillEnableRange = 700.0f;
 	TeleportDistance = 30.0f;
 
-	AllSkillCooldown = 3.0f; // 스킬 쿨타임 설정 (예: 7초)
+	AllSkillCooldown = 4.0f; // 스킬 쿨타임 설정 (예: 4초)
 	bCanSkill = true;  //초기에 스킬 사용할 수 있도록 설정
 	CollisonTimer = 1.0f; // 무적 쿨타임 설정 (예: 1초)
 
+	bIsPhaseTwo = false;
+	PhaseTwoTimer = 7.0f;
 }
 void ALichEnemy::BeginPlay()
 {
@@ -82,37 +91,13 @@ void ALichEnemy::BeginPlay()
 		if (PawnSensing) PawnSensing->OnSeePawn.AddDynamic(this, &ALichEnemy::PawnSeen);
 		InitializeEnemy();
 		Tags.Add(FName("Enemy"));
+		InitialLocation = GetActorLocation();
 
 		OnSwingSkillDetected.AddDynamic(this, &ALichEnemy::SwingSkill);
 		OnSmashSkillDetected.AddDynamic(this, &ALichEnemy::SmashSkill);
+		OnMagicSkillDetected.AddDynamic(this, &ALichEnemy::MagicSkill);
 		OnTeleportSkillDetected.AddDynamic(this, &ALichEnemy::TeleportSkill);
-}
-
-void ALichEnemy::CheckForSwing()
-{
-	if (HasExistPlayerInFront())
-	{
-		// 델리게이트 호출
-		OnSwingSkillDetected.Broadcast();
-	}
-}
-
-void ALichEnemy::CheckForSmash()
-{
-	if (HasExistSmashPlayerInFront())
-	{
-		// 델리게이트 호출	
-		OnSmashSkillDetected.Broadcast();
-	}
-}
-
-void ALichEnemy::CheckForTeleport()
-{
-	if (HasExistTeleportPlayerInFront())
-	{
-		// 델리게이트 호출
-		OnTeleportSkillDetected.Broadcast();
-	}
+		OnBossPhaseDelegated.AddDynamic(this, &ALichEnemy::EnterPhaseTwo);
 }
 
 void ALichEnemy::Tick(float DeltaTime)
@@ -135,7 +120,9 @@ void ALichEnemy::Tick(float DeltaTime)
 	}
 	CheckForSwing();
 	CheckForSmash();
+	CheckForMagic();
 	CheckForTeleport();
+	CheckHealth();
 }
 
 void ALichEnemy::CheckPatrolTarget()
@@ -166,6 +153,147 @@ void ALichEnemy::CheckCombatTarget()
 	else if (CanAttack())
 	{
 		StartAttackTimer();
+	}
+}
+
+bool ALichEnemy::InTargetRange(AActor* Target, double Radius)
+{
+	if (Target == nullptr) return false;
+	const double DistanceToTarget = (Target->GetActorLocation() - GetActorLocation()).Size();
+	return DistanceToTarget <= Radius;
+}
+
+void ALichEnemy::MoveToTarget(AActor* Target)
+{
+	if (EnemyController == nullptr || Target == nullptr) return;
+	FAIMoveRequest MoveRequest;
+	MoveRequest.SetGoalActor(Target);
+	MoveRequest.SetAcceptanceRadius(50.f);
+	EnemyController->MoveTo(MoveRequest);
+}
+
+void ALichEnemy::CheckForSwing()
+{
+	if (HasExistPlayerInFront())
+	{
+		// 델리게이트 호출
+		OnSwingSkillDetected.Broadcast();
+	}
+}
+
+void ALichEnemy::CheckForSmash()
+{
+	if (HasExistSmashPlayerInFront())
+	{
+		// 델리게이트 호출	
+		OnSmashSkillDetected.Broadcast();
+	}
+}
+
+void ALichEnemy::CheckForMagic()
+{
+	if (HasExistMagicPlayerInFront())
+	{
+		// 델리게이트 호출	
+		OnMagicSkillDetected.Broadcast();
+	}
+}
+
+void ALichEnemy::CheckForTeleport()
+{
+	if (HasExistTeleportPlayerInFront())
+	{
+		// 델리게이트 호출
+		OnTeleportSkillDetected.Broadcast();
+	}
+}
+
+void ALichEnemy::CheckHealth()
+{
+	if (Attributes->Health <=  Attributes->MaxHealth / 2 && !bIsPhaseTwo)
+	{
+		OnBossPhaseDelegated.Broadcast();
+	}
+}
+
+void ALichEnemy::EnterPhaseTwo()
+{
+	FTimerHandle PhaseTwoCountdown;
+
+	bIsPhaseTwo = true;
+	bAttack = false; //기본 공격 변수
+	bAction = true; //행동 변수
+	EnemyState = EEnemyState::EES_Engaged;
+	UE_LOG(LogTemp, Log, TEXT("EnterPhaseTwo")); 
+	PlayPhaseEnterMontage();
+	GetCharacterMovement()->Deactivate();
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	GetWorldTimerManager().SetTimer(PhaseTwoCountdown, this, &ALichEnemy::EnterEndPhaseTwo, PhaseTwoTimer, false); // 타이머 시작
+}
+
+void ALichEnemy::ResetPositions()
+{
+	// 보스 위치 초기화
+	SetActorLocation(InitialLocation);
+
+	// 플레이어 위치 초기화
+	if (ProjectNo1Character)
+	{
+		FVector PlayerStartLocation = FVector(8070.0f, 1560.0f, 70.0f); // 시작점 좌표 설정
+		ProjectNo1Character->SetActorLocation(PlayerStartLocation);
+	}
+}
+
+void ALichEnemy::EnterEndPhaseTwo()
+{
+	EnemyState = EEnemyState::EES_NoState;
+	ResetPositions();
+	ChangeBossAppearance();
+	GetCharacterMovement()->Activate();
+	CheckCombatTarget();
+	bAttack = true; //기본 공격 변수
+	bAction = false; //행동 변수
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+}
+
+void ALichEnemy::ChangeBossAppearance()
+{
+	if (PhaseTwoMesh)
+	{
+		USkeletalMeshComponent* MeshComponent = FindComponentByClass<USkeletalMeshComponent>();
+		if (MeshComponent)
+		{
+			MeshComponent->SetSkeletalMesh(PhaseTwoMesh);
+			UE_LOG(LogTemp, Log, TEXT("ChangeBossAppearance"));
+		}
+	}
+}
+
+void ALichEnemy::SpawnEnterPhaseTwoParticles()
+{
+	if (PhaseTwoParticles && GetWorld())
+	{
+		FVector SpawnLocation = GetActorLocation() - FVector(0.0f, 0.0f, GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
+		//리치 발 밑에 생성되도록
+
+		UGameplayStatics::SpawnEmitterAtLocation(
+			GetWorld(),
+			PhaseTwoParticles,
+			SpawnLocation
+		);
+	}
+}
+
+void ALichEnemy::PlayEnterPhaseSound()
+{
+	if (EnterPhaseSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			EnterPhaseSound,
+			GetActorLocation()
+		);
 	}
 }
 
@@ -206,6 +334,38 @@ bool ALichEnemy::HasExistSmashPlayerInFront()//플레이어 체크 함수
 	TArray<FHitResult> HitResults;
 	FVector StartLocation = GetActorLocation();
 	FVector EndLocation = StartLocation + GetActorForwardVector() * SmashSkillEnableRange;
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.AddIgnoredActor(this); // Ignore the boss
+	CollisionParams.bTraceComplex = true;
+	bool bHit = GetWorld()->SweepMultiByChannel(HitResults, StartLocation, EndLocation, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(50.0f), CollisionParams);
+
+	if (bHit)
+	{
+		for (const FHitResult& HitResult : HitResults)
+		{
+			AActor* OverlappingActor = HitResult.GetActor();
+			// 액터의 클래스가 AProjectNo1Character인지 확인
+			if (OverlappingActor->IsA(AProjectNo1Character::StaticClass()))
+			{
+				ProjectNo1Character = Cast<AProjectNo1Character>(OverlappingActor);
+
+				if (ProjectNo1Character)
+				{
+					//UE_LOG(LogTemp, Log, TEXT("ProjectNo1CharacterCheck")); //확인완료
+					return true;
+				}
+			}
+		}
+	}
+	//DrawDebugLine(GetWorld(), StartLocation, EndLocation, FColor::Red, false, 2.0f); //확인완료
+	return false;
+}
+
+bool ALichEnemy::HasExistMagicPlayerInFront()//플레이어 체크 함수
+{
+	TArray<FHitResult> HitResults;
+	FVector StartLocation = GetActorLocation();
+	FVector EndLocation = StartLocation + GetActorForwardVector() * MagicSkillEnableRange;
 	FCollisionQueryParams CollisionParams;
 	CollisionParams.AddIgnoredActor(this); // Ignore the boss
 	CollisionParams.bTraceComplex = true;
@@ -274,7 +434,9 @@ void ALichEnemy::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitte
 		ShowHealthBar();
 	}
 	ClearPatrolTimer();
-	ClearAttackTimer();
+	if (!bAction) {
+		ClearAttackTimer();
+	}
 	EquippedWeapon->DeactivateLeftCastSkillEffect(); // 주문검 공격 이펙트 비활성화
 	GetCharacterMovement()->Activate();
 	EnemyState = EEnemyState::EES_Attacking;
@@ -296,7 +458,9 @@ void ALichEnemy::GetStun_Implementation(const FVector& ImpactPoint, AActor* Hitt
 		ShowHealthBar();
 	}
 	ClearPatrolTimer();
-	ClearAttackTimer();
+	if (!bAction) {
+		ClearAttackTimer();
+	}
 	EquippedWeapon->DeactivateLeftCastSkillEffect(); // 주문검 공격 이펙트 비활성화
 	EnemyState = EEnemyState::EES_Stunned;
 	StopAttackMontage();
@@ -331,19 +495,30 @@ void ALichEnemy::SwingSkill()
 	FTimerHandle SkillCountdown;
 	FTimerHandle CollisonCountdown;
 
-	if (CanSwingAttack() && bCanSwingSkill && bCanSkill) //스킬 우선순위 설정
+	if (CanSwingAttack() && bCanSwingSkill && bCanSkill && !bAction) //스킬 우선순위 설정
 	{
 		PlaySwingSkillMontage();
 		EnemyState = EEnemyState::EES_Engaged;
 		bCanSwingSkill = false;//스윙 연속 사용 X
 		bCanSkill = false;//스킬 연속 사용 X
-		bAttack = false;
+		bAttack = false; //기본 공격 변수
+		bAction = true; //행동 변수
 		GetCharacterMovement()->Deactivate();
 		GetWorldTimerManager().SetTimer(RushSkillCountdown, this, &ALichEnemy::EnableSwingSkill, SwingSkillCooldown, false); // 쿨타임 타이머 시작
 		GetWorldTimerManager().SetTimer(SkillCountdown, this, &ALichEnemy::EnableSkill, AllSkillCooldown, false); // 쿨타임 타이머 시작
 		GetWorldTimerManager().SetTimer(CollisonCountdown, this, &ALichEnemy::EndSwingSkill, CollisonTimer, false); // 쿨타임 타이머 시작
 		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);//스윙 공격 시 무적
 	}
+}
+
+void ALichEnemy::SwingSpellEffect()
+{
+	float CapsuleHalfHeight = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+	FRotator PlayerRotation = GetActorRotation();
+	FRotator DesiredRotation = PlayerRotation + FRotator(0.0f, 0.0f, 0.0f);
+	FVector ForwardVector = GetActorForwardVector(); // 플레이어 전방
+	FVector SpawnLocationA = GetActorLocation() + (ForwardVector * 200.0f) - FVector(0.0f, 0.0f, CapsuleHalfHeight);;
+	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), SwingImpactEffect, SpawnLocationA, DesiredRotation);
 }
 
 void ALichEnemy::SwingSpellSweepTrace()
@@ -433,18 +608,32 @@ void ALichEnemy::PlayLichSwingHitSound(const FVector& ImpactPoint)
 	}
 }
 
+void ALichEnemy::PlayLichSwingSound()
+{
+	if (LichSwingSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			LichSwingSound,
+			GetActorLocation()
+		);
+	}
+}
+
 void ALichEnemy::TeleportSkill()
 {
 	FTimerHandle TeleportSkillCountdown;
 	FTimerHandle TeleAllSkillCountdown;
 	FTimerHandle TeleportCollisonCountdown;
 
-	if (CanSmashAttack() && !bCanSwingSkill && !bCanSmashSkill && bCanTeleportSkill && bCanSkill) //스킬 우선순위 설정
+	if (CanSmashAttack() && !bCanSwingSkill && !bCanSmashSkill && bCanTeleportSkill && bCanSkill && !bAction) //스킬 우선순위 설정
 	{
 		PlayTeleportSkillMontage();
 		EnemyState = EEnemyState::EES_Engaged;
 		bCanTeleportSkill = false;//텔레포트 연속 사용 X
 		bCanSkill = false;//스킬 연속 사용 X
+		bAttack = false;
+		bAction = true;
 		GetCharacterMovement()->Deactivate();
 		GetWorldTimerManager().SetTimer(TeleportSkillCountdown, this, &ALichEnemy::EnableTeleportSkill, TeleportSkillCooldown, false); // 쿨타임 타이머 시작
 		GetWorldTimerManager().SetTimer(TeleAllSkillCountdown, this, &ALichEnemy::EnableSkill, AllSkillCooldown, false); // 쿨타임 타이머 시작
@@ -514,13 +703,14 @@ void ALichEnemy::SmashSkill()
 	FTimerHandle CommonSkillCountdown;
 	FTimerHandle SmashCollisonCountdown;
 
-	if (CanSmashAttack() && !bCanSwingSkill && bCanSmashSkill && bCanSkill) //스킬 우선순위 설정
+	if (CanSmashAttack() && !bCanSwingSkill && bCanSmashSkill && bCanSkill && bIsPhaseTwo && !bAction) //스킬 우선순위 설정
 	{
 		PlaySmashSkillMontage();
 		EnemyState = EEnemyState::EES_Engaged;
 		bCanSmashSkill = false;//스매쉬 연속 사용 X
 		bCanSkill = false;//스킬 연속 사용 X
 		bAttack = false;
+		bAction = true;
 		GetCharacterMovement()->Deactivate();
 		GetWorldTimerManager().SetTimer(SmashSkillCountdown, this, &ALichEnemy::EnableSmashSkill, SmashSkillCooldown, false); // 쿨타임 타이머 시작
 		GetWorldTimerManager().SetTimer(CommonSkillCountdown, this, &ALichEnemy::EnableSkill, AllSkillCooldown, false); // 쿨타임 타이머 시작
@@ -622,6 +812,133 @@ void ALichEnemy::PlayLichSmashHitSound(const FVector& ImpactPoint)
 	}
 }
 
+void ALichEnemy::PlayLichSmashSound()
+{
+	if (LichSmashSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			LichSmashSound,
+			GetActorLocation()
+		);
+	}
+}
+
+void ALichEnemy::MagicSkill()
+{
+	FTimerHandle MagicSkillCountdown;
+	FTimerHandle MagicCommonSkillCountdown;
+	FTimerHandle MagicCollisonCountdown;
+
+	if (CanMagicAttack() && bCanMagicSkill && bCanSkill && bIsPhaseTwo && !bAction) //스킬 우선순위 설정
+	{
+		PlayMagicSkillMontage();
+		EnemyState = EEnemyState::EES_Engaged;
+		bCanMagicSkill = false;//스매쉬 연속 사용 X
+		bCanSkill = false;//스킬 연속 사용 X
+		bAttack = false;
+		bAction = true;
+		GetCharacterMovement()->Deactivate();
+		GetWorldTimerManager().SetTimer(MagicSkillCountdown, this, &ALichEnemy::EnableMagicSkill, MagicSkillCooldown, false); // 쿨타임 타이머 시작
+		GetWorldTimerManager().SetTimer(MagicCommonSkillCountdown, this, &ALichEnemy::EnableSkill, AllSkillCooldown, false); // 쿨타임 타이머 시작
+		GetWorldTimerManager().SetTimer(MagicCollisonCountdown, this, &ALichEnemy::EndMagicSkill, CollisonTimer, false); // 쿨타임 타이머 시작
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);//스매쉬 공격 시 무적
+	}
+}
+
+void ALichEnemy::MagicSpellEffect()
+{
+	float CapsuleHalfHeight = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+	FRotator PlayerRotation = GetActorRotation();
+	FRotator DesiredRotation = PlayerRotation + FRotator(0.0f, 0.0f, 0.0f);
+	FVector ForwardVector = GetActorForwardVector(); // 플레이어 전방
+	FVector SpawnLocationA = GetActorLocation() + (ForwardVector * 200.0f) - FVector(0.0f, 0.0f, CapsuleHalfHeight);;
+	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), MagicImpactEffect, SpawnLocationA, DesiredRotation);
+}
+
+void ALichEnemy::MagicSpellSweepTrace()
+{
+	FVector Start = GetActorLocation() + GetActorForwardVector() * 100.0f; // 보스 바로 앞 위치에서 시작
+	FVector ForwardVector = GetActorForwardVector(); // 보스가 향하는 방향
+	FVector End = Start + ForwardVector * 300.0f; // 일정 거리만큼 스윕 트레이스
+	FVector SpawnLocation = GetActorLocation();
+	FHitResult HitResult;
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.AddIgnoredActor(this); // 보스는 무시
+	bool bResult = GetWorld()->SweepSingleByChannel(
+		HitResult,
+		Start,
+		End,
+		FQuat::Identity,
+		ECollisionChannel::ECC_Visibility,
+		FCollisionShape::MakeSphere(80.0f),
+		CollisionParams);
+	UE_LOG(LogTemp, Log, TEXT("MagicSpellSweepTrace")); //확인완료
+	// 라인 트레이스의 시작점에 이펙트를 생성하여 표시
+
+	//UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), EndPointEffect, SpawnLocation, FRotator::ZeroRotator);
+	// 라인 트레이스 실행
+	if (bResult) {
+		if (AActor* Actor = HitResult.GetActor()) {
+			if (HitResult.GetActor()->ActorHasTag("EngageableTarget"))
+			{
+				UE_LOG(LogTemp, Log, TEXT("Hit Actor : %s"), *HitResult.GetActor()->GetName());
+				//DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.f, 0, 1.f);
+				// 라인 트레이스의 타격점에 이펙트를 생성하여 표시
+				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), LichMagicHitEffect, HitResult.ImpactPoint, FRotator::ZeroRotator);
+				PlayLichMagicHitSound(HitResult.ImpactPoint);
+				FDamageEvent DamageEvent;
+
+				UGameplayStatics::ApplyDamage(HitResult.GetActor(), LichDamage, GetInstigatorController(), this, UDamageType::StaticClass());
+				ExecuteGetHit(HitResult);
+				ExecuteGetBlock(HitResult);
+			}
+		}
+	}
+	else {
+		//DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.f, 0, 1.f);
+	}
+}
+
+void ALichEnemy::EndMagicSkill()
+{
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//무적 해제
+}
+
+void ALichEnemy::EnableMagicSkill()
+{
+	bCanMagicSkill = true;// 스매쉬 공격 사용 활성화
+}
+
+void ALichEnemy::DisableMagicSkill()
+{
+	bCanMagicSkill = false;// 스매쉬 공격 사용 비활성화
+}
+
+void ALichEnemy::PlayLichMagicHitSound(const FVector& ImpactPoint)
+{
+	if (LichMagicHitSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			LichMagicHitSound,
+			ImpactPoint
+		);
+	}
+}
+
+void ALichEnemy::PlayLichMagicSound()
+{
+	if (LichMagicSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			LichMagicSound,
+			GetActorLocation()
+		);
+	}
+}
+
 bool ALichEnemy::IsHitOnShield(AActor* Hitter)
 {
 	// 여기에 방패에 맞았는지 여부를 확인하는 코드를 추가
@@ -718,22 +1035,6 @@ void ALichEnemy::SpawnGd()
 			SpawnedGd->SetGold(Attributes->GetGold());
 		}
 	}
-}
-
-bool ALichEnemy::InTargetRange(AActor* Target, double Radius)
-{
-	if (Target == nullptr) return false;
-	const double DistanceToTarget = (Target->GetActorLocation() - GetActorLocation()).Size();
-	return DistanceToTarget <= Radius;
-}
-
-void ALichEnemy::MoveToTarget(AActor* Target)
-{
-	if (EnemyController == nullptr || Target == nullptr) return;
-	FAIMoveRequest MoveRequest;
-	MoveRequest.SetGoalActor(Target);
-	MoveRequest.SetAcceptanceRadius(50.f);
-	EnemyController->MoveTo(MoveRequest);
 }
 
 float ALichEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) //������ �ޱ�
@@ -921,10 +1222,8 @@ void ALichEnemy::ExecuteGetBlock(FHitResult& HitResult)
 void ALichEnemy::Attack()
 {
 	Super::Attack();
-	if (CanAttack()) return;
-	if (CombatTarget == nullptr) return;
-	if (bAttack == false) return;
-	//GetCharacterMovement()->Deactivate();
+	if (CanAttack() || CombatTarget == nullptr || !bAttack || bAction) return;
+	GetCharacterMovement()->Activate();
 	EnemyState = EEnemyState::EES_Engaged;
 	PlayAttackMontage();
 }
@@ -962,12 +1261,24 @@ bool ALichEnemy::CanSmashAttack()
 	return bCanRushAttack;
 }
 
+bool ALichEnemy::CanMagicAttack()
+{
+	bool bCanMagicAttack =
+		IsOutsideAttackRadius() &&
+		!IsAttacking() &&
+		!IsEngaged() &&
+		!IsStunned() &&
+		!IsDead();
+	return bCanMagicAttack;
+}
+
 void ALichEnemy::AttackEnd()
 {
 	EnemyState = EEnemyState::EES_NoState;
 	GetCharacterMovement()->Activate();
 	CheckCombatTarget();
 	bAttack = true;
+	bAction = false;
 }
 
 void ALichEnemy::HitEnd()

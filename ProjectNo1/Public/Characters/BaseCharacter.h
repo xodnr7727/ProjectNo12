@@ -54,15 +54,18 @@ protected:
 	void PlayBlockSound(const FVector& ImpactPoint);
 	void SpawnBlockParticles(const FVector& ImpactPoint);
 	void PlayWeaponSkillSound();
-
+	void PlayDamageIncreaseSound();
+	void PlayDamageIncreaseFailSound();
 	void PlayRushSkillSound();
 
 	void DisableCapsule();
+	void EnableCapsule();
 
 	virtual bool CanAttack();
 	virtual bool CanLaserAttack();
 	virtual bool CanRushAttack();
 	virtual bool CanSmashAttack();
+	virtual bool CanMagicAttack();
 	virtual bool CanSwingAttack();
 	virtual bool CanNeckSkill();
 
@@ -97,8 +100,10 @@ protected:
 	virtual void PlayLaserSkillMontage();
 	virtual void PlayRushSkillMontage();
 	virtual void PlaySmashSkillMontage();
+	virtual void PlayMagicSkillMontage();
 	virtual void PlaySwingSkillMontage();
 	virtual void PlayTeleportSkillMontage();
+	virtual void PlayPhaseEnterMontage();
 	void StopAttackMontage();
 
 	void SpawnEffect(const FVector& ImpactPoint);
@@ -140,6 +145,12 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	virtual void EndSwingSkill();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void EndEnterPhase();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void EndMagicSkill();
 
 	UFUNCTION(BlueprintCallable)
 		void SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
@@ -198,7 +209,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 		TEnumAsByte<EDeathPose> DeathPose;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat)
 		float MaxParryAngle = 100;
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
@@ -230,7 +241,7 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
 		UAnimMontage* SwordSkillMontage;
-
+	
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
 		UAnimMontage* LaserSkillMontage;
 
@@ -241,10 +252,16 @@ protected:
 		UAnimMontage* SmashSkillMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
+		UAnimMontage* MagicSkillMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat)
 		UAnimMontage* SwingSkillMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
 		UAnimMontage* TeleportSkillMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat)
+		UAnimMontage* PhaseEnterMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
 		UAnimMontage* DeathMontage;
@@ -274,7 +291,6 @@ protected:
 	*/
 public:
 	FORCEINLINE TEnumAsByte<EDeathPose> GetDeathPose() const { return DeathPose; }
-
 private:
 	void PlayMontageSection(UAnimMontage* Montage, const FName& SectionName);
 	int32 PlayRandomMontageSection(UAnimMontage* Montage, const TArray<FName>& SectionNames);
@@ -298,6 +314,12 @@ private:
 		USoundBase* WeaponSkillSound;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
+		USoundBase* DamageIncreaseSound;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+		USoundBase* DamageIncreaseFailSound;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
 		USoundBase* RushSkillSound;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
@@ -305,6 +327,4 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 		UParticleSystem* ArrowParticles;
-
-
 };

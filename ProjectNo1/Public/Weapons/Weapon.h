@@ -68,12 +68,16 @@ public:
 	void IncreaseLaserSkillDamage();
 	void RestoreLaserSkillDamage();
 
+	void GoldIncreaseDamage();
+	void GoldIncreaseAmor();
+
 	void AttachMeshToSocket(USceneComponent* InParent, const FName& InSocketName);
 
 	TArray<AActor*> IgnoreActors;
 
 protected:
 	virtual void BeginPlay() override;
+
 
 	/*
 	virtual void OnCapsuleOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
@@ -210,5 +214,6 @@ public:
 	FORCEINLINE UBoxComponent* GetRushSkillBox() const { return RushSkillBox; }
 	FORCEINLINE UBoxComponent* GetClawSkillBox() const { return ClawSkillBox; }
 	FORCEINLINE UBoxComponent* GetTeethSkillBox() const { return TeethSkillBox; }
-	FORCEINLINE UBoxComponent* GetLeftCastSkillBox() const { return LeftCastSkillBox; }
+	FORCEINLINE UBoxComponent* GetLeftCastSkillBox() const { return LeftCastSkillBox; }	
+	FORCEINLINE float GetDamage() const { return Damage; }
 };

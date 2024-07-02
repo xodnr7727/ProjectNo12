@@ -36,6 +36,7 @@
 #include "HUD/MyProNo1HUD.h"
 #include "HUD/InventoryUI.h"
 #include "HUD/SlashOverlay.h"
+#include "HUD/DamageIncreaseWidget.h"
 #include "MyPlayerController.h"
 #include "Soul.h"
 #include "NiagaraFunctionLibrary.h"
@@ -149,8 +150,13 @@ AProjectNo1Character::AProjectNo1Character()
 	DamagebackCountdown = 2.0f;// 데미지 복구 타이머
 
 	PushBackDistance = 200.0f; // 원하는 거리로 설정
-}
 
+	bIsDamageIncreaseUIVisible = false;
+
+	bPlayerDead = false;
+
+	bDamageIncreaseState = true;
+}
 
 void AProjectNo1Character::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)//맞는 함수
 {
@@ -180,38 +186,6 @@ void AProjectNo1Character::GetBlock_Implementation(const FVector& ImpactPoint, A
 		SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 		EnableGuardCounter(); //가드 카운터 활성화
 		ActionState = EActionState::EAS_Blocking;
-}
-
-
-void AProjectNo1Character::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	if (Attributes && SlashOverlay)
-	{
-		if (ActionState == EActionState::EAS_Unoccupied) {//기본 상태일때만 체력이나 스태미너 재생
-			Attributes->RegenHealth(DeltaTime);
-			Attributes->RegenStamina(DeltaTime);
-			SlashOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
-			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
-		}
-		if (ActionState == EActionState::EAS_Sprint) {//달리기중일때 스태미너 초당 소모
-			Attributes->RegenMinusStamina(DeltaTime);
-			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
-		}
-		SlashOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
-		SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
-		SlashOverlay->SetExperienceBarPercent(Attributes->GetExperiencePercent());
-	}
-
-	if (!HasEnoughStamina() && ActionState == EActionState::EAS_Sprint) { //달리기중일때 스태미너가 부족하면 달리기 해제
-		GetCharacterMovement()->MaxWalkSpeed = 300.f;
-
-		ActionState = EActionState::EAS_Unoccupied;
-	}
-
-	CheckForStunnedEnemy();
-	CheckForNotStunnedEnemy();
 }
 
 void AProjectNo1Character::SetOverlappingItem(AItem* Item)
@@ -258,7 +232,85 @@ void AProjectNo1Character::AddGold(ATreasure* Treasure) //골드 추가
 		SlashOverlay->SetGold(Attributes->GetGold());
 	}
 }
+void AProjectNo1Character::ICDamageGold() //데미지 증가
+{
+	if(bDamageIncreaseState){
+		if (Attributes && SlashOverlay)
+		{
+			if (Attributes->GetGold() > 1999.f) {
+				Attributes->ICDamageMinusGold();
+				SlashOverlay->SetGold(Attributes->GetGold());
+				EquippedWeapon->GoldIncreaseDamage();
+				DamageIncreaseWidgetInstance->SetDamage(EquippedWeapon->GetDamage());
+				PlayDamageIncreaseSound();
+			}
+			else {
+				if (DamageIncreaseWidgetInstance)
+				{
+					DamageIncreaseWidgetInstance->ShowNotEnoughGoldMessage();
+					PlayDamageIncreaseFailSound();
+				}
+			}
+		}
+    }
+}
 
+void AProjectNo1Character::ICAmorGold() //아머 증가
+{
+	if (Attributes && SlashOverlay)
+	{
+		if (Attributes->GetGold() > 1999.f) {
+			Attributes->ICDamageMinusGold();
+			SlashOverlay->SetGold(Attributes->GetGold());
+			GoldIncreaseAmor();
+			DamageIncreaseWidgetInstance->SetAmor(GetAmor());
+			PlayDamageIncreaseSound();
+		}
+		else {
+			if (DamageIncreaseWidgetInstance)
+			{
+				DamageIncreaseWidgetInstance->ShowNotEnoughGoldMessage();
+				PlayDamageIncreaseFailSound();
+			}
+		}
+	}
+}
+
+void AProjectNo1Character::GoldIncreaseAmor()
+{
+	Amor += 0.2f;
+}
+
+void AProjectNo1Character::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (Attributes && SlashOverlay)
+	{
+		if (ActionState == EActionState::EAS_Unoccupied) {//기본 상태일때만 체력이나 스태미너 재생
+			Attributes->RegenHealth(DeltaTime);
+			Attributes->RegenStamina(DeltaTime);
+			SlashOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
+			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+		}
+		if (ActionState == EActionState::EAS_Sprint) {//달리기중일때 스태미너 초당 소모
+			Attributes->RegenMinusStamina(DeltaTime);
+			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+		}
+		SlashOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
+		SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+		SlashOverlay->SetExperienceBarPercent(Attributes->GetExperiencePercent());
+	}
+
+	if (!HasEnoughStamina() && ActionState == EActionState::EAS_Sprint) { //달리기중일때 스태미너가 부족하면 달리기 해제
+		GetCharacterMovement()->MaxWalkSpeed = 300.f;
+
+		ActionState = EActionState::EAS_Unoccupied;
+	}
+
+	CheckForStunnedEnemy();
+	CheckForNotStunnedEnemy();
+}
 
 void AProjectNo1Character::BeginPlay()
 {
@@ -270,7 +322,8 @@ void AProjectNo1Character::BeginPlay()
 	SpawnDefaultWeapon();//주무기 장착
 	SpawnDefaultWeaponTwo();//쉴드 장착
 	SpawnDefaultPotionOne();//포션 장착
-	CheckBossMonsters();
+	CheckBossMonsters();//보스 체크
+	DamageIncreaseWidget();//데미지 증가 UI
 
 	OnStunnedEnemyDetected.AddDynamic(this, &AProjectNo1Character::EnableSpecialTargetingAttack);
 	OffStunnedEnemyDetected.AddDynamic(this, &AProjectNo1Character::DisableSpecialTargetingAttack);
@@ -330,6 +383,8 @@ void AProjectNo1Character::SetupPlayerInputComponent(class UInputComponent* Play
 	PlayerInputComponent->BindAction(FName("GuardCounter"), IE_Pressed, this, &AProjectNo1Character::GuardCounterPressed);
 
 	PlayerInputComponent->BindAction(FName("WeaponSpellAttack"), IE_Pressed, this, &AProjectNo1Character::WeaponSpellAttack);
+
+	PlayerInputComponent->BindAction(FName("ToggleDamageIncreaseUI"), IE_Pressed, this, &AProjectNo1Character::ToggleDamageIncreaseUI);
 }
 
 void AProjectNo1Character::OnNeckSkillPressed()
@@ -343,6 +398,7 @@ void AProjectNo1Character::OnNeckSkillPressed()
 		PlayNeckSkillMontage();
 		ActionState = EActionState::EAS_NeckSkillDo;
 		bCanRage = false;//연속 사용 불가
+		bDamageIncreaseState = false;
 		EquippedWeapon->IncreaseDamage();// 공격력 증가
 		IncreaseSpellDamage();
 		RageSkillEffect->ActivateSystem();//분노 이펙트 활성화
@@ -365,6 +421,7 @@ void AProjectNo1Character::DeactivateSkillEffect()
 void AProjectNo1Character::RestoreDamage()
 {
 	EquippedWeapon->RestoreDamage();// 공격력 복구
+	bDamageIncreaseState = true;
 	RestoreSpellDamage();
 }
 
@@ -759,14 +816,14 @@ void AProjectNo1Character::WeaponSpellLineTrace()
 		SpawnLocationB.Z += 100.0f;
 		FVector SpawnLocationC = SpawnLocationA - (RightVector * 80.0f) + (RightVector * 30.0f) - (ForwardVector * 30.0f);
 		SpawnLocationC.Z -= 100.0f;
-     	//FHitResult HitResult;
+		TArray<FHitResult> HitResults;
 		//TArray<FHitResult> HitResults;
-		FHitResult HitResult;
+		//FHitResult HitResult;
 		FCollisionQueryParams CollisionParams;
 		CollisionParams.AddIgnoredActor(this); // 플레이어는 무시
 		CollisionParams.OwnerTag = "EngageableTarget";
-		bool bResult = GetWorld()->SweepSingleByChannel(
-			HitResult,
+		bool bResult = GetWorld()->SweepMultiByChannel(
+			HitResults,
 			Start,
 			End,
 			FQuat::Identity,
@@ -782,7 +839,7 @@ void AProjectNo1Character::WeaponSpellLineTrace()
 		PlayWeaponSpellHitSound(SpawnLocationA);
 		// 트레이스 실행
 		if (bResult) {
-			//for (FHitResult& HitResult : HitResults) {
+			for (FHitResult& HitResult : HitResults) {
 			if (AActor* Actor = HitResult.GetActor()) {
 				if (HitResult.GetActor()->ActorHasTag("Enemy"))
 				{
@@ -814,8 +871,8 @@ void AProjectNo1Character::WeaponSpellLineTrace()
 				}
 			}
 		}
-		//}
-		else {
+		}
+	  else {
 			//DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.f, 0, 1.f);
 		}
 	}
@@ -862,10 +919,6 @@ void AProjectNo1Character::PlayWeaponSpellHitSound(const FVector& ImpactPoint)
 	}
 }
 
-void AProjectNo1Character::EquipNeck(AWeapon* NewNeck)
-{
-	EquippedNeck = NewNeck;
-}
 
 void AProjectNo1Character::Jump()
 {
@@ -901,9 +954,9 @@ float AProjectNo1Character::TakeDamage(float DamageAmount, FDamageEvent const& D
 		return 0;
 	}
 	else { //막기 상태 아닐때 데미지 받기
-		HandleDamage(DamageAmount);
+		HandleDamage(DamageAmount-Amor);
 		SetHUDHealth();
-		return DamageAmount;
+		return DamageAmount-Amor;
 	}
 }
 
@@ -966,8 +1019,7 @@ void AProjectNo1Character::MoveRight(float Value)
 
 void AProjectNo1Character::RMKeyPressed()
 {
-	if (BlockCantState()) return;
-	if (!HasEnoughShieldStamina()) return; //쉴드에 충분한 스태미너가 아니거나 달리기 상태, 스킬 사용 중일때 리턴
+	if (!HasEnoughShieldStamina() || Dead() || BlockCantState()) return; //쉴드에 충분한 스태미너가 아니거나 달리기 상태, 스킬 사용 중일때 리턴
 	if (CanBlock())
 	{
 		DisBlock();
@@ -980,6 +1032,16 @@ void AProjectNo1Character::RMKeyReleased()
 	{
 		AsBlock();
 	}
+}
+
+void AProjectNo1Character::BlockEnd()
+{
+	ActionState = EActionState::EAS_Unoccupied;
+}
+
+void AProjectNo1Character::EndBlocking()
+{
+	ActionState = EActionState::EAS_Unoccupied;
 }
 
 bool AProjectNo1Character::BlockCantState()
@@ -998,12 +1060,13 @@ bool AProjectNo1Character::BlockCantState()
 		ActionState == EActionState::EAS_Dead;
 }
 
-void AProjectNo1Character::IfAttack()
+void AProjectNo1Character::PlayEquip(const FName& SectionName)
 {
-	if (!Dead() && ActionState == EActionState::EAS_Unoccupied)
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && EquipUnEquipMontage)
 	{
-		Attack();
-		ActionState = EActionState::EAS_Attacking;
+		AnimInstance->Montage_Play(EquipUnEquipMontage);
+		AnimInstance->Montage_JumpToSection(SectionName, EquipUnEquipMontage);
 	}
 }
 
@@ -1041,6 +1104,11 @@ void AProjectNo1Character::EquipWeapon(AWeapon* Weapon)
 	//CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
 	OverlappingItem = nullptr;
 	EquippedWeapon = Weapon;
+}
+
+void AProjectNo1Character::EquipNeck(AWeapon* NewNeck)
+{
+	EquippedNeck = NewNeck;
 }
 
 void AProjectNo1Character::EquipProjectileWeapon(AProjectileWeapon* ProjectileWeapon)
@@ -1204,6 +1272,8 @@ void AProjectNo1Character::SavePlayerState()
 		GameInstance->PlayerMaxExperience = Attributes->MaxExperience;
 		GameInstance->PlayerHealthRegenRate = Attributes->HealthRegenRate;
 		GameInstance->PlayerStaminaRegenRate = Attributes->StaminaRegenRate;
+		GameInstance->PlayerLevel = Attributes->Level;
+		GameInstance->PlayerGold = Attributes->Gold;
 	}
 	else
 	{
@@ -1225,6 +1295,8 @@ void AProjectNo1Character::LoadPlayerState()
 		Attributes->MaxExperience = GameInstance->PlayerMaxExperience;
 		Attributes->HealthRegenRate = GameInstance->PlayerHealthRegenRate;
 		Attributes->StaminaRegenRate = GameInstance->PlayerStaminaRegenRate;
+		Attributes->Level = GameInstance->PlayerLevel;
+		Attributes->Gold = GameInstance->PlayerGold;
 		UE_LOG(LogTemp, Log, TEXT("LoadState"));
 	}
 	else
@@ -1234,16 +1306,6 @@ void AProjectNo1Character::LoadPlayerState()
 	}
 }
 
-void AProjectNo1Character::AttackEnd()
-{
-	ActionState = EActionState::EAS_Unoccupied;
-	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//무적 해제
-}
-
-void AProjectNo1Character::BlockEnd()
-{
-	ActionState = EActionState::EAS_Unoccupied;
-}
 
 void AProjectNo1Character::Parry()
 {
@@ -1343,11 +1405,21 @@ void AProjectNo1Character::SpecialTargetingAttackInput()
 	}
 }
 
+void AProjectNo1Character::IfAttack()
+{
+	if (!Dead() && ActionState == EActionState::EAS_Unoccupied)
+	{
+		Attack();
+		ActionState = EActionState::EAS_Attacking;
+	}
+}
+
 void AProjectNo1Character::Attack()
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	Super::Attack();
 	
+	if (bIsDamageIncreaseUIVisible) return;
 	if (!Dead() && CanAttack() && HasEnoughAttackStamina())
 	{
 		FName SectionName = ComboSectionNames[CurrentComboStep];
@@ -1366,6 +1438,19 @@ void AProjectNo1Character::Attack()
 		}
 	}
 }
+
+void AProjectNo1Character::AttackEnd()
+{
+	ActionState = EActionState::EAS_Unoccupied;
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//무적 해제
+}
+
+void AProjectNo1Character::EndAttacking()
+{
+	ActionState = EActionState::EAS_Unoccupied;
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//무적 해제
+}
+
 void AProjectNo1Character::AttackComboResetCountDown()
 {
 	GetWorldTimerManager().ClearTimer(AttackComboCountdown); //공격 키 재입력시 콤보 초기화 타이머 초기화
@@ -1495,8 +1580,8 @@ bool AProjectNo1Character::Unequipoccupied()//어느 행동도 하지않을 때
 
 bool AProjectNo1Character::Dead()//죽은 상태
 {
-	return ActionState == EActionState::EAS_Dead;
-
+	return ActionState == EActionState::EAS_Dead ||
+		bPlayerDead == true;
 }
 
 bool AProjectNo1Character::IsArm()
@@ -1516,16 +1601,6 @@ bool AProjectNo1Character::CanNeckSkill()
 		CharacterState != ECharacterState::ECS_Unequipped;
 }
 
-void AProjectNo1Character::PlayEquip(const FName& SectionName)
-{
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && EquipUnEquipMontage)
-	{
-		AnimInstance->Montage_Play(EquipUnEquipMontage);
-		AnimInstance->Montage_JumpToSection(SectionName, EquipUnEquipMontage);
-	}
-}
-
 void AProjectNo1Character::Die()
 {
 	Super::Die();
@@ -1539,6 +1614,7 @@ void AProjectNo1Character::Die()
 	GetCharacterMovement()->Deactivate();
 	UE_LOG(LogTemp, Log, TEXT("Dead"));
 	ActionState = EActionState::EAS_Dead;
+	bPlayerDead = true;
 	DisableMeshCollision();
 	PlayerDieUI();
 }
@@ -1592,6 +1668,11 @@ void AProjectNo1Character::GameClearUI()
 		}
 		GetWorld()->GetTimerManager().SetTimer(LevelTransitionTimerHandle, this, &AProjectNo1Character::RemoveClearWidget, 1.0f, false);
 	}
+	if (Attributes && SlashOverlay)
+	{
+		Attributes->BossClearGold();
+		SlashOverlay->SetGold(Attributes->GetGold());
+	}
 }
 
 void AProjectNo1Character::RemoveClearWidget()
@@ -1603,15 +1684,46 @@ void AProjectNo1Character::RemoveClearWidget()
 
 }
 
-void AProjectNo1Character::EndAttacking()
+void AProjectNo1Character::ToggleDamageIncreaseUI()
 {
-	ActionState = EActionState::EAS_Unoccupied;
-	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//무적 해제
-}
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	if (DamageIncreaseWidgetInstance)
+	{
+		if (bIsDamageIncreaseUIVisible)
+		{
+			DamageIncreaseWidgetInstance->Hide();
+			if (PlayerController) {
+				PlayerController->SetIgnoreMoveInput(false);
+				PlayerController->SetIgnoreLookInput(false);
+				PlayerController->bShowMouseCursor = false;
+				GetCharacterMovement()->Activate();
+			}
+		}
+		else
+		{
+			DamageIncreaseWidgetInstance->Show();
+			if (PlayerController) {
+				PlayerController->SetIgnoreMoveInput(true);
+				PlayerController->SetIgnoreLookInput(true);
+				PlayerController->bShowMouseCursor = true;
+				GetCharacterMovement()->Deactivate();
+			}
+		}
 
-void AProjectNo1Character::EndBlocking()
+		bIsDamageIncreaseUIVisible = !bIsDamageIncreaseUIVisible;
+	}
+}
+void AProjectNo1Character::DamageIncreaseWidget()
 {
-	ActionState = EActionState::EAS_Unoccupied;
+if (DamageIncreaseWidgetClass)
+{
+	DamageIncreaseWidgetInstance = CreateWidget<UDamageIncreaseWidget>(GetWorld(), DamageIncreaseWidgetClass);
+	if (DamageIncreaseWidgetInstance)
+	{
+		DamageIncreaseWidgetInstance->AddToViewport();
+		DamageIncreaseWidgetInstance->Hide();
+	}
+}
 }
 
 void AProjectNo1Character::SpawnDefaultWeapon()

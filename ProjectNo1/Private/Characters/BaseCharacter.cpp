@@ -289,6 +289,30 @@ void ABaseCharacter::PlayWeaponSkillSound()
 	}
 }
 
+void ABaseCharacter::PlayDamageIncreaseSound()
+{
+	if (DamageIncreaseSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			DamageIncreaseSound,
+			GetActorLocation()
+		);
+	}
+}
+
+void ABaseCharacter::PlayDamageIncreaseFailSound()
+{
+	if (DamageIncreaseFailSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			DamageIncreaseFailSound,
+			GetActorLocation()
+		);
+	}
+}
+
 void ABaseCharacter::PlayRushSkillSound()
 {
 	if (RushSkillSound)
@@ -478,6 +502,11 @@ void ABaseCharacter::PlaySmashSkillMontage()
 	PlayMontageSection(SmashSkillMontage, FName("SmashSkill"));
 }
 
+void ABaseCharacter::PlayMagicSkillMontage()
+{
+	PlayMontageSection(MagicSkillMontage, FName("MagicSkill"));
+}
+
 void ABaseCharacter::PlaySwingSkillMontage()
 {
 	PlayMontageSection(SwingSkillMontage, FName("SwingSkill"));
@@ -486,6 +515,11 @@ void ABaseCharacter::PlaySwingSkillMontage()
 void ABaseCharacter::PlayTeleportSkillMontage()
 {
 	PlayMontageSection(TeleportSkillMontage, FName("TeleportSkill"));
+}
+
+void ABaseCharacter::PlayPhaseEnterMontage()
+{
+	PlayMontageSection(PhaseEnterMontage, FName("PhaseEnter"));
 }
 
 
@@ -531,6 +565,11 @@ void ABaseCharacter::DisableCapsule()
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
+void ABaseCharacter::EnableCapsule()
+{
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+}
+
 bool ABaseCharacter::CanAttack()
 {
 	return false;
@@ -556,6 +595,10 @@ bool ABaseCharacter::CanSmashAttack()
 	return false;
 }
 
+bool ABaseCharacter::CanMagicAttack()
+{
+	return false;
+}
 
 
 bool ABaseCharacter::CanNeckSkill()
@@ -625,7 +668,15 @@ void ABaseCharacter::EndSmashSkill()
 {
 }
 
+void ABaseCharacter::EndMagicSkill()
+{
+}
+
 void ABaseCharacter::EndSwingSkill()
+{
+}
+
+void ABaseCharacter::EndEnterPhase()
 {
 }
 

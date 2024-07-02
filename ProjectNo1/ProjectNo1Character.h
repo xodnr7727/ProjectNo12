@@ -42,6 +42,9 @@ public:
 	virtual void SetOverlappingItem(AItem* Item) override;
 	virtual void AddEx(ASoul* Soul) override;
 	virtual void AddGold(ATreasure* Treasure) override;
+	void ICDamageGold();
+	void ICAmorGold();
+	void GoldIncreaseAmor();
 	void LevelUpAll();
 	void LevelUpEC();
 	void LevelUpES();
@@ -152,6 +155,12 @@ protected:
 
 	UFUNCTION()
 	void RemoveClearWidget();
+
+	UFUNCTION()
+	void ToggleDamageIncreaseUI();
+
+	UFUNCTION()
+	void DamageIncreaseWidget();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Block")
 	class UAnimMontage* ShieldMontage;
@@ -387,7 +396,7 @@ private:
 		bool bCanWeaponSpell; // 스킬 사용할 수 있는지 여부
 		bool AttackWeaponSpell; // 스킬 사용할 수 있는지 여부
 
-		UPROPERTY(EditAnywhere, Category = "Attack Properties")
+		UPROPERTY(EditAnywhere, Category = "Skill")
 		float SpellDamage;
 
 		UPROPERTY(EditAnywhere, Category = "Skill")
@@ -450,9 +459,27 @@ private:
 		float PushBackDistance;
 
 		int32 RemainingMonsters;
+
+		UPROPERTY(EditAnywhere, Category = "UI")
+		bool bIsDamageIncreaseUIVisible;
+
+		UPROPERTY(EditAnywhere, Category = "UI")
+		TSubclassOf<class UDamageIncreaseWidget> DamageIncreaseWidgetClass;
+
+		UPROPERTY()
+		UDamageIncreaseWidget* DamageIncreaseWidgetInstance;
+
+		UPROPERTY(EditAnywhere, Category = "Combat")
+		bool bPlayerDead;
+
+		UPROPERTY(EditAnywhere, Category = "Combat")
+		float Amor;
+
+		UPROPERTY(EditAnywhere, Category = "Combat")
+		bool bDamageIncreaseState;
 public:
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
 	FORCEINLINE EActionState GetActionState() const { return ActionState; }
-
+	FORCEINLINE float GetAmor() const { return Amor; }
 };
 

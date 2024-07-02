@@ -17,8 +17,7 @@ void UMyProAnimInstance::NativeInitializeAnimation()
 	LichEnemy = Cast<ALichEnemy>(TryGetPawnOwner());
 	BossCharacter = Cast<ABossCharacter>(TryGetPawnOwner());
 	Goblin = Cast<AGoblin>(TryGetPawnOwner());
-	if (ProjectNo1Character)
-	{
+	if (ProjectNo1Character){
 		ProjectNo1CharacterMovement = ProjectNo1Character->GetCharacterMovement();
 	}
 	if (LichEnemy) {

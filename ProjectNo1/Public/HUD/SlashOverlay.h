@@ -16,6 +16,8 @@ class PROJECTNO1_API USlashOverlay : public UUserWidget
 	
 public:
 
+	void NativeConstruct();
+
 	void SetHealthBarPercent(float Percent);
 	void SetStaminaBarPercent(float Percent);
 	void SetExperienceBarPercent(float Percent);
