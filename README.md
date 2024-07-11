@@ -1,17 +1,17 @@
 # ProjectNo12
-[Basecharacter](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/Characters/BaseCharacter.h) : **LichEnemy. Goblin, ProjectNo1Character, BossCharacter의 공통 함수, 변수 선언****
+[Basecharacter](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/Characters/BaseCharacter.h) : **LichEnemy. Goblin, ProjectNo1Character, BossCharacter의 공통 함수, 변수 선언**
 
 **[CharacterTypes.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/CharacterTypes.h) : 몬스터, 플레이어의 행동 상태**
 
-**[MyProAnimInstance.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/MyProAnimInstance.h) : **몬스터, 플레이어의 애니메이션 동작 함수나 변수****
+**[MyProAnimInstance.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/MyProAnimInstance.h) : **몬스터, 플레이어의 애니메이션 동작 함수나 변수**
 
-[ProjectNo1Character](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/ProjectNo1Character.h) : **플레이어****
+[ProjectNo1Character](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/ProjectNo1Character.h) : **플레이어**
 
 [LichEnemy](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/LichEnemy.h) : **리치 몬스터**
 
-[Goblin](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/Goblin.h) : **고블린 몬스터****
+[Goblin](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/Goblin.h) : **고블린 몬스터**
 
-[BossCharacter](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/BossCharacter.h) : **드래곤 보스몬스터****
+[BossCharacter](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/BossCharacter.h) : **드래곤 몬스터**
 
 ---
 
