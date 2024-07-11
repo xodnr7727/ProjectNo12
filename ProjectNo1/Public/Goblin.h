@@ -36,15 +36,16 @@ protected:
 
 	/** <ABaseCharacter> */
 	virtual void Die() override;
+	virtual void Attack() override;
+	virtual bool CanAttack() override;
+	virtual void HandleDamage(float DamageAmount) override;
+	virtual void AttackEnd() override;
+
 	void SpawnEx();
 	void SpawnGd();
 	bool InTargetRange(AActor* Target, double Radius);
 	void MoveToTarget(AActor* Target);
 	AActor* ChoosePatrolTarget();
-	virtual void Attack() override;
-	virtual bool CanAttack() override;
-	virtual void HandleDamage(float DamageAmount) override;
-	virtual void AttackEnd() override;
 
 	UFUNCTION(BlueprintCallable)
 	void AttackSweepTrace();
@@ -197,9 +198,6 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Attack Properties")
 	float GoblinDamage;
-
-	UPROPERTY(EditAnywhere, Category = "Spawn")
-	FVector OriginalSpawnLocation;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TSubclassOf<class ASoul> ExClass;

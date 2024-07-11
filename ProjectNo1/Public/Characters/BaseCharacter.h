@@ -58,6 +58,9 @@ protected:
 	void PlayDamageIncreaseFailSound();
 	void PlayRushSkillSound();
 
+	void PlayAllMenuOpenSound();
+	void PlayAllMenuCloseSound();
+
 	void DisableCapsule();
 	void EnableCapsule();
 
@@ -318,6 +321,12 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 		USoundBase* DamageIncreaseFailSound;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+		USoundBase* AllMenuOpenSound;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+		USoundBase* AllMenuCloseSound;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 		USoundBase* RushSkillSound;

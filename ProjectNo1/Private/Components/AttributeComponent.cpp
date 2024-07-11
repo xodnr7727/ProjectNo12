@@ -140,6 +140,7 @@ void UAttributeComponent::AddSouls(int32 NumberOfSouls)
 		Stamina += MaxStamina; //스태미너 회복
 		//최대 체력, 경험치, 스태미너 증가 추가 and 리젠량.
 		AProjectNo1Character* ProjectNo1Character = Cast<AProjectNo1Character>(GetOwner());
+		ProjectNo1Character->SetStatus();
 		if (ProjectNo1Character)
 		{
 			FVector SpawnLocation = ProjectNo1Character->GetActorLocation() - FVector(0.0f, 0.0f, ProjectNo1Character->GetCapsuleComponent()->GetScaledCapsuleHalfHeight());

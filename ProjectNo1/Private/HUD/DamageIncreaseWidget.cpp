@@ -6,6 +6,7 @@
 #include "ProjectNo1/ProjectNo1Character.h"
 #include "Components/TextBlock.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "HUD/AllMenuWidget.h"
 
 void UDamageIncreaseWidget::Show()
 {
@@ -41,6 +42,10 @@ void UDamageIncreaseWidget::NativeConstruct()
     {
         AmorIncrease->OnClicked.AddDynamic(this, &UDamageIncreaseWidget::OnAmorIncreaseClicked);
     }
+    if (Back)
+    {
+        Back->OnClicked.AddDynamic(this, &UDamageIncreaseWidget::OnBackClicked);
+    }
 }
 
 void UDamageIncreaseWidget::OnDamageIncreaseClicked()
@@ -51,6 +56,14 @@ void UDamageIncreaseWidget::OnDamageIncreaseClicked()
 void UDamageIncreaseWidget::OnAmorIncreaseClicked()
 {
     PlayerCharacter->ICAmorGold();
+}
+
+void UDamageIncreaseWidget::OnBackClicked()
+{
+        PlayerCharacter->PlayerCanMove();
+        this->Hide();
+ 
+        UE_LOG(LogTemp, Log, TEXT("DamageWidgetHide"));
 }
 
 void UDamageIncreaseWidget::ShowNotEnoughGoldMessage()

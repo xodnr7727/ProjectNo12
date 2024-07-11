@@ -42,11 +42,8 @@ void APortal::NotifyActorBeginOverlap(AActor* OtherActor) //Æ÷Å» ÀÌµ¿
     AProjectNo1Character* ProjectNo1Character = Cast<AProjectNo1Character>(OtherActor);
     if (ProjectNo1Character)
     {
-        if (ProjectNo1Character)
-        {
             PlayTransSound();
             ProjectNo1Character->SetActorLocation(TeleportLocation);
-        }
     }
 }
 

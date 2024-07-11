@@ -237,12 +237,6 @@ void ALichEnemy::ResetPositions()
 	// 보스 위치 초기화
 	SetActorLocation(InitialLocation);
 
-	// 플레이어 위치 초기화
-	if (ProjectNo1Character)
-	{
-		FVector PlayerStartLocation = FVector(8070.0f, 1560.0f, 70.0f); // 시작점 좌표 설정
-		ProjectNo1Character->SetActorLocation(PlayerStartLocation);
-	}
 }
 
 void ALichEnemy::EnterEndPhaseTwo()

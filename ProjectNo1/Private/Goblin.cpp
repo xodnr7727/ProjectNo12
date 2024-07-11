@@ -51,7 +51,6 @@ AGoblin::AGoblin()
 	if (MeshAsset.Succeeded())
 		GetMesh()->SetSkeletalMesh(MeshAsset.Object);
 
-	OriginalSpawnLocation = GetActorLocation(); // 원래 스폰 위치 저장
 }
 void AGoblin::BeginPlay()
 {
@@ -190,7 +189,8 @@ void AGoblin::Die()
 	ClearAttackTimer();
 	HideHealthBar();
 	DisableCapsule();
-	SetLifeSpan(DeathLifeSpan);
+	//SetLifeSpan(DeathLifeSpan);
+	GetCharacterMovement()->Deactivate();
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	SetActorEnableCollision(false);
 	SpawnEx();

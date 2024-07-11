@@ -325,6 +325,30 @@ void ABaseCharacter::PlayRushSkillSound()
 	}
 }
 
+void ABaseCharacter::PlayAllMenuOpenSound()
+{
+	if (AllMenuOpenSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			AllMenuOpenSound,
+			GetActorLocation()
+		);
+	}
+}
+
+void ABaseCharacter::PlayAllMenuCloseSound()
+{
+	if (AllMenuCloseSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			AllMenuCloseSound,
+			GetActorLocation()
+		);
+	}
+}
+
 void ABaseCharacter::PlayBlockSound(const FVector& ImpactPoint)
 {
 	if (BlockSound)

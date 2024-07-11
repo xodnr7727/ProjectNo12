@@ -37,6 +37,9 @@
 #include "HUD/InventoryUI.h"
 #include "HUD/SlashOverlay.h"
 #include "HUD/DamageIncreaseWidget.h"
+#include "HUD/AllMenuWidget.h"
+#include "HUD/MapWidget.h"
+#include "HUD/InfoWidget.h"
 #include "MyPlayerController.h"
 #include "Soul.h"
 #include "NiagaraFunctionLibrary.h"
@@ -151,7 +154,7 @@ AProjectNo1Character::AProjectNo1Character()
 
 	PushBackDistance = 200.0f; // 원하는 거리로 설정
 
-	bIsDamageIncreaseUIVisible = false;
+	bIsAllMenuUIVisible = false;
 
 	bPlayerDead = false;
 
@@ -242,6 +245,7 @@ void AProjectNo1Character::ICDamageGold() //데미지 증가
 				SlashOverlay->SetGold(Attributes->GetGold());
 				EquippedWeapon->GoldIncreaseDamage();
 				DamageIncreaseWidgetInstance->SetDamage(EquippedWeapon->GetDamage());
+				InfoWidgetInstance->SetInfoDamage(EquippedWeapon->GetDamage());
 				PlayDamageIncreaseSound();
 			}
 			else {
@@ -263,7 +267,8 @@ void AProjectNo1Character::ICAmorGold() //아머 증가
 			Attributes->ICDamageMinusGold();
 			SlashOverlay->SetGold(Attributes->GetGold());
 			GoldIncreaseAmor();
-			DamageIncreaseWidgetInstance->SetAmor(GetAmor());
+		    DamageIncreaseWidgetInstance->SetAmor(GetAmor());
+			InfoWidgetInstance->SetInfoArmor(GetAmor());
 			PlayDamageIncreaseSound();
 		}
 		else {
@@ -279,6 +284,44 @@ void AProjectNo1Character::ICAmorGold() //아머 증가
 void AProjectNo1Character::GoldIncreaseAmor()
 {
 	Amor += 0.2f;
+}
+
+void AProjectNo1Character::SetStatus()
+{
+	if (InfoWidgetInstance) {
+		InfoWidgetInstance->SetHealth(Attributes->GetMaxHealth());
+		InfoWidgetInstance->SetStamina(Attributes->GetMaxStamina());
+		InfoWidgetInstance->SetHealthRegenRate(Attributes->GetHealthRegenRate());
+		InfoWidgetInstance->SetStaminaRegenRate(Attributes->GetStaminaRegenRate());
+		InfoWidgetInstance->SetExperience(Attributes->GetMaxExperience());
+		InfoWidgetInstance->SetStaminaRegenRate(Attributes->GetStaminaRegenRate());
+		InfoWidgetInstance->SetInfoDamage(EquippedWeapon->GetDamage());
+		InfoWidgetInstance->SetInfoArmor(GetAmor());
+	}
+}
+
+void AProjectNo1Character::CaveRegionOpen()
+{
+	if (SlashOverlay && MapWidgetInstance) {
+		SlashOverlay->MapOpenTextMessage();
+		MapWidgetInstance->MapCaveOpen();
+	}
+}
+
+void AProjectNo1Character::IceLandRegionOpen()
+{
+	if (SlashOverlay && MapWidgetInstance) {
+		SlashOverlay->MapOpenTextMessage();
+		MapWidgetInstance->MapCaveOpen();
+	}
+}
+
+void AProjectNo1Character::ForestRegionOpen()
+{
+	if (SlashOverlay && MapWidgetInstance) {
+		SlashOverlay->MapOpenTextMessage();
+		MapWidgetInstance->MapCaveOpen();
+	}
 }
 
 void AProjectNo1Character::Tick(float DeltaTime)
@@ -323,7 +366,10 @@ void AProjectNo1Character::BeginPlay()
 	SpawnDefaultWeaponTwo();//쉴드 장착
 	SpawnDefaultPotionOne();//포션 장착
 	CheckBossMonsters();//보스 체크
+	InfoWidget();//인포 UI
 	DamageIncreaseWidget();//데미지 증가 UI
+	MapWidget();//맵 UI
+	AllMenuWidget();//전체 메뉴 UI
 
 	OnStunnedEnemyDetected.AddDynamic(this, &AProjectNo1Character::EnableSpecialTargetingAttack);
 	OffStunnedEnemyDetected.AddDynamic(this, &AProjectNo1Character::DisableSpecialTargetingAttack);
@@ -384,7 +430,7 @@ void AProjectNo1Character::SetupPlayerInputComponent(class UInputComponent* Play
 
 	PlayerInputComponent->BindAction(FName("WeaponSpellAttack"), IE_Pressed, this, &AProjectNo1Character::WeaponSpellAttack);
 
-	PlayerInputComponent->BindAction(FName("ToggleDamageIncreaseUI"), IE_Pressed, this, &AProjectNo1Character::ToggleDamageIncreaseUI);
+	PlayerInputComponent->BindAction(FName("ToggleAllMenuUI"), IE_Pressed, this, &AProjectNo1Character::ToggleAllMenuUI);
 }
 
 void AProjectNo1Character::OnNeckSkillPressed()
@@ -1419,7 +1465,7 @@ void AProjectNo1Character::Attack()
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	Super::Attack();
 	
-	if (bIsDamageIncreaseUIVisible) return;
+	if (bIsAllMenuUIVisible) return;
 	if (!Dead() && CanAttack() && HasEnoughAttackStamina())
 	{
 		FName SectionName = ComboSectionNames[CurrentComboStep];
@@ -1656,7 +1702,7 @@ void AProjectNo1Character::CheckBossMonsters()
 
 void AProjectNo1Character::GameClearUI()
 {
-	// 드래곤 처치 UI 생성
+	// 보스 처치 UI 생성
 	FTimerHandle LevelTransitionTimerHandle;
 	UWorld* World = GetWorld();
 	if (World)
@@ -1681,27 +1727,19 @@ void AProjectNo1Character::RemoveClearWidget()
 	{
 		ClearWidget->RemoveFromParent();
 	}
-
 }
 
-void AProjectNo1Character::ToggleDamageIncreaseUI()
+void AProjectNo1Character::ToggleAllMenuUI()
 {
 	APlayerController* PlayerController = Cast<APlayerController>(GetController());
-	if (DamageIncreaseWidgetInstance)
+	if (AllMenuWidgetInstance)
 	{
-		if (bIsDamageIncreaseUIVisible)
-		{
-			DamageIncreaseWidgetInstance->Hide();
-			if (PlayerController) {
-				PlayerController->SetIgnoreMoveInput(false);
-				PlayerController->SetIgnoreLookInput(false);
-				PlayerController->bShowMouseCursor = false;
-				GetCharacterMovement()->Activate();
-			}
-		}
-		else
-		{
-			DamageIncreaseWidgetInstance->Show();
+		if (!bIsAllMenuUIVisible) {
+
+			AllMenuWidgetInstance->Show();
+			bIsAllMenuUIVisible = true;
+			PlayAllMenuOpenSound();
+			UE_LOG(LogTemp, Log, TEXT("Show"));
 			if (PlayerController) {
 				PlayerController->SetIgnoreMoveInput(true);
 				PlayerController->SetIgnoreLookInput(true);
@@ -1709,23 +1747,111 @@ void AProjectNo1Character::ToggleDamageIncreaseUI()
 				GetCharacterMovement()->Deactivate();
 			}
 		}
-
-		bIsDamageIncreaseUIVisible = !bIsDamageIncreaseUIVisible;
+		else {
+			AllMenuWidgetInstance->Hide();
+			if (InfoWidgetInstance) InfoWidgetInstance->Hide();
+			if (MapWidgetInstance) MapWidgetInstance->Hide();
+			if (DamageIncreaseWidgetInstance) DamageIncreaseWidgetInstance->Hide();
+			bIsAllMenuUIVisible = false;
+			PlayAllMenuCloseSound();
+			UE_LOG(LogTemp, Log, TEXT("Hide"));
+			if (PlayerController) {
+				PlayerController->SetIgnoreMoveInput(false);
+				PlayerController->SetIgnoreLookInput(false);
+				PlayerController->bShowMouseCursor = false;
+				GetCharacterMovement()->Activate();
+			}
+		}
 	}
 }
+
+void AProjectNo1Character::AllMenuWidget()
+{
+	if (AllMenuWidgetClass)
+	{
+		AllMenuWidgetInstance = CreateWidget<UAllMenuWidget>(GetWorld(), AllMenuWidgetClass);
+		if (AllMenuWidgetInstance)
+		{
+			AllMenuWidgetInstance->AddToViewport();
+			AllMenuWidgetInstance->Hide();
+		}
+	}
+}
+
+void AProjectNo1Character::InfoWidget()
+{
+	if (InfoWidgetClass)
+	{
+		InfoWidgetInstance = CreateWidget<UInfoWidget>(GetWorld(), InfoWidgetClass);
+		if (InfoWidgetInstance)
+		{
+			InfoWidgetInstance->AddToViewport();
+			InfoWidgetInstance->Hide();
+		}
+	}
+}
+
+void AProjectNo1Character::OpenInfoWidget()
+{
+		if (InfoWidgetInstance)
+		{
+			InfoWidgetInstance->Show();
+		}
+}
+
 void AProjectNo1Character::DamageIncreaseWidget()
 {
-if (DamageIncreaseWidgetClass)
-{
-	DamageIncreaseWidgetInstance = CreateWidget<UDamageIncreaseWidget>(GetWorld(), DamageIncreaseWidgetClass);
-	if (DamageIncreaseWidgetInstance)
+	if (DamageIncreaseWidgetClass)
 	{
-		DamageIncreaseWidgetInstance->AddToViewport();
-		DamageIncreaseWidgetInstance->Hide();
+		DamageIncreaseWidgetInstance = CreateWidget<UDamageIncreaseWidget>(GetWorld(), DamageIncreaseWidgetClass);
+		if (DamageIncreaseWidgetInstance)
+		{
+			DamageIncreaseWidgetInstance->AddToViewport();
+			DamageIncreaseWidgetInstance->Hide();
+		}
 	}
 }
+
+void AProjectNo1Character::OpenDamageIncreaseWidget()
+{
+		if (DamageIncreaseWidgetInstance)
+		{
+			DamageIncreaseWidgetInstance->Show();
+		}
 }
 
+void AProjectNo1Character::MapWidget()
+{
+	if (MapWidgetClass)
+	{
+		MapWidgetInstance = CreateWidget<UMapWidget>(GetWorld(), MapWidgetClass);
+		if (MapWidgetInstance)
+		{
+			MapWidgetInstance->AddToViewport();
+			MapWidgetInstance->Hide();
+		}
+	}
+}
+
+void AProjectNo1Character::OpenMapWidget()
+{
+		if (MapWidgetInstance)
+		{
+			MapWidgetInstance->Show();
+		}
+}
+
+void AProjectNo1Character::PlayerCanMove()
+{
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	bIsAllMenuUIVisible = false;
+	if (PlayerController) {
+		PlayerController->SetIgnoreMoveInput(false);
+		PlayerController->SetIgnoreLookInput(false);
+		PlayerController->bShowMouseCursor = false;
+		GetCharacterMovement()->Activate();
+	}
+}
 void AProjectNo1Character::SpawnDefaultWeapon()
 {
 	UWorld* World = GetWorld();

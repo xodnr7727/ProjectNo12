@@ -42,15 +42,33 @@ public:
 	virtual void SetOverlappingItem(AItem* Item) override;
 	virtual void AddEx(ASoul* Soul) override;
 	virtual void AddGold(ATreasure* Treasure) override;
-	void ICDamageGold();
-	void ICAmorGold();
-	void GoldIncreaseAmor();
+	void ICDamageGold(); //데미지 증가 골드 소모
+	void ICAmorGold(); //아머 증가 골드 소모
+	void GoldIncreaseAmor(); //아머 증가
+	void SetStatus(); //스텟창 동기화
 	void LevelUpAll();
 	void LevelUpEC();
 	void LevelUpES();
 	void SavePlayerState();//플레이어 데이터 저장
-	void LoadPlayerState();
-	//플레이어 데이터 로드
+	void LoadPlayerState();//플레이어 데이터 로드
+
+	/*지도 지역 오픈*/
+	void CaveRegionOpen();
+	void IceLandRegionOpen();
+	void ForestRegionOpen();
+
+	UFUNCTION()
+	void PlayerCanMove(); //캐릭터 움직임 활성화
+
+	UFUNCTION()
+	void OpenInfoWidget(); //플레이어 능력치 창 오픈
+
+	UFUNCTION()
+	void OpenMapWidget(); //지도 오픈
+
+	UFUNCTION()
+	void OpenDamageIncreaseWidget(); //공방 오픈
+
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Input)
 		float TurnRateGamepad;
@@ -157,10 +175,19 @@ protected:
 	void RemoveClearWidget();
 
 	UFUNCTION()
-	void ToggleDamageIncreaseUI();
+	void ToggleAllMenuUI();
+
+	UFUNCTION()
+	void AllMenuWidget();
+
+	UFUNCTION()
+	void InfoWidget();
 
 	UFUNCTION()
 	void DamageIncreaseWidget();
+
+	UFUNCTION()
+	void MapWidget();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Block")
 	class UAnimMontage* ShieldMontage;
@@ -284,6 +311,9 @@ public:
 	void InitializeSlashOverlay();
 
 	AActor* FindClosestEnemy();
+
+	UPROPERTY(EditAnywhere, Category = "UI")
+	bool bIsAllMenuUIVisible;
 private:
 
 	    bool IsUnoccupied();
@@ -461,13 +491,28 @@ private:
 		int32 RemainingMonsters;
 
 		UPROPERTY(EditAnywhere, Category = "UI")
-		bool bIsDamageIncreaseUIVisible;
-
-		UPROPERTY(EditAnywhere, Category = "UI")
 		TSubclassOf<class UDamageIncreaseWidget> DamageIncreaseWidgetClass;
 
 		UPROPERTY()
 		UDamageIncreaseWidget* DamageIncreaseWidgetInstance;
+
+		UPROPERTY(EditAnywhere, Category = "UI")
+		TSubclassOf<class UAllMenuWidget> AllMenuWidgetClass;
+
+		UPROPERTY()
+		UAllMenuWidget* AllMenuWidgetInstance;
+
+		UPROPERTY(EditAnywhere, Category = "UI")
+		TSubclassOf<class UMapWidget> MapWidgetClass;
+
+		UPROPERTY()
+		UMapWidget* MapWidgetInstance;
+
+		UPROPERTY(EditAnywhere, Category = "UI")
+		TSubclassOf<class UInfoWidget> InfoWidgetClass;
+
+		UPROPERTY()
+		UInfoWidget* InfoWidgetInstance;
 
 		UPROPERTY(EditAnywhere, Category = "Combat")
 		bool bPlayerDead;

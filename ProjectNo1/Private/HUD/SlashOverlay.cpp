@@ -18,6 +18,12 @@ void USlashOverlay::NativeConstruct()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("LevelText is not bound!"));
 	}
+
+	if (MapOpenMessageText)
+	{
+		MapOpenMessageText->SetText(FText::FromString(TEXT("New Region")));
+		MapOpenMessageText->SetVisibility(ESlateVisibility::Hidden); // 처음엔 숨겨놓음
+	}
 }
 
 void USlashOverlay::SetHealthBarPercent(float Percent)
@@ -67,6 +73,25 @@ void USlashOverlay::SetLevel(int32 Level)
 		FormatOptions.UseGrouping = true;
 		const FText Text = FText::AsNumber(Level, &FormatOptions);
 		LevelText->SetText(Text);
+	}
+}
+
+void USlashOverlay::MapOpenTextMessage()
+{
+	FTimerHandle MessageEndTimerHandle;
+	if (MapOpenMessageText)
+	{
+		MapOpenMessageText->SetVisibility(ESlateVisibility::Visible);
+		// 1초 후 HideMessage 함수를 호출하여 메시지를 숨김
+		GetWorld()->GetTimerManager().SetTimer(MessageEndTimerHandle, this, &USlashOverlay::HideMessage, 1.0f, false);
+	}
+}
+
+void USlashOverlay::HideMessage()
+{
+	if (MapOpenMessageText)
+	{
+		MapOpenMessageText->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
 

@@ -35,12 +35,21 @@ protected:
 	UFUNCTION()
 	void OnAmorIncreaseClicked();
 
+	UFUNCTION()
+	void OnBackClicked();
+
+	UFUNCTION()
+	void HideMessage();
+
 private:
 	UPROPERTY(meta = (BindWidget))
 	class UButton* DamageIncrease;
 
 	UPROPERTY(meta = (BindWidget))
 	class UButton* AmorIncrease;
+
+	UPROPERTY(meta = (BindWidget))
+	class UButton* Back;
 
 	class AProjectNo1Character* PlayerCharacter;
 
@@ -53,7 +62,9 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Amor;
 
-	UFUNCTION()
-	void HideMessage();
+	UPROPERTY(EditAnywhere, Category = "UI")
+	TSubclassOf<class  UAllMenuWidget> AllMenuWidgetClass;
 
+	UPROPERTY()
+	UAllMenuWidget* AllMenuWidgetInstance;
 };

@@ -6,7 +6,10 @@
 #include "GameFramework/HUD.h"
 #include "MyProNo1HUD.generated.h"
 class USlashOverlay;
-class UInventoryUI;
+class UAllMenuWidget;
+class UInfoWidget;
+class UDamageIncreaseWidget;
+class UMapWidget;
 /**
  * 
  */
@@ -27,12 +30,12 @@ private:
 	UPROPERTY()
 		USlashOverlay* SlashOverlay;
 
-
 	UPROPERTY(EditDefaultsOnly, Category = Inventory)
 	TSubclassOf<UInventoryUI> InventoryUIClass;
 
 	UPROPERTY()
 	UInventoryUI* InventoryUI;
+
 public:
 	FORCEINLINE USlashOverlay* GetSlashOverlay() const { return SlashOverlay; }
 	FORCEINLINE UInventoryUI* GetInventoryUI() const { return InventoryUI; }

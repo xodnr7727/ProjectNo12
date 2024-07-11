@@ -112,7 +112,11 @@ public:
 	FORCEINLINE float GetDiveCost() const { return DiveCost; }
 	FORCEINLINE float GetShieldCost() const { return ShieldCost; }
 	FORCEINLINE float GetPotionCost() const { return PotionCost; }
+	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
+	FORCEINLINE float GetMaxStamina() const { return MaxStamina; }
 	FORCEINLINE float GetStamina() const { return Stamina; }
+	FORCEINLINE float GetHealthRegenRate() const { return HealthRegenRate; }
+	FORCEINLINE float GetStaminaRegenRate() const { return StaminaRegenRate; }
 	void AddSouls(int32 NumberOfSouls);
 	void AddLevel(int32 AmountOfLevel);
 	void AddGold(int32 AmountOfGold);
@@ -122,6 +126,7 @@ public:
 	void AddEx(float DropEx);
 	FORCEINLINE int32 GetGold() const { return Gold; }
 	FORCEINLINE float GetExperience() const { return Experience; }
+	FORCEINLINE float GetMaxExperience() const { return MaxExperience; }
 	FORCEINLINE int32 GetSouls() const { return Souls; }
 	FORCEINLINE int32 GetLevel() const { return Level; }
 
