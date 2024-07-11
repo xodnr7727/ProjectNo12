@@ -33,6 +33,8 @@
 
 **[Soul.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/Soul.h) : 경험치**
 
+**[CheckPoint.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/CheckPoint.h) : 지역 체크포인트**
+
 ---
 
 **[HitInterface.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/Interfaces/HitInterface.h) : 히트, 블록, 스턴의 기본 블루프린트네이티브이벤트 선언파일**
@@ -54,4 +56,13 @@
 **[MyProNo1HUD.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/HUD/MyProNo1HUD.h) : 플레이어 기본 베이스 UI**
 
 **[SlashOverlay.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/HUD/SlashOverlay.h) : 체력, 스태미너, 경험치, 골드 퍼센트 설정, 프로그래스바 선언 파일**
+
+**[AllMenuWidget.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/HUD/AllMenuWidget.h) : 전체 메뉴 UI 파일**
+
+**[InfoWidget.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/HUD/InfoWidget.h) : 플레이어 능력치 정보 UI 파일**
+
+**[MapWidget.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/HUD/MapWidget.h) : 지도 UI 파일**
+
+**[DamageIncreaseWidget.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/HUD/DamageIncreaseWidget.h) : 공방 업그레이드 UI 파일**
+
 [![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fxodnr7727%2FTaeWook&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
