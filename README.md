@@ -33,7 +33,7 @@
 
 **[Soul.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/Soul.h) : 경험치**
 
-**[CheckPoint.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/CheckPoint.h) : 지역 체크포인트**
+**[CheckPoint.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/CheckPoint.h) : 지도 확장 포인트**
 
 **[BlessingPoint.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/BlessingPoint.h) : 세이브 포인트**
 
