@@ -24,6 +24,12 @@ void USlashOverlay::NativeConstruct()
 		MapOpenMessageText->SetText(FText::FromString(TEXT("New Region")));
 		MapOpenMessageText->SetVisibility(ESlateVisibility::Hidden); // 처음엔 숨겨놓음
 	}
+
+	if (InteractText)
+	{
+		InteractText->SetText(FText::FromString(TEXT("Interact(B)")));
+		InteractText->SetVisibility(ESlateVisibility::Hidden); // 처음엔 숨겨놓음
+	}
 }
 
 void USlashOverlay::SetHealthBarPercent(float Percent)
@@ -92,6 +98,22 @@ void USlashOverlay::HideMessage()
 	if (MapOpenMessageText)
 	{
 		MapOpenMessageText->SetVisibility(ESlateVisibility::Hidden);
+	}
+}
+
+void USlashOverlay::ShowInteractTextMessage()
+{
+	if (InteractText)
+	{
+		InteractText->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+
+void USlashOverlay::HideInteractTextMessage()
+{
+	if (InteractText)
+	{
+		InteractText->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
 

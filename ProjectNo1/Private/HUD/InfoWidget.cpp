@@ -150,15 +150,12 @@ void UInfoWidget::SetInfoArmor(float WArmor)
 void UInfoWidget::OnBackClicked()
 {
     AProjectNo1Character* Player = Cast<AProjectNo1Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-    if (AllMenuWidgetClass) {
-        AllMenuWidgetInstance = CreateWidget<UAllMenuWidget>(GetWorld(), AllMenuWidgetClass);
-        if (AllMenuWidgetInstance)
+        if (Player)
         {
             Player->PlayerCanMove();
             this->Hide();
         }
         UE_LOG(LogTemp, Log, TEXT("InfoWidgetHide"));
-    }
 }
 
 void UInfoWidget::OnRefreshClicked()

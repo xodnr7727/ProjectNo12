@@ -67,6 +67,7 @@ void UMapWidget::OnIceLandClicked()
         }
     }
     else {
+        PlayUnknownRegionSound();
         UnknownRegionMessage();
     }
 }
@@ -84,6 +85,7 @@ void UMapWidget::OnForestClicked()
         }
     }
     else {
+        PlayUnknownRegionSound();
         UnknownRegionMessage();
     }
 }
@@ -101,6 +103,7 @@ void UMapWidget::OnCaveClicked()
         }
     }
     else {
+        PlayUnknownRegionSound();
         UnknownRegionMessage();
     }
 }
@@ -134,15 +137,11 @@ void UMapWidget::PlayUnknownRegionSound()
 void UMapWidget::OnBackClicked()
 {
     AProjectNo1Character* Player = Cast<AProjectNo1Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-    if (AllMenuWidgetClass) {
-        AllMenuWidgetInstance = CreateWidget<UAllMenuWidget>(GetWorld(), AllMenuWidgetClass);
-        if (AllMenuWidgetInstance)
-        {
-            Player->PlayerCanMove();
-            this->Hide();
-        }
-        UE_LOG(LogTemp, Log, TEXT("MapWidgetHide"));
+    if (Player) {
+        Player->PlayerCanMove();
+        this->Hide();
     }
+        UE_LOG(LogTemp, Log, TEXT("MapWidgetHide"));
 }
 
 void UMapWidget::UnknownRegionMessage()

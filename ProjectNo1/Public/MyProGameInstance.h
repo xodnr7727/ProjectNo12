@@ -49,6 +49,12 @@ public:
     UPROPERTY(EditAnywhere, Category = "PlayerState")
     int32 PlayerLevel;
 
+    UPROPERTY(EditAnywhere, Category = "PlayerState")
+    float PlayerDamage;
+
+    UPROPERTY(EditAnywhere, Category = "PlayerState")
+    float PlayerArmor;
+
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Player Stats")
     bool bIsInitialized;
 };

@@ -265,6 +265,30 @@ void ABaseCharacter::PlayArrowSound(const FVector& ImpactPoint)
 	}
 }
 
+void ABaseCharacter::PlayRespawnSound()
+{
+	if (RespawnSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			RespawnSound,
+			GetActorLocation()
+		);
+	}
+}
+
+void ABaseCharacter::PlayBlessInteractSound()
+{
+	if (BlessInteractSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			BlessInteractSound,
+			GetActorLocation()
+		);
+	}
+}
+
 void ABaseCharacter::SpawnArrowParticles(const FVector& ImpactPoint)
 {
 	if (ArrowParticles && GetWorld())
@@ -481,6 +505,11 @@ void ABaseCharacter::PlayDrinkMontage()
 	PlayMontageSection(DrinkMontage, FName("Drink"));
 }
 
+void ABaseCharacter::PlayGetUpMontage()
+{
+	PlayMontageSection(GetUpMontage, FName("GetUp"));
+}
+
 void ABaseCharacter::PlayNeckSkillMontage()
 {
 	PlayMontageSection(NeckSkillMontage, FName("Skill"));
@@ -554,6 +583,11 @@ void ABaseCharacter::StopAttackMontage()
 	{
 		AnimInstance->Montage_Stop(0.25f, AttackMontage);
 	}
+}
+
+void ABaseCharacter::EnableMeshCollision()
+{
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 }
 
 void ABaseCharacter::DisableMeshCollision()

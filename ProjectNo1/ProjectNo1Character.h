@@ -52,6 +52,8 @@ public:
 	void SavePlayerState();//플레이어 데이터 저장
 	void LoadPlayerState();//플레이어 데이터 로드
 
+	void Respawn(); // 캐릭터 죽을 시 리스폰
+
 	/*지도 지역 오픈*/
 	void CaveRegionOpen();
 	void IceLandRegionOpen();
@@ -78,6 +80,20 @@ public:
 
 		UPROPERTY(BlueprintAssignable, Category = "Events")
 		FOffStunnedEnemyDetected OffStunnedEnemyDetected;
+
+		/*축복 상호 작용 관련*/
+		void ShowInteractMessage();
+		void HideInteractMessage();
+		void BlessingPointSetting();
+		void BlessingPointCaveSetting();
+		void BlessingPointForestSetting();
+		void BlessingPointIceLandSetting();
+		void BlessingPointInteract();
+		bool IsBlessingPointInteract();
+		bool bInRangePoint();
+
+		void bInRangePointTrue();
+		void bInRangePointFalse();
 
 protected:
 
@@ -222,10 +238,10 @@ protected:
 	void EndLargeAttack();
 	UFUNCTION(BlueprintCallable)
 	void DeactivateLargeSkillEffect();
-
 	UFUNCTION(BlueprintCallable)
 	void ActivateLargeSkillEffect();
 
+	/*가드 카운터*/
 	void GuardCounterPressed();
 	void EnableGuardCountdown();
 	void EnableGuardCounter();
@@ -235,11 +251,13 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void DeactivateGuardCounterEffect();
 
+
 	void OnSwordSkillPressed();
 	void EnableSwordSkill();
 	UFUNCTION(BlueprintCallable)
 	void EndSwordSkill();
 
+	/*스턴 공격*/
 	void SmallSkillPressed();
 	UFUNCTION(BlueprintCallable)
 	void EndSmallSkill();
@@ -253,6 +271,19 @@ protected:
 	void PerformBack();
 	void CheckForStunnedEnemy(); //스턴 몬스터 체크
 	void CheckForNotStunnedEnemy();
+	// Function to check if there is a stunned enemy in front of the player
+	UFUNCTION(BlueprintPure, Category = "SpecialTargeting")
+	bool HasStunnedEnemyInFront();
+	// Function to enable special targeting attack when a stunned enemy is in front
+	UFUNCTION(BlueprintCallable, Category = "SpecialTargeting")
+	void EnableSpecialTargetingAttack();
+	UFUNCTION(BlueprintCallable, Category = "SpecialTargeting")
+	void DisableSpecialTargetingAttack();
+	// Function to handle the input for the special targeting attack
+	void SpecialTargetingAttackInput();
+
+	/*축복 상호 작용 관련*/
+	void BlessingPointInteractInput();
 
 	void EnableHit(); //무적해제
 	void ActivateSkillParticles();
@@ -293,20 +324,6 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
-
-	// Function to check if there is a stunned enemy in front of the player
-	UFUNCTION(BlueprintPure, Category = "SpecialTargeting")
-	bool HasStunnedEnemyInFront();
-
-	// Function to enable special targeting attack when a stunned enemy is in front
-	UFUNCTION(BlueprintCallable, Category = "SpecialTargeting")
-	void EnableSpecialTargetingAttack();
-
-	UFUNCTION(BlueprintCallable, Category = "SpecialTargeting")
-	void DisableSpecialTargetingAttack();
-
-	// Function to handle the input for the special targeting attack
-	void SpecialTargetingAttackInput();
 
 	void InitializeSlashOverlay();
 
@@ -522,6 +539,13 @@ private:
 
 		UPROPERTY(EditAnywhere, Category = "Combat")
 		bool bDamageIncreaseState;
+
+		UPROPERTY()
+		ABlessingPoint* LastBlessingPoint;
+
+		bool bIsBlessingPointInteractEnabled;
+
+		bool bInRange;
 public:
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
 	FORCEINLINE EActionState GetActionState() const { return ActionState; }

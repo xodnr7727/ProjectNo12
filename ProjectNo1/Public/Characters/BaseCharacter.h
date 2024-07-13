@@ -14,6 +14,7 @@ class ATopArmor;
 class UAttributeComponent;
 class UAnimMontage;
 class ALichEnemy;
+class ABlessingPoint;
 UCLASS()
 class PROJECTNO1_API ABaseCharacter : public ACharacter, public IHitInterface
 {
@@ -50,6 +51,8 @@ protected:
 	void PlayHitSound(const FVector& ImpactPoint);
 	void SpawnHitParticles(const FVector& ImpactPoint);
 	void PlayArrowSound(const FVector& ImpactPoint);
+	void PlayRespawnSound();
+	void PlayBlessInteractSound();
 	void SpawnArrowParticles(const FVector& ImpactPoint);
 	void PlayBlockSound(const FVector& ImpactPoint);
 	void SpawnBlockParticles(const FVector& ImpactPoint);
@@ -82,7 +85,10 @@ protected:
 	bool NotEnoughStamina();
 
 	bool IsAttacking();
+
+	UFUNCTION(BlueprintCallable)
 	void DisableMeshCollision();
+	void EnableMeshCollision();
 
 	bool HasEnoughShieldStamina();
 	void PlayHitReactMontage(const FName& SectionName);
@@ -94,6 +100,7 @@ protected:
 	virtual int32 PlayStunMontage();
 	virtual void PlayDiveMontage();
 	virtual void PlayDrinkMontage();
+	virtual void PlayGetUpMontage();
 	virtual void PlayNeckSkillMontage();
 	virtual void PlayWeaponSpellSkillMontage();
 	virtual void PlayLargeSkillMontage();
@@ -276,6 +283,9 @@ protected:
 		UAnimMontage* DrinkMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
+		UAnimMontage* GetUpMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat)
 		UAnimMontage* WeaponSpellSkillMontage;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
@@ -330,6 +340,12 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 		USoundBase* RushSkillSound;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+		USoundBase* BlessInteractSound;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+		USoundBase* RespawnSound;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 		USoundBase* ArrowSound;

@@ -2,6 +2,7 @@
 
 #include "ProjectNo1Character.h"
 #include "MyProAnimInstance.h"
+#include "ProjectNo1GameMode.h"
 #include "LichEnemy.h"
 #include "BossCharacter.h"
 #include "Goblin.h"
@@ -16,7 +17,9 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/Actor.h"
+#include "GameFramework/PlayerStart.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/GameModeBase.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Animation/AnimInstance.h"
@@ -27,6 +30,7 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "Engine/World.h"
 #include "Item.h"
+#include "BlessingPoint.h"
 #include "Items/Treasure.h"
 #include "Weapons/MySkillClass.h"
 #include "Weapons/Weapon.h"
@@ -41,7 +45,7 @@
 #include "HUD/MapWidget.h"
 #include "HUD/InfoWidget.h"
 #include "MyPlayerController.h"
-#include "Soul.h"
+#include "Soul.h" 
 #include "NiagaraFunctionLibrary.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -159,6 +163,8 @@ AProjectNo1Character::AProjectNo1Character()
 	bPlayerDead = false;
 
 	bDamageIncreaseState = true;
+
+	bIsBlessingPointInteractEnabled = false;
 }
 
 void AProjectNo1Character::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)//맞는 함수
@@ -312,7 +318,7 @@ void AProjectNo1Character::IceLandRegionOpen()
 {
 	if (SlashOverlay && MapWidgetInstance) {
 		SlashOverlay->MapOpenTextMessage();
-		MapWidgetInstance->MapCaveOpen();
+		MapWidgetInstance->MapIceLandOpen();
 	}
 }
 
@@ -320,7 +326,7 @@ void AProjectNo1Character::ForestRegionOpen()
 {
 	if (SlashOverlay && MapWidgetInstance) {
 		SlashOverlay->MapOpenTextMessage();
-		MapWidgetInstance->MapCaveOpen();
+		MapWidgetInstance->MapForestOpen();
 	}
 }
 
@@ -370,6 +376,7 @@ void AProjectNo1Character::BeginPlay()
 	DamageIncreaseWidget();//데미지 증가 UI
 	MapWidget();//맵 UI
 	AllMenuWidget();//전체 메뉴 UI
+	BlessingPointSetting();
 
 	OnStunnedEnemyDetected.AddDynamic(this, &AProjectNo1Character::EnableSpecialTargetingAttack);
 	OffStunnedEnemyDetected.AddDynamic(this, &AProjectNo1Character::DisableSpecialTargetingAttack);
@@ -431,6 +438,8 @@ void AProjectNo1Character::SetupPlayerInputComponent(class UInputComponent* Play
 	PlayerInputComponent->BindAction(FName("WeaponSpellAttack"), IE_Pressed, this, &AProjectNo1Character::WeaponSpellAttack);
 
 	PlayerInputComponent->BindAction(FName("ToggleAllMenuUI"), IE_Pressed, this, &AProjectNo1Character::ToggleAllMenuUI);
+
+	PlayerInputComponent->BindAction(FName("BlessingPointInteract"), IE_Pressed, this, &AProjectNo1Character::BlessingPointInteractInput);
 }
 
 void AProjectNo1Character::OnNeckSkillPressed()
@@ -986,9 +995,11 @@ void AProjectNo1Character::Sprint()//달리기
 
 void AProjectNo1Character::StopSprinting()
 {
-	GetCharacterMovement()->MaxWalkSpeed = 300.f;
+	if (ActionState == EActionState::EAS_Sprint) {
+		GetCharacterMovement()->MaxWalkSpeed = 300.f;
 
-	ActionState = EActionState::EAS_Unoccupied;
+		ActionState = EActionState::EAS_Unoccupied;
+	}
 } 
 
 float AProjectNo1Character::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -1310,8 +1321,6 @@ void AProjectNo1Character::SavePlayerState()
 	UMyProGameInstance* GameInstance = Cast<UMyProGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
 	if (GameInstance)
 	{
-		GameInstance->PlayerHealth = Attributes->Health;
-		GameInstance->PlayerStamina = Attributes->Stamina;
 		GameInstance->PlayerMaxHealth = Attributes->MaxHealth;
 		GameInstance->PlayerMaxStamina = Attributes->MaxStamina;
 		GameInstance->PlayerExperience = Attributes->Experience;
@@ -1333,8 +1342,6 @@ void AProjectNo1Character::LoadPlayerState()
 {
 	if (UMyProGameInstance* GameInstance = Cast<UMyProGameInstance>(UGameplayStatics::GetGameInstance(GetWorld())))
 	{
-		Attributes->Health = GameInstance->PlayerHealth;
-		Attributes->Stamina = GameInstance->PlayerStamina;
 		Attributes->MaxHealth = GameInstance->PlayerMaxHealth;
 		Attributes->MaxStamina = GameInstance->PlayerMaxStamina;
 		Attributes->Experience = GameInstance->PlayerExperience;
@@ -1343,6 +1350,7 @@ void AProjectNo1Character::LoadPlayerState()
 		Attributes->StaminaRegenRate = GameInstance->PlayerStaminaRegenRate;
 		Attributes->Level = GameInstance->PlayerLevel;
 		Attributes->Gold = GameInstance->PlayerGold;
+		SetStatus();
 		UE_LOG(LogTemp, Log, TEXT("LoadState"));
 	}
 	else
@@ -1448,6 +1456,129 @@ void AProjectNo1Character::SpecialTargetingAttackInput()
 
 		SmallSkillPressed();
 		bIsSpecialTargetingEnabled = false; //연속 스턴 공격 x
+	}
+}
+
+void AProjectNo1Character::BlessingPointInteractInput()
+{
+	if (bInRangePoint()) {
+		bIsBlessingPointInteractEnabled = true;
+		UE_LOG(LogTemp, Log, TEXT("BlessingPointInteractInput"));
+	}
+}
+
+bool AProjectNo1Character::IsBlessingPointInteract()
+{
+	return bIsBlessingPointInteractEnabled == true;
+}
+
+bool AProjectNo1Character::bInRangePoint()
+{
+	return bInRange == true;
+}
+
+void AProjectNo1Character::bInRangePointTrue()
+{
+	bInRange = true;
+}
+
+void AProjectNo1Character::bInRangePointFalse()
+{
+	bInRange = false;
+}
+
+void AProjectNo1Character::BlessingPointInteract()
+{
+	TArray<AActor*> PlayerStarts;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), PlayerStarts);
+	AActor* PlayerStart = PlayerStarts[0];
+		UE_LOG(LogTemp, Log, TEXT("BlessingPointInteract"));
+		bIsBlessingPointInteractEnabled = false;
+		if (LastBlessingPoint)
+		{
+			UE_LOG(LogTemp, Log, TEXT("Interact"));
+			Attributes->Health += Attributes->MaxHealth;
+			SavePlayerState();
+			PlayBlessInteractSound();
+			if (PlayerStart)
+			{
+				// PlayerStart의 모빌리티 설정을 확인하고 Movable로 변경
+				if (PlayerStart->GetRootComponent()->Mobility != EComponentMobility::Movable)
+				{
+					PlayerStart->GetRootComponent()->SetMobility(EComponentMobility::Movable);
+				}
+				if (PlayerStarts.Num() > 0)
+				{
+					UE_LOG(LogTemp, Log, TEXT("PlayerStartlocation"));
+					PlayerStart->SetActorLocation(LastBlessingPoint->GetActorLocation()); //축복 지점으로 리스폰 장소 변경
+				}
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("LastBlessingPoint is nullptr"));
+		}
+}
+
+void AProjectNo1Character::BlessingPointSetting()
+{
+	TArray<AActor*> BlessingPoints;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABlessingPoint::StaticClass(), BlessingPoints);
+
+	if (BlessingPoints.Num() > 0)
+	{
+		LastBlessingPoint = Cast<ABlessingPoint>(BlessingPoints[0]);
+		UE_LOG(LogTemp, Log, TEXT("BlessingPointSetting is set to %s"), *LastBlessingPoint->GetName());
+	}
+}
+
+void AProjectNo1Character::BlessingPointForestSetting()
+{
+	TArray<AActor*> BlessingPoints;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABlessingPoint::StaticClass(), BlessingPoints);
+
+	if (BlessingPoints.Num() > 0)
+	{
+		LastBlessingPoint = Cast<ABlessingPoint>(BlessingPoints[0]);
+		UE_LOG(LogTemp, Log, TEXT("BlessingPointForestSetting is Update to %s"), *LastBlessingPoint->GetName());
+	}
+}
+
+void AProjectNo1Character::BlessingPointIceLandSetting()
+{
+	TArray<AActor*> BlessingPoints;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABlessingPoint::StaticClass(), BlessingPoints);
+
+	if (BlessingPoints.Num() > 0)
+	{
+		LastBlessingPoint = Cast<ABlessingPoint>(BlessingPoints[1]);
+		UE_LOG(LogTemp, Log, TEXT("BlessingPointIceLandSetting is Update to %s"), *LastBlessingPoint->GetName());
+	}
+}
+
+void AProjectNo1Character::BlessingPointCaveSetting()
+{
+	TArray<AActor*> BlessingPoints;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABlessingPoint::StaticClass(), BlessingPoints);
+
+	if (BlessingPoints.Num() > 0)
+	{
+		LastBlessingPoint = Cast<ABlessingPoint>(BlessingPoints[2]);
+		UE_LOG(LogTemp, Log, TEXT("BlessingPointCaveSetting is Update to %s"), *LastBlessingPoint->GetName());
+	}
+}
+
+void AProjectNo1Character::ShowInteractMessage()
+{
+	if (SlashOverlay) {
+		SlashOverlay->ShowInteractTextMessage();
+	}
+}
+
+void AProjectNo1Character::HideInteractMessage()
+{
+	if (SlashOverlay) {
+		SlashOverlay->HideInteractTextMessage();
 	}
 }
 
@@ -1665,6 +1796,29 @@ void AProjectNo1Character::Die()
 	PlayerDieUI();
 }
 
+void AProjectNo1Character::Respawn()
+{
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	if (PlayerController)
+	{
+		AProjectNo1GameMode* GameMode = Cast<AProjectNo1GameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+		if (GameMode)
+		{
+			GameMode->RestartPlayerAtPlayerStart(this);
+			PlayGetUpMontage();
+			GetCharacterMovement()->Activate();
+			EnableMeshCollision();
+			PlayerCanMove(); 
+			PlayRespawnSound();
+			bPlayerDead = false;
+			ActionState = EActionState::EAS_Unoccupied;
+			Tags.Remove(FName("Dead"));
+			Attributes->Health += Attributes->MaxHealth;
+			LoadPlayerState();
+		}
+	}
+}
+
 void AProjectNo1Character::PlayerDieUI()
 {
 	// 게임 종료 UI 생성
@@ -1844,7 +1998,6 @@ void AProjectNo1Character::OpenMapWidget()
 void AProjectNo1Character::PlayerCanMove()
 {
 	APlayerController* PlayerController = Cast<APlayerController>(GetController());
-	bIsAllMenuUIVisible = false;
 	if (PlayerController) {
 		PlayerController->SetIgnoreMoveInput(false);
 		PlayerController->SetIgnoreLookInput(false);
@@ -1852,6 +2005,7 @@ void AProjectNo1Character::PlayerCanMove()
 		GetCharacterMovement()->Activate();
 	}
 }
+
 void AProjectNo1Character::SpawnDefaultWeapon()
 {
 	UWorld* World = GetWorld();

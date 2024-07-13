@@ -3,6 +3,7 @@
 
 #include "HUD/InventoryUI.h"
 #include "Kismet/GameplayStatics.h"
+#include "ProjectNo1/ProjectNo1Character.h"
 
 void UInventoryUI::NativeConstruct()
 {
@@ -17,6 +18,17 @@ void UInventoryUI::NativeConstruct()
 
 void UInventoryUI::OnRetryClicked()
 {
-    // 게임을 다시 시작
-    UGameplayStatics::OpenLevel(GetWorld(), FName(*GetWorld()->GetName()), false);
+    AProjectNo1Character* Player = Cast<AProjectNo1Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+    Player->Respawn();
+    this->Hide();
+}
+
+void UInventoryUI::Show()
+{
+    this->SetVisibility(ESlateVisibility::Visible);
+}
+
+void UInventoryUI::Hide()
+{
+    this->SetVisibility(ESlateVisibility::Hidden);
 }

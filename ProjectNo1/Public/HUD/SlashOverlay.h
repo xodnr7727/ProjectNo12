@@ -28,8 +28,12 @@ public:
 	void MapOpenTextMessage();
 	//void SetSouls(int32 Souls);
 
+	void ShowInteractTextMessage();
+	void HideInteractTextMessage();
+
 protected:
 	void HideMessage();
+
 		
 private:
 	UPROPERTY(meta = (BindWidget))
@@ -49,6 +53,9 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* MapOpenMessageText;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* InteractText;
 
 	//UPROPERTY(meta = (BindWidget))
 	//	class UTextBlock* SoulsText;

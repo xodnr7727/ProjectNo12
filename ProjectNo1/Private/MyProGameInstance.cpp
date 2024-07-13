@@ -24,6 +24,8 @@ void UMyProGameInstance::InitializeDefaultValues()
         PlayerStaminaRegenRate = 55;
         PlayerGold = 0;
         PlayerLevel = 1;
+        PlayerDamage = 100;
+        PlayerArmor = 1;
 
         bIsInitialized = true; // 초기화 완료
     }
