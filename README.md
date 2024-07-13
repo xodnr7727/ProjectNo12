@@ -35,6 +35,8 @@
 
 **[CheckPoint.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/CheckPoint.h) : 지역 체크포인트**
 
+**[CheckPoint.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/BlessingPoint.h) : 세이브 포인트**
+
 ---
 
 **[HitInterface.h](https://github.com/xodnr7727/ProjectNo12/blob/master/ProjectNo1/Public/Interfaces/HitInterface.h) : 히트, 블록, 스턴의 기본 블루프린트네이티브이벤트 선언파일**
