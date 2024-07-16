@@ -32,11 +32,10 @@ public:
 	UFUNCTION()
 	void OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 
 	void RespawnGoblinMonsters();
 	void RespawnDragonMonsters();
-	void RespawnGrugMonsters();
+	void RespawnGhoulMonsters();
 private:
 	UPROPERTY(EditAnywhere, Category = "Point")
 	FString RegionName; // 지역 이름 (예: "Cave", "IceLand", "Forest")

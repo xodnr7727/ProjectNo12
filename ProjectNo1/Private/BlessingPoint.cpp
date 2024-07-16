@@ -4,9 +4,11 @@
 #include "BlessingPoint.h"
 #include "Goblin.h"
 #include "BossCharacter.h"
+#include "CaveEnemy.h"
 #include "Components/BoxComponent.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "ProjectNo1/ProjectNo1Character.h"
+#include <Kismet/GameplayStatics.h>
 
 // Sets default values
 ABlessingPoint::ABlessingPoint()
@@ -49,6 +51,27 @@ void ABlessingPoint::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor*
         {
             Player->ShowInteractMessage();
             Player->bInRangePointTrue();
+            if (Player->IsBlessingPointInteract())
+            {
+                if (RegionName == "Cave")
+                {
+                    RespawnGhoulMonsters();
+                    Player->BlessingPointCaveSetting();
+                    Player->BlessingPointInteract();
+                }
+                else if (RegionName == "IceLand")
+                {
+                    RespawnGoblinMonsters();
+                    Player->BlessingPointIceLandSetting();
+                    Player->BlessingPointInteract();
+                }
+                else if (RegionName == "Forest")
+                {
+                    RespawnDragonMonsters();
+                    Player->BlessingPointForestSetting();
+                    Player->BlessingPointInteract();
+                }
+            }
         }
     }
 }
@@ -66,42 +89,49 @@ void ABlessingPoint::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* O
     }
 }
 
-void ABlessingPoint::NotifyActorBeginOverlap(AActor* OtherActor) 
+void ABlessingPoint::RespawnGoblinMonsters()
 {
-    AProjectNo1Character* Player = Cast<AProjectNo1Character>(OtherActor);
-    if (Player && Player->IsBlessingPointInteract())
+    TArray<AActor*> FoundGoblinMonsters;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGoblin::StaticClass(), FoundGoblinMonsters);
+
+    for (AActor* GoblinMonsterActor : FoundGoblinMonsters)
     {
-        if (RegionName == "Cave")
+        AGoblin* Goblin = Cast<AGoblin>(GoblinMonsterActor);
+        if (Goblin && Goblin->IsDead())
         {
-            RespawnGoblinMonsters();
-            Player->BlessingPointCaveSetting();
-            Player->BlessingPointInteract();
-        }
-        else if (RegionName == "IceLand")
-        {
-            RespawnGrugMonsters();
-            Player->BlessingPointIceLandSetting();
-            Player->BlessingPointInteract();
-        }
-        else if (RegionName == "Forest")
-        {
-            RespawnDragonMonsters();
-            Player->BlessingPointForestSetting();
-            Player->BlessingPointInteract();
+            Goblin->Respawn();
         }
     }
 }
 
-void ABlessingPoint::RespawnGoblinMonsters()
-{
-}
-
 void ABlessingPoint::RespawnDragonMonsters()
 {
+    TArray<AActor*> FoundDragonMonsters;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABossCharacter::StaticClass(), FoundDragonMonsters);
+
+    for (AActor* DragonMonsterActor : FoundDragonMonsters)
+    {
+        ABossCharacter* Dragon = Cast<ABossCharacter>(DragonMonsterActor);
+        if (Dragon && Dragon->IsDead())
+        {
+            Dragon->Respawn();
+        }
+    }
 }
 
-void ABlessingPoint::RespawnGrugMonsters()
+void ABlessingPoint::RespawnGhoulMonsters()
 {
+    TArray<AActor*> FoundGhoulMonsters;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACaveEnemy::StaticClass(), FoundGhoulMonsters);
+
+    for (AActor* GhoulMonsterActor : FoundGhoulMonsters)
+    {
+        ACaveEnemy* Ghoul = Cast<ACaveEnemy>(GhoulMonsterActor);
+        if (Ghoul && Ghoul->IsDead())
+        {
+            Ghoul->Respawn();
+        }
+    }
 }
 
 

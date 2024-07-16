@@ -42,6 +42,12 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = Movement)
 	class UCharacterMovementComponent* GoblinMovement;
 
+	UPROPERTY(BlueprintReadOnly)
+	class ACaveEnemy* CaveEnemy;
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement)
+	class UCharacterMovementComponent* CaveEnemyMovement;
+
 	UPROPERTY(BlueprintReadWrite, Category = Movement)
 	float GroundSpeed;
 

@@ -6,6 +6,7 @@
 #include "GameFramework/HUD.h"
 #include "MyProNo1HUD.generated.h"
 class USlashOverlay;
+class UInventoryUI;
 class UAllMenuWidget;
 class UInfoWidget;
 class UDamageIncreaseWidget;

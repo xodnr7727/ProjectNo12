@@ -101,6 +101,7 @@ protected:
 	virtual void PlayDiveMontage();
 	virtual void PlayDrinkMontage();
 	virtual void PlayGetUpMontage();
+	virtual void PlayRespawnMontage();
 	virtual void PlayNeckSkillMontage();
 	virtual void PlayWeaponSpellSkillMontage();
 	virtual void PlayLargeSkillMontage();
@@ -284,6 +285,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
 		UAnimMontage* GetUpMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat)
+		UAnimMontage* RespawnMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
 		UAnimMontage* WeaponSpellSkillMontage;

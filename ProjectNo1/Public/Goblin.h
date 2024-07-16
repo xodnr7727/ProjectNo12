@@ -41,6 +41,8 @@ protected:
 	virtual void HandleDamage(float DamageAmount) override;
 	virtual void AttackEnd() override;
 
+	void RestartMonsterAtLocation(FVector RestartspawnLocation);
+	void SetInitialSpawnLocation();
 	void SpawnEx();
 	void SpawnGd();
 	bool InTargetRange(AActor* Target, double Radius);
@@ -58,9 +60,6 @@ protected:
 	void DestroyHitNumber(UUserWidget* HitNumber);
 
 	void UpdateHitNumbers();
-
-	UPROPERTY(EditAnywhere, Category = Combat)
-	float DeathLifeSpan = 1.0f;
 
 	UFUNCTION()
 	void PawnSeen(APawn* SeenPawn);
@@ -85,6 +84,9 @@ public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
 	virtual void Destroyed() override;
+
+	void Respawn();
+	bool IsDead();
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void ShowHitNumber(int32 Damage, FVector HitLocation);
@@ -169,7 +171,6 @@ private:
 	bool IsInsideAttackRadius();
 	bool IsChasing();
 	bool IsAttacking();
-	bool IsDead();
 	bool IsEngaged();
 	void ClearPatrolTimer();
 	void SpawnDefaultWeapon();
@@ -208,4 +209,7 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = Player)
 	AProjectNo1Character* ProjectNo1Character;
 
+	FVector RespawnLocation;
+	float RespawnTime;
+	bool bGoblinDead;
 };

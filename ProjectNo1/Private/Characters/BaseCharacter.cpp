@@ -510,6 +510,11 @@ void ABaseCharacter::PlayGetUpMontage()
 	PlayMontageSection(GetUpMontage, FName("GetUp"));
 }
 
+void ABaseCharacter::PlayRespawnMontage()
+{
+	PlayMontageSection(RespawnMontage, FName("Respawn"));
+}
+
 void ABaseCharacter::PlayNeckSkillMontage()
 {
 	PlayMontageSection(NeckSkillMontage, FName("Skill"));

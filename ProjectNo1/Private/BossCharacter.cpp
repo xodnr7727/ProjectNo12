@@ -70,6 +70,8 @@ ABossCharacter::ABossCharacter()
 	// Set the default value for the special targeting range
 	RushSkillEnableRange = 300.0f;
 
+	bDragonDead = false;
+
 	RushSkillEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("RushSkillEffect"));
 	RushSkillEffect->SetupAttachment(RootComponent); // 이펙트 위치 설정
 
@@ -88,6 +90,7 @@ void ABossCharacter::BeginPlay()
 	if (PawnSensing) PawnSensing->OnSeePawn.AddDynamic(this, &ABossCharacter::PawnSeen);
 	InitializeEnemy();
 	Tags.Add(FName("Enemy"));
+	SetInitialSpawnRotationLocation();
 
 	OnLaserSkillDetected.AddDynamic(this, &ABossCharacter::OnLaserSkill);
 	OnRushSkillDetected.AddDynamic(this, &ABossCharacter::RushSkill);
@@ -465,22 +468,47 @@ void ABossCharacter::Die()
 {
 	Super::Die();
 	EnemyState = EEnemyState::EES_Dead;
+	bDragonDead = true;
 	ClearAttackTimer();
 	HideHealthBar();
 	HideStunBar();
 	DisableCapsule();
-	SetLifeSpan(DeathLifeSpan);
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	SetActorEnableCollision(false);
 	SpawnEx();
 	SpawnGd();
 }
 
-
-void ABossCharacter::Destroyed()
+void ABossCharacter::Respawn()
 {
-	Super::Destroyed();
+	PlayRespawnMontage();
+	RestartMonsterAtLocation(RespawnLocation);
+	RestartMonsterAtRotation(RespawnRotation);
+	EnemyState = EEnemyState::EES_NoState;
+	MoveToTarget(PatrolTarget);
+	bDragonDead = false;
+	EnableCapsule();
+	GetCharacterMovement()->Activate();
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	SetActorEnableCollision(true);
+	Attributes->Health += Attributes->MaxHealth;
+	Attributes->Stun += Attributes->MaxStun;
+}
 
+void ABossCharacter::RestartMonsterAtLocation(FVector RestartspawnLocation)
+{
+	SetActorLocation(RespawnLocation); // 리스폰 위치로 설정
+}
+
+void ABossCharacter::RestartMonsterAtRotation(FRotator RestartspawnRotation)
+{
+	SetActorRotation(RespawnRotation); // 기본 회전으로 설정
+}
+
+void ABossCharacter::SetInitialSpawnRotationLocation()
+{
+	RespawnLocation = GetActorLocation();
+	RespawnRotation = GetActorRotation();
 }
 
 void ABossCharacter::Stun()
@@ -629,9 +657,7 @@ void ABossCharacter::Attack() //공격 함수
 {
 	FTimerHandle AttackCollisonCountdown;
 	Super::Attack();
-	if (CanAttack()) return;
-	if (CombatTarget == nullptr) return;
-	if (bAttack == false) return;
+	if (CanAttack() || CombatTarget == nullptr || bAttack == false) return;
 	GetCharacterMovement()->Deactivate();
 	bAttack = false;
 	EnemyState = EEnemyState::EES_Engaged;
@@ -810,7 +836,8 @@ bool ABossCharacter::IsAttacking()
 
 bool ABossCharacter::IsDead()
 {
-	return EnemyState == EEnemyState::EES_Dead;
+	return EnemyState == EEnemyState::EES_Dead ||
+		bDragonDead == true;;
 }
 
 bool ABossCharacter::Alive()

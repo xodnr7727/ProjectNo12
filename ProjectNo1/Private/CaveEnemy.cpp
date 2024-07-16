@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Goblin.h"
+#include "CaveEnemy.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "ProjectNo1/ProjectNo1Character.h"
@@ -20,7 +20,7 @@
 #include "HUD/SlashOverlay.h"
 
 // Sets default values
-AGoblin::AGoblin()
+ACaveEnemy::ACaveEnemy()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -41,22 +41,12 @@ AGoblin::AGoblin()
 	PawnSensing->SetPeripheralVisionAngle(45.f);
 	HitNumberDestroyTime = 1.5f;
 
-	static ConstructorHelpers::FClassFinder<AProjectileWeapon> ProjectileAsset(TEXT("Blueprint'/Game/ThirdPerson/Blueprints/Enemy/Weapon/EnemyProjectileWeapon'"));
-
-	if (ProjectileAsset.Succeeded())
-		ProjectileWeaponClass = ProjectileAsset.Class;
-
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> MeshAsset(TEXT("/Script /Engine.SkeletalMesh'/Game/Goblin/Mesh/Goblin_armor_ice/SK_Goblin_Body_Armor_ice.SK_Goblin_Body_Armor_ice'"));
-
-	if (MeshAsset.Succeeded())
-		GetMesh()->SetSkeletalMesh(MeshAsset.Object);
-
 }
-void AGoblin::BeginPlay()
+void ACaveEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (PawnSensing) PawnSensing->OnSeePawn.AddDynamic(this, &AGoblin::PawnSeen);
+	if (PawnSensing) PawnSensing->OnSeePawn.AddDynamic(this, &ACaveEnemy::PawnSeen);
 	InitializeEnemy();
 	SetInitialSpawnLocation();
 	Tags.Add(FName("Enemy"));
@@ -65,7 +55,7 @@ void AGoblin::BeginPlay()
 
 }
 
-void AGoblin::Tick(float DeltaTime)
+void ACaveEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	UpdateHitNumbers();
@@ -100,17 +90,17 @@ void AGoblin::Tick(float DeltaTime)
 }
 
 
-void AGoblin::CheckPatrolTarget()
+void ACaveEnemy::CheckPatrolTarget()
 {
 	if (InTargetRange(PatrolTarget, PatrolRadius))
 	{
 		PatrolTarget = ChoosePatrolTarget();
 		const float WaitTime = FMath::RandRange(PatrolWaitMin, PatrolWaitMax);
-		GetWorldTimerManager().SetTimer(PatrolTimer, this, &AGoblin::PatrolTimerFinished, WaitTime);
+		GetWorldTimerManager().SetTimer(PatrolTimer, this, &ACaveEnemy::PatrolTimerFinished, WaitTime);
 	}
 }
 
-void AGoblin::CheckCombatTarget()
+void ACaveEnemy::CheckCombatTarget()
 {
 	if (IsOutsideCombatRadius())
 	{
@@ -131,7 +121,7 @@ void AGoblin::CheckCombatTarget()
 	}
 }
 
-void AGoblin::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)//타격 받는 함수
+void ACaveEnemy::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)//타격 받는 함수
 {
 	if (IsEngaged()) return;
 
@@ -150,44 +140,12 @@ void AGoblin::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)/
 	}
 }
 
-void AGoblin::SpawnDefaultWeapon()
-{
-	UWorld* World = GetWorld();
-	if (World && WeaponClass)
-	{
-		AWeapon* DefaultWeapon = World->SpawnActor<AWeapon>(WeaponClass);
-		DefaultWeapon->Equip(GetMesh(), FName("PointSword"), this, this);
-		EquippedWeapon = DefaultWeapon;
-	}
-}
-void AGoblin::SpawnDefaultWeaponTwo()
-{
-	UWorld* World = GetWorld();
-	if (World && ShieldClass)
-	{
-		AShield* DefaultShield = World->SpawnActor<AShield>(ShieldClass);
-		DefaultShield->Equip(GetMesh(), FName("LeftWeapon"), this, this);
-		EquippedShield = DefaultShield;
-	}
-}
-
-void AGoblin::SpawnDefaultAmor()
-{
-	UWorld* World = GetWorld();
-	if (World && AmorClass)
-	{
-		ATopArmor* DefaultArmor = World->SpawnActor<ATopArmor>(AmorClass);
-		DefaultArmor->Equip(GetMesh(), FName("PointArmor"), this, this);
-		EquippedArmor = DefaultArmor;
-	}
-}
-
-void AGoblin::Die()
+void ACaveEnemy::Die()
 {
 	FTimerHandle RespawnTimerHandle;
 	Super::Die();
 	EnemyState = EEnemyState::EES_Dead;
-	bGoblinDead = true;
+	bGhoulDead = true;
 	ClearAttackTimer();
 	HideHealthBar();
 	DisableCapsule();
@@ -198,14 +156,14 @@ void AGoblin::Die()
 	SpawnGd();
 }
 
-void AGoblin::Respawn()
+void ACaveEnemy::Respawn()
 {
 	EnemyController = Cast<AAIController>(GetController());
 	PlayRespawnMontage();
 	RestartMonsterAtLocation(RespawnLocation);
 	EnemyState = EEnemyState::EES_NoState;
 	MoveToTarget(PatrolTarget);
-	bGoblinDead = false;
+	bGhoulDead = false;
 	EnableCapsule();
 	GetCharacterMovement()->Activate();
 	GetCharacterMovement()->bOrientRotationToMovement = true;
@@ -213,18 +171,18 @@ void AGoblin::Respawn()
 	Attributes->Health += Attributes->MaxHealth;
 }
 
-void AGoblin::RestartMonsterAtLocation(FVector RestartspawnLocation)
+void ACaveEnemy::RestartMonsterAtLocation(FVector RestartspawnLocation)
 {
 	SetActorLocation(RespawnLocation); // 리스폰 위치로 이동
 	SetActorRotation(FRotator::ZeroRotator); // 기본 회전으로 설정
 }
 
-void AGoblin::SetInitialSpawnLocation()
+void ACaveEnemy::SetInitialSpawnLocation()
 {
 	RespawnLocation = GetActorLocation();
 }
 
-void AGoblin::SpawnEx()
+void ACaveEnemy::SpawnEx()
 {
 	UWorld* World = GetWorld();
 	if (World && ExClass && Attributes)
@@ -236,7 +194,7 @@ void AGoblin::SpawnEx()
 		}
 	}
 }
-void AGoblin::SpawnGd()
+void ACaveEnemy::SpawnGd()
 {
 	UWorld* World = GetWorld();
 	if (World && GdClass && Attributes)
@@ -249,14 +207,14 @@ void AGoblin::SpawnGd()
 	}
 }
 
-bool AGoblin::InTargetRange(AActor* Target, double Radius)
+bool ACaveEnemy::InTargetRange(AActor* Target, double Radius)
 {
 	if (Target == nullptr) return false;
 	const double DistanceToTarget = (Target->GetActorLocation() - GetActorLocation()).Size();
 	return DistanceToTarget <= Radius;
 }
 
-void AGoblin::MoveToTarget(AActor* Target)
+void ACaveEnemy::MoveToTarget(AActor* Target)
 {
 	if (EnemyController == nullptr || Target == nullptr) return;
 	FAIMoveRequest MoveRequest;
@@ -265,7 +223,7 @@ void AGoblin::MoveToTarget(AActor* Target)
 	EnemyController->MoveTo(MoveRequest);
 }
 
-float AGoblin::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) //������ �ޱ�
+float ACaveEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) //������ �ޱ�
 {
 	HandleDamage(DamageAmount);
 	CombatTarget = EventInstigator->GetPawn();
@@ -282,21 +240,7 @@ float AGoblin::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, A
 	return DamageAmount;
 }
 
-void AGoblin::Destroyed()
-{
-	if (EquippedWeapon)
-	{
-		EquippedWeapon->Destroy();
-	}
-	if (EquippedShield)
-	{
-		EquippedShield->Destroy();
-	}
-
-	OnDestroyedDetected.Broadcast();
-}
-
-void AGoblin::StoreHitNumber(UUserWidget* HitNubmer, FVector Location)
+void ACaveEnemy::StoreHitNumber(UUserWidget* HitNubmer, FVector Location)
 {
 	HitNumbers.Add(HitNubmer, Location);
 
@@ -310,13 +254,13 @@ void AGoblin::StoreHitNumber(UUserWidget* HitNubmer, FVector Location)
 		false);
 }
 
-void AGoblin::DestroyHitNumber(UUserWidget* HitNumber)
+void ACaveEnemy::DestroyHitNumber(UUserWidget* HitNumber)
 {
 	HitNumbers.Remove(HitNumber);
 	HitNumber->RemoveFromParent();
 }
 
-void AGoblin::UpdateHitNumbers()
+void ACaveEnemy::UpdateHitNumbers()
 {
 	for (auto& HitPair : HitNumbers) {
 		UUserWidget* HitNumber{ HitPair.Key };
@@ -331,13 +275,13 @@ void AGoblin::UpdateHitNumbers()
 	}
 }
 
-void AGoblin::PatrolTimerFinished()
+void ACaveEnemy::PatrolTimerFinished()
 {
 	EnemyController = Cast<AAIController>(GetController());
 	MoveToTarget(PatrolTarget);
 }
 
-void AGoblin::PawnSeen(APawn* SeenPawn)
+void ACaveEnemy::PawnSeen(APawn* SeenPawn)
 {
 	const bool bShouldChaseTarget =
 		EnemyState != EEnemyState::EES_Dead &&
@@ -353,7 +297,7 @@ void AGoblin::PawnSeen(APawn* SeenPawn)
 	}
 }
 
-AActor* AGoblin::ChoosePatrolTarget()
+AActor* ACaveEnemy::ChoosePatrolTarget()
 {
 	TArray<AActor*> ValidTargets;
 	for (AActor* Target : PatrolTargets)
@@ -373,7 +317,7 @@ AActor* AGoblin::ChoosePatrolTarget()
 	return nullptr;
 }
 
-void AGoblin::AttackSweepTrace()
+void ACaveEnemy::AttackSweepTrace()
 {
 	FVector Start = GetActorLocation() + GetActorForwardVector() * 100.0f; // 보스 바로 앞 위치에서 시작
 	FVector ForwardVector = GetActorForwardVector(); // 몬스터가 향하는 방향
@@ -407,7 +351,7 @@ void AGoblin::AttackSweepTrace()
 				//PlayWeaponSpellHitSound(HitResult.ImpactPoint);
 				FDamageEvent DamageEvent;
 
-				UGameplayStatics::ApplyDamage(HitResult.GetActor(), GoblinDamage, GetInstigatorController(), this, UDamageType::StaticClass());
+				UGameplayStatics::ApplyDamage(HitResult.GetActor(), GhoulDamage, GetInstigatorController(), this, UDamageType::StaticClass());
 				ExecuteGetHit(HitResult);
 				ExecuteGetBlock(HitResult);
 			}
@@ -418,7 +362,7 @@ void AGoblin::AttackSweepTrace()
 	}
 }
 
-void AGoblin::ExecuteGetHit(FHitResult& HitResult)
+void ACaveEnemy::ExecuteGetHit(FHitResult& HitResult)
 {
 	IHitInterface* HitInterface = Cast<IHitInterface>(HitResult.GetActor());
 	if (HitInterface)
@@ -427,7 +371,7 @@ void AGoblin::ExecuteGetHit(FHitResult& HitResult)
 	}
 }
 
-void AGoblin::ExecuteGetBlock(FHitResult& HitResult)
+void ACaveEnemy::ExecuteGetBlock(FHitResult& HitResult)
 {
 	IHitInterface* HitInterface = Cast<IHitInterface>(HitResult.GetActor());
 	if (HitInterface)
@@ -436,7 +380,7 @@ void AGoblin::ExecuteGetBlock(FHitResult& HitResult)
 	}
 }
 
-void AGoblin::Attack()
+void ACaveEnemy::Attack()
 {
 	Super::Attack();
 	if (CombatTarget == nullptr || IsDead()) return;
@@ -445,7 +389,7 @@ void AGoblin::Attack()
 	PlayAttackMontage();
 }
 
-bool AGoblin::CanAttack()
+bool ACaveEnemy::CanAttack()
 {
 	bool bCanAttack =
 		IsInsideAttackRadius() &&
@@ -455,14 +399,14 @@ bool AGoblin::CanAttack()
 	return bCanAttack;
 }
 
-void AGoblin::AttackEnd()
+void ACaveEnemy::AttackEnd()
 {
 	EnemyState = EEnemyState::EES_NoState;
 	GetCharacterMovement()->Activate();
 	CheckCombatTarget();
 }
 
-void AGoblin::HandleDamage(float DamageAmount)
+void ACaveEnemy::HandleDamage(float DamageAmount)
 {
 	Super::HandleDamage(DamageAmount);
 
@@ -472,16 +416,14 @@ void AGoblin::HandleDamage(float DamageAmount)
 	}
 }
 
-void AGoblin::InitializeEnemy()
+void ACaveEnemy::InitializeEnemy()
 {
 	EnemyController = Cast<AAIController>(GetController());
 	MoveToTarget(PatrolTarget);
 	HideHealthBar();
-	SpawnDefaultWeapon();
-	SpawnDefaultWeaponTwo();
 }
 
-void AGoblin::HideHealthBar()
+void ACaveEnemy::HideHealthBar()
 {
 	if (HealthBarWidget)
 	{
@@ -489,7 +431,7 @@ void AGoblin::HideHealthBar()
 	}
 }
 
-void AGoblin::ShowHealthBar()
+void ACaveEnemy::ShowHealthBar()
 {
 	if (HealthBarWidget)
 	{
@@ -497,27 +439,27 @@ void AGoblin::ShowHealthBar()
 	}
 }
 
-void AGoblin::LoseInterest()
+void ACaveEnemy::LoseInterest()
 {
 	CombatTarget = nullptr;
 	HideHealthBar();
 }
 
-void AGoblin::StartPatrolling()
+void ACaveEnemy::StartPatrolling()
 {
 	EnemyState = EEnemyState::EES_Patrolling;
 	GetCharacterMovement()->MaxWalkSpeed = PatrollingSpeed;
 	MoveToTarget(PatrolTarget);
 }
 
-void AGoblin::ChaseTarget()
+void ACaveEnemy::ChaseTarget()
 {
 	EnemyState = EEnemyState::EES_Chasing;
 	GetCharacterMovement()->MaxWalkSpeed = ChasingSpeed;
 	MoveToTarget(CombatTarget);
 }
 
-void AGoblin::CombatTargetPlayer()
+void ACaveEnemy::CombatTargetPlayer()
 {
 	EnemyState = EEnemyState::EES_Chasing;
 	UE_LOG(LogTemp, Log, TEXT("PlayerCombat"));
@@ -525,61 +467,61 @@ void AGoblin::CombatTargetPlayer()
 	MoveToTarget(ProjectNo1Character);
 }
 
-bool AGoblin::IsOutsideCombatRadius()
+bool ACaveEnemy::IsOutsideCombatRadius()
 {
 	return !InTargetRange(CombatTarget, CombatRadius);
 }
 
-bool AGoblin::IsOutsideAttackRadius()
+bool ACaveEnemy::IsOutsideAttackRadius()
 {
 	return !InTargetRange(CombatTarget, AttackRadius);
 }
 
-bool AGoblin::IsInsideAttackRadius()
+bool ACaveEnemy::IsInsideAttackRadius()
 {
 	return InTargetRange(CombatTarget, AttackRadius);
 }
 
-bool AGoblin::IsChasing()
+bool ACaveEnemy::IsChasing()
 {
 	return EnemyState == EEnemyState::EES_Chasing;
 }
 
-bool AGoblin::IsAttacking()
+bool ACaveEnemy::IsAttacking()
 {
 	return EnemyState == EEnemyState::EES_Attacking;
 }
 
-bool AGoblin::IsDead()
+bool ACaveEnemy::IsDead()
 {
 	return EnemyState == EEnemyState::EES_Dead ||
-		bGoblinDead == true;
+		bGhoulDead == true;
 }
 
-bool AGoblin::IsEngaged()
+bool ACaveEnemy::IsEngaged()
 {
 	return EnemyState == EEnemyState::EES_Engaged;
 }
 
-void AGoblin::ClearPatrolTimer()
+void ACaveEnemy::ClearPatrolTimer()
 {
 	GetWorldTimerManager().ClearTimer(PatrolTimer);
 }
 
-void AGoblin::StartAttackTimer()
+void ACaveEnemy::StartAttackTimer()
 {
 	EnemyState = EEnemyState::EES_Attacking;
 	const float AttackTime = FMath::RandRange(AttackMin, AttackMax);
-	GetWorldTimerManager().SetTimer(AttackTimer, this, &AGoblin::Attack, AttackTime);
+	GetWorldTimerManager().SetTimer(AttackTimer, this, &ACaveEnemy::Attack, AttackTime);
 }
 
-void AGoblin::ClearAttackTimer()
+void ACaveEnemy::ClearAttackTimer()
 {
 	GetWorldTimerManager().ClearTimer(AttackTimer);
 }
 
 // 발사체 액터 생성 함수
-void AGoblin::ProjectileAttack()
+void ACaveEnemy::ProjectileAttack()
 {
 	// 화살이 발사될 위치를 설정한다
 	FVector vPos = GetActorLocation() + GetActorUpVector() * 30.f + GetActorForwardVector() * 100.f;
@@ -591,3 +533,4 @@ void AGoblin::ProjectileAttack()
 	// 월드에 액터를 배치한다
 	AProjectileWeapon* ProjectileWeapon = GetWorld()->SpawnActor<AProjectileWeapon>(ProjectileWeaponClass, vPos, GetActorRotation(), params);
 }
+

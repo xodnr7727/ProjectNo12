@@ -2004,6 +2004,7 @@ void AProjectNo1Character::PlayerCanMove()
 		PlayerController->bShowMouseCursor = false;
 		GetCharacterMovement()->Activate();
 	}
+	bIsAllMenuUIVisible = false;
 }
 
 void AProjectNo1Character::SpawnDefaultWeapon()

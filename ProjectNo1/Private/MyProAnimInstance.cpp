@@ -6,6 +6,7 @@
 #include "ProjectNo1/LichEnemy.h"
 #include "BossCharacter.h"
 #include "Goblin.h"
+#include "CaveEnemy.h"
 #include "CharacterTypes.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -17,6 +18,7 @@ void UMyProAnimInstance::NativeInitializeAnimation()
 	LichEnemy = Cast<ALichEnemy>(TryGetPawnOwner());
 	BossCharacter = Cast<ABossCharacter>(TryGetPawnOwner());
 	Goblin = Cast<AGoblin>(TryGetPawnOwner());
+	CaveEnemy = Cast<ACaveEnemy>(TryGetPawnOwner());
 	if (ProjectNo1Character){
 		ProjectNo1CharacterMovement = ProjectNo1Character->GetCharacterMovement();
 	}
@@ -28,6 +30,9 @@ void UMyProAnimInstance::NativeInitializeAnimation()
 	}
 	if (Goblin) {
 		GoblinMovement = Goblin->GetCharacterMovement();
+	}
+	if (CaveEnemy) {
+		CaveEnemyMovement = CaveEnemy->GetCharacterMovement();
 	}
 }
 void UMyProAnimInstance::NativeUpdateAnimation(float DeltaTime)
@@ -45,6 +50,9 @@ void UMyProAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	}
 	if (Goblin == nullptr) {
 		Goblin = Cast<AGoblin>(TryGetPawnOwner());
+	}
+	if (CaveEnemy == nullptr) {
+		CaveEnemy = Cast<ACaveEnemy>(TryGetPawnOwner());
 	}
 	if (ProjectNo1Character) {
 		FVector Velocity{ ProjectNo1Character->GetVelocity() };
@@ -80,7 +88,9 @@ void UMyProAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	if (GoblinMovement) {
 		EnemyState = Goblin->GetEnemyState();
 	}
-
+	if (CaveEnemyMovement) {
+		EnemyState = CaveEnemy->GetEnemyState();
+	}
 	auto Pawn = TryGetPawnOwner();
 	if (::IsValid(Pawn)) {
 		CurrentPawnSpeed = Pawn->GetVelocity().Size();
