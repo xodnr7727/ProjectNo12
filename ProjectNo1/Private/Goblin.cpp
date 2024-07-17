@@ -265,7 +265,7 @@ void AGoblin::MoveToTarget(AActor* Target)
 	EnemyController->MoveTo(MoveRequest);
 }
 
-float AGoblin::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) //������ �ޱ�
+float AGoblin::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) 
 {
 	HandleDamage(DamageAmount);
 	CombatTarget = EventInstigator->GetPawn();

@@ -386,65 +386,6 @@ void AWeapon::BeginPlay()
 	LeftCastSkillBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnBoxOverlap);
 }
 
-void AWeapon::GoldIncreaseDamage()
-{
-	// 공격력을 증가시키는 코드
-	Damage += 20.0f;
-}
-
-void AWeapon::IncreaseDamage()
-{
-	// 공격력을 증가시키는 코드
-	Damage += 100.0f;
-}
-
-void AWeapon::RestoreDamage()
-{
-	// 공격력을 원래대로 복구시키는 코드
-	// 예를 들어, CharacterDamage = BaseDamage;
-	Damage -= 100.0f;
-}
-
-void AWeapon::IncreaseSkillDamage()
-{
-	// 공격력을 증가시키는 코드
-	Damage += 400.0f;
-}
-
-void AWeapon::RestoreSkillDamage()
-{
-	// 공격력을 원래대로 복구시키는 코드
-	// 예를 들어, CharacterDamage = BaseDamage;
-	Damage -= 400.0f;
-}
-
-
-void AWeapon::IncreaseStunDamage()
-{
-	// 공격력을 증가시키는 코드
-	Damage += 500.0f;
-}
-
-void AWeapon::RestoreStunDamage()
-{
-	// 공격력을 원래대로 복구시키는 코드
-	// 예를 들어, CharacterDamage = BaseDamage;
-	Damage -= 500.0f;
-}
-
-void AWeapon::IncreaseCounterDamage()
-{
-	// 공격력을 증가시키는 코드
-	Damage += 400.0f;
-}
-
-void AWeapon::RestoreCounterDamage()
-{
-	// 공격력을 원래대로 복구시키는 코드
-	// 예를 들어, CharacterDamage = BaseDamage;
-	Damage -= 400.0f;
-}
-
 void AWeapon::IncreaseLaserSkillDamage()
 {
 	// 공격력을 증가시키는 코드

@@ -6,6 +6,7 @@
 #include "LichEnemy.h"
 #include "BossCharacter.h"
 #include "Goblin.h"
+#include "CaveEnemy.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -126,7 +127,7 @@ AProjectNo1Character::AProjectNo1Character()
 	bCanSwordSkill = true; // 초기에 검 공격 사용할 수 있도록 설정
 
 	WeaponSpellCooldown = 20.0f; // 초기 쿨타임 설정 (예: 20초)
-	WeaponSpellDuration = 14.0f; // 초기 지속시간 설정 (예: 14초)
+	WeaponSpellCountdown = 14.0f; // 초기 지속시간 설정 (예: 14초)
 	bCanWeaponSpell = true; // 초기에 주문 공격 사용할 수 있도록 설정
 	AttackWeaponSpell = false; // 초기에 주문 공격 투사체가 나가지 않도록 설정
 
@@ -249,9 +250,9 @@ void AProjectNo1Character::ICDamageGold() //데미지 증가
 			if (Attributes->GetGold() > 1999.f) {
 				Attributes->ICDamageMinusGold();
 				SlashOverlay->SetGold(Attributes->GetGold());
-				EquippedWeapon->GoldIncreaseDamage();
-				DamageIncreaseWidgetInstance->SetDamage(EquippedWeapon->GetDamage());
-				InfoWidgetInstance->SetInfoDamage(EquippedWeapon->GetDamage());
+				WeaponDamage += 20.0f;
+				DamageIncreaseWidgetInstance->SetDamage(GetWeaponDamage());
+				InfoWidgetInstance->SetInfoDamage(GetWeaponDamage());
 				PlayDamageIncreaseSound();
 			}
 			else {
@@ -272,7 +273,7 @@ void AProjectNo1Character::ICAmorGold() //아머 증가
 		if (Attributes->GetGold() > 1999.f) {
 			Attributes->ICDamageMinusGold();
 			SlashOverlay->SetGold(Attributes->GetGold());
-			GoldIncreaseAmor();
+			Amor += 0.5f;
 		    DamageIncreaseWidgetInstance->SetAmor(GetAmor());
 			InfoWidgetInstance->SetInfoArmor(GetAmor());
 			PlayDamageIncreaseSound();
@@ -287,9 +288,65 @@ void AProjectNo1Character::ICAmorGold() //아머 증가
 	}
 }
 
-void AProjectNo1Character::GoldIncreaseAmor()
+void AProjectNo1Character::IncreaseDamage()
 {
-	Amor += 0.2f;
+	// 공격력을 증가시키는 코드
+	WeaponDamage += 100.0f;
+	bDamageIncreaseState = false;
+}
+
+void AProjectNo1Character::RestoreDamage()
+{
+	// 공격력을 원래대로 복구시키는 코드
+	// 예를 들어, CharacterDamage = BaseDamage;
+	WeaponDamage -= 100.0f;
+	bDamageIncreaseState = true;
+}
+
+void AProjectNo1Character::IncreaseSkillDamage()
+{
+	// 공격력을 증가시키는 코드
+	WeaponDamage += 400.0f;
+	bDamageIncreaseState = false;
+}
+
+void AProjectNo1Character::RestoreSkillDamage()
+{
+	// 공격력을 원래대로 복구시키는 코드
+	// 예를 들어, CharacterDamage = BaseDamage;
+	WeaponDamage -= 400.0f;
+	bDamageIncreaseState = true;
+}
+
+
+void AProjectNo1Character::IncreaseStunDamage()
+{
+	// 공격력을 증가시키는 코드
+	WeaponDamage += 500.0f;
+	bDamageIncreaseState = false;
+}
+
+void AProjectNo1Character::RestoreStunDamage()
+{
+	// 공격력을 원래대로 복구시키는 코드
+	// 예를 들어, CharacterDamage = BaseDamage;
+	WeaponDamage -= 500.0f;
+	bDamageIncreaseState = true;
+}
+
+void AProjectNo1Character::IncreaseCounterDamage()
+{
+	// 공격력을 증가시키는 코드
+	WeaponDamage += 400.0f;
+	bDamageIncreaseState = false;
+}
+
+void AProjectNo1Character::RestoreCounterDamage()
+{
+	// 공격력을 원래대로 복구시키는 코드
+	// 예를 들어, CharacterDamage = BaseDamage;
+	WeaponDamage -= 400.0f;
+	bDamageIncreaseState = true;
 }
 
 void AProjectNo1Character::SetStatus()
@@ -301,8 +358,34 @@ void AProjectNo1Character::SetStatus()
 		InfoWidgetInstance->SetStaminaRegenRate(Attributes->GetStaminaRegenRate());
 		InfoWidgetInstance->SetExperience(Attributes->GetMaxExperience());
 		InfoWidgetInstance->SetStaminaRegenRate(Attributes->GetStaminaRegenRate());
-		InfoWidgetInstance->SetInfoDamage(EquippedWeapon->GetDamage());
+		InfoWidgetInstance->SetInfoDamage(GetWeaponDamage());
 		InfoWidgetInstance->SetInfoArmor(GetAmor());
+	}
+	if (SlashOverlay) {
+		SlashOverlay->SetGold(Attributes->GetGold());
+		SlashOverlay->SetLevel(Attributes->GetLevel());
+	}
+}
+
+void AProjectNo1Character::SetStatusWithDmgAm()
+{
+	if (InfoWidgetInstance) {
+		InfoWidgetInstance->SetHealth(Attributes->GetMaxHealth());
+		InfoWidgetInstance->SetStamina(Attributes->GetMaxStamina());
+		InfoWidgetInstance->SetHealthRegenRate(Attributes->GetHealthRegenRate());
+		InfoWidgetInstance->SetStaminaRegenRate(Attributes->GetStaminaRegenRate());
+		InfoWidgetInstance->SetExperience(Attributes->GetMaxExperience());
+		InfoWidgetInstance->SetStaminaRegenRate(Attributes->GetStaminaRegenRate());
+		InfoWidgetInstance->SetInfoDamage(GetWeaponDamage());
+		InfoWidgetInstance->SetInfoArmor(GetAmor());
+	}
+	if (SlashOverlay) {
+		SlashOverlay->SetGold(Attributes->GetGold());
+		SlashOverlay->SetLevel(Attributes->GetLevel());
+	}
+	if (DamageIncreaseWidgetInstance) {
+		DamageIncreaseWidgetInstance->SetDamage(GetWeaponDamage());
+		DamageIncreaseWidgetInstance->SetAmor(GetAmor());
 	}
 }
 
@@ -377,6 +460,7 @@ void AProjectNo1Character::BeginPlay()
 	MapWidget();//맵 UI
 	AllMenuWidget();//전체 메뉴 UI
 	BlessingPointSetting();
+	SetStatusWithDmgAm();
 
 	OnStunnedEnemyDetected.AddDynamic(this, &AProjectNo1Character::EnableSpecialTargetingAttack);
 	OffStunnedEnemyDetected.AddDynamic(this, &AProjectNo1Character::DisableSpecialTargetingAttack);
@@ -453,12 +537,11 @@ void AProjectNo1Character::OnNeckSkillPressed()
 		PlayNeckSkillMontage();
 		ActionState = EActionState::EAS_NeckSkillDo;
 		bCanRage = false;//연속 사용 불가
-		bDamageIncreaseState = false;
-		EquippedWeapon->IncreaseDamage();// 공격력 증가
+		IncreaseDamage();// 공격력 증가
 		IncreaseSpellDamage();
 		RageSkillEffect->ActivateSystem();//분노 이펙트 활성화
 		GetWorldTimerManager().SetTimer(NeckSkillCountdown, this, &AProjectNo1Character::EnableRage, RageCooldown, false); // 쿨타임 타이머 시작
-		GetWorldTimerManager().SetTimer(RageEndTimerHandle, this, &AProjectNo1Character::RestoreDamage, RageDuration, false);//분노 지속시간 타이머 시작
+		GetWorldTimerManager().SetTimer(RageEndTimerHandle, this, &AProjectNo1Character::RestoreAllDamage, RageDuration, false);//분노 지속시간 타이머 시작
 		GetWorldTimerManager().SetTimer(RageEffectEndTimerHandle, this, &AProjectNo1Character::DeactivateSkillEffect, RageDuration, false);//이펙트 지속시간 타이머 시작
 		if (Attributes && SlashOverlay)
 		{
@@ -473,24 +556,23 @@ void AProjectNo1Character::DeactivateSkillEffect()
 	RageSkillEffect->DeactivateSystem();// 분노 이펙트 비활성화
 }
 
-void AProjectNo1Character::RestoreDamage()
+void AProjectNo1Character::RestoreAllDamage()
 {
-	EquippedWeapon->RestoreDamage();// 공격력 복구
-	bDamageIncreaseState = true;
+	RestoreDamage();// 공격력 복구
 	RestoreSpellDamage();
 }
 
 void AProjectNo1Character::IncreaseSpellDamage()
 {
 	// 공격력을 증가시키는 코드
-	SpellDamage += 20.0f;
+	SpellDamage += 100.0f;
 }
 
 void AProjectNo1Character::RestoreSpellDamage()
 {
 	// 공격력을 원래대로 복구시키는 코드
 	// 예를 들어, CharacterDamage = BaseDamage;
-	SpellDamage -= 20.0f;
+	SpellDamage -= 100.0f;
 }
 
 void AProjectNo1Character::EnableRage()
@@ -598,10 +680,10 @@ void AProjectNo1Character::GuardCounterPressed()
 		bIsGuardCountdownEnabled = false; //쿨타임 부울 변수
 		bIsGuardCounterAttackEnabled = false;//연속 사용 X
 		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);//카운터 공격 시 무적
-		EquippedWeapon->IncreaseCounterDamage();// 공격력 증가
+		IncreaseCounterDamage();// 공격력 증가
 		GetWorldTimerManager().SetTimer(GuardCounterTimer, this, &AProjectNo1Character::EnableGuardCountdown, GuardCounterCooldown, false); // 쿨타임 타이머 시작
 		GetWorldTimerManager().SetTimer(EnableHitTimer, this, &AProjectNo1Character::EnableHit, EnableHitCountdown, false); // 카운트다운 타이머 시작
-		GetWorldTimerManager().SetTimer(CounterDamageTimer, this, &AProjectNo1Character::ReCounterDamage, DamagebackCountdown, false); // 데미지 복구 타이머 시작
+		GetWorldTimerManager().SetTimer(CounterDamageTimer, this, &AProjectNo1Character::RestoreCounterDamage, DamagebackCountdown, false); // 데미지 복구 타이머 시작
 		UE_LOG(LogTemp, Log, TEXT("GuardCounter"));
 		if (Attributes && SlashOverlay)
 		{
@@ -614,11 +696,6 @@ void AProjectNo1Character::GuardCounterPressed()
 void AProjectNo1Character::DeactivateGuardCounterEffect()
 {
 	EquippedWeapon->DeactivateGuardCounterEffect(); // 카운터 공격 이펙트 비활성화
-}
-
-void AProjectNo1Character::ReCounterDamage()
-{
-	EquippedWeapon->RestoreCounterDamage(); // 공격력 복구
 }
 
 void AProjectNo1Character::ActivateGuardCounterEffect()
@@ -658,12 +735,12 @@ void AProjectNo1Character::SmallSkillPressed()
 		ActionState = EActionState::EAS_AttackSkill;
 		bCanSmallSkill = false;//연속 사용 X
 		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);//스턴 공격 시 무적
-		EquippedWeapon->IncreaseStunDamage();// 공격력 증가
+		IncreaseStunDamage();// 공격력 증가
 		ExecuteHold();
 		UE_LOG(LogTemp, Log, TEXT("StunAttack"));
 		GetWorldTimerManager().SetTimer(SmallSkillCountdown, this, &AProjectNo1Character::EnableSmallSkill, SmallSkillCooldown, false); // 쿨타임 타이머 시작
 		GetWorldTimerManager().SetTimer(EnableHitTimer, this, &AProjectNo1Character::EnableHit, EnableHitCountdown, false); // 카운트다운 타이머 시작
-		GetWorldTimerManager().SetTimer(StunDamageTimer, this, &AProjectNo1Character::ReStunDamage, DamagebackCountdown, false); // 카운트다운 타이머 시작
+		GetWorldTimerManager().SetTimer(StunDamageTimer, this, &AProjectNo1Character::RestoreStunDamage, DamagebackCountdown, false); // 카운트다운 타이머 시작
 		if (Attributes && SlashOverlay)
 		{
 			Attributes->UseStamina(Attributes->GetSkillCost());
@@ -676,11 +753,6 @@ void AProjectNo1Character::EndSmallSkill()
 {
 	ActionState = EActionState::EAS_Unoccupied;
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//무적 해제
-}
-
-void AProjectNo1Character::ReStunDamage()
-{
-	EquippedWeapon->RestoreStunDamage(); // 공격력 복구
 }
 
 void AProjectNo1Character::EnableSmallSkill()
@@ -774,7 +846,7 @@ void AProjectNo1Character::OnSwordSkillPressed()
 		PlaySwordSkillMontage();
 		ActionState = EActionState::EAS_AttackSkill;
 		bCanSwordSkill = false;//연속 사용 X
-		EquippedWeapon->IncreaseSkillDamage();// 공격력 증가
+		IncreaseSkillDamage();// 공격력 증가
 		GetWorldTimerManager().SetTimer(SwordSkillCountdown, this, &AProjectNo1Character::EnableSwordSkill, SwordSkillCooldown, false); // 쿨타임 타이머 시작
 		GetWorldTimerManager().SetTimer(SwordSkillAGITime, this, &AProjectNo1Character::DeactivateLargeSkillEffect, SwordSkillDuration, false); // 지속시간 타이머 시작
 		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);//검 공격 시 무적
@@ -803,7 +875,7 @@ void AProjectNo1Character::DeactivateLargeSkillEffect()
 {
 	EquippedWeapon->DeactivateLargeSkillEffect(); // 강공격 이펙트 비활성화
 	EquippedWeapon->DeactivateSmallSkillEffect(); // 약공격 이펙트 비활성화
-	EquippedWeapon->RestoreSkillDamage(); // 공격력 복구
+	RestoreSkillDamage(); // 공격력 복구
 }
 
 void AProjectNo1Character::ActivateLargeSkillEffect()
@@ -829,6 +901,7 @@ void AProjectNo1Character::ActivateSkillParticles()
 
 void AProjectNo1Character::WeaponSpellAttack()
 {
+	FTimerHandle WeaponSpellSkillCooldown;
 	FTimerHandle WeaponSpellSkillCountdown;
 
 	if (!Dead() && CanNeckSkill() && HasEnoughSkillStamina() && bCanWeaponSpell)
@@ -836,10 +909,10 @@ void AProjectNo1Character::WeaponSpellAttack()
 		PlayWeaponSpellSkillMontage();
 		ActionState = EActionState::EAS_WeaponSpell;
 		bCanWeaponSpell = false;//연속 사용 불가
-		AttackWeaponSpell = true;//검기 활성화
-		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);//주문검 공격 시 무적
-		GetWorldTimerManager().SetTimer(WeaponSpellSkillCountdown, this, &AProjectNo1Character::EnableWeaponSpell, WeaponSpellCooldown, false); // 쿨타임 타이머 시작
-	
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);//주문검 동작 시 무적
+		GetWorldTimerManager().SetTimer(WeaponSpellSkillCooldown, this, &AProjectNo1Character::EnableWeaponSpell, WeaponSpellCooldown, false); // 쿨타임 타이머 시작
+		GetWorldTimerManager().SetTimer(WeaponSpellSkillCountdown, this, &AProjectNo1Character::DeactivateWeaponSpellEffect, WeaponSpellCountdown, false); // 지속시간 타이머 시작
+
 		if (Attributes && SlashOverlay)
 		{
 			Attributes->UseStamina(Attributes->GetSkillCost());
@@ -856,8 +929,6 @@ void AProjectNo1Character::WeaponSpellSlashEffect()
 	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), ImpactEffect, SpawnLocationA, DesiredRotation);
 }
 
-
-// 플레이어가 발사할 수 있는 트레이스를 나타내는 함수
 void AProjectNo1Character::WeaponSpellLineTrace()
 {
 	if (AttackWeaponSpell) {
@@ -871,14 +942,13 @@ void AProjectNo1Character::WeaponSpellLineTrace()
 		SpawnLocationB.Z += 100.0f;
 		FVector SpawnLocationC = SpawnLocationA - (RightVector * 80.0f) + (RightVector * 30.0f) - (ForwardVector * 30.0f);
 		SpawnLocationC.Z -= 100.0f;
-		TArray<FHitResult> HitResults;
 		//TArray<FHitResult> HitResults;
-		//FHitResult HitResult;
+		FHitResult HitResult;
 		FCollisionQueryParams CollisionParams;
 		CollisionParams.AddIgnoredActor(this); // 플레이어는 무시
 		CollisionParams.OwnerTag = "EngageableTarget";
-		bool bResult = GetWorld()->SweepMultiByChannel(
-			HitResults,
+		bool bResult = GetWorld()->SweepSingleByChannel(
+			HitResult,
 			Start,
 			End,
 			FQuat::Identity,
@@ -894,17 +964,15 @@ void AProjectNo1Character::WeaponSpellLineTrace()
 		PlayWeaponSpellHitSound(SpawnLocationA);
 		// 트레이스 실행
 		if (bResult) {
-			for (FHitResult& HitResult : HitResults) {
 			if (AActor* Actor = HitResult.GetActor()) {
 				if (HitResult.GetActor()->ActorHasTag("Enemy"))
 				{
 					UE_LOG(LogTemp, Log, TEXT("Hit Actor : %s"), *Actor->GetName());
-					//DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.f, 0, 1.f);
-					// 트레이스의 타격점에 이펙트를 생성하여 표시
 					FDamageEvent DamageEvent;
 
 					ALichEnemy* HitEnemy = Cast<ALichEnemy>(HitResult.GetActor());
 					AGoblin* Goblin = Cast<AGoblin>(HitResult.GetActor());
+					ACaveEnemy* CaveEnemy = Cast<ACaveEnemy>(HitResult.GetActor());
 					ABossCharacter* BossCharacter = Cast<ABossCharacter>(HitResult.GetActor());
 
 					Actor->SetOwner(this);
@@ -919,16 +987,16 @@ void AProjectNo1Character::WeaponSpellLineTrace()
 						Goblin->ShowHitNumber(SpellDamage, HitResult.Location);
 						Goblin->CombatTargetPlayer();
 					}
+					if (CaveEnemy) {
+						CaveEnemy->ShowHitNumber(SpellDamage, HitResult.Location);
+						CaveEnemy->CombatTargetPlayer();
+					}
 					if (BossCharacter) {
 						BossCharacter->ShowHitNumber(SpellDamage, HitResult.Location);
 						BossCharacter->CombatTargetPlayer();
 					}
 				}
 			}
-		}
-		}
-	  else {
-			//DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.f, 0, 1.f);
 		}
 	}
 }
@@ -947,7 +1015,6 @@ void AProjectNo1Character::EnableWeaponSpell()
 	bCanWeaponSpell = true;
 }
 
-
 void AProjectNo1Character::DeactivateWeaponSpellEffect()
 {
 	EquippedWeapon->DeactivateWeaponSpellEffect(); // 주문공격 이펙트 비활성화
@@ -956,10 +1023,8 @@ void AProjectNo1Character::DeactivateWeaponSpellEffect()
 
 void AProjectNo1Character::ActivateWeaponSpellEffect()
 {
-	FTimerHandle WeaponSpellAttackEffectEndTimerHandle;
 	EquippedWeapon->ActivateWeaponSpellEffect(); // 주문공격 이펙트 활성화
-
-	GetWorldTimerManager().SetTimer(WeaponSpellAttackEffectEndTimerHandle, this, &AProjectNo1Character::DeactivateWeaponSpellEffect, WeaponSpellDuration, false);//주문검 지속시간 타이머 시작
+	AttackWeaponSpell = true;//검기 활성화
 }
 
 void AProjectNo1Character::PlayWeaponSpellHitSound(const FVector& ImpactPoint)
@@ -1329,6 +1394,8 @@ void AProjectNo1Character::SavePlayerState()
 		GameInstance->PlayerStaminaRegenRate = Attributes->StaminaRegenRate;
 		GameInstance->PlayerLevel = Attributes->Level;
 		GameInstance->PlayerGold = Attributes->Gold;
+		GameInstance->PlayerDamage = WeaponDamage;
+		GameInstance->PlayerArmor = Amor;
 	}
 	else
 	{
@@ -1350,7 +1417,10 @@ void AProjectNo1Character::LoadPlayerState()
 		Attributes->StaminaRegenRate = GameInstance->PlayerStaminaRegenRate;
 		Attributes->Level = GameInstance->PlayerLevel;
 		Attributes->Gold = GameInstance->PlayerGold;
-		SetStatus();
+		WeaponDamage = GameInstance->PlayerDamage;
+		Amor = GameInstance->PlayerArmor;
+		Attributes->Health += Attributes->MaxHealth;
+		Attributes->Stamina += Attributes->MaxStamina;
 		UE_LOG(LogTemp, Log, TEXT("LoadState"));
 	}
 	else
@@ -1461,7 +1531,7 @@ void AProjectNo1Character::SpecialTargetingAttackInput()
 
 void AProjectNo1Character::BlessingPointInteractInput()
 {
-	if (bInRangePoint()) {
+	if (bInRangePoint() && bDamageIncreaseState) {
 		bIsBlessingPointInteractEnabled = true;
 		UE_LOG(LogTemp, Log, TEXT("BlessingPointInteractInput"));
 	}
@@ -1489,6 +1559,7 @@ void AProjectNo1Character::bInRangePointFalse()
 
 void AProjectNo1Character::BlessingPointInteract()
 {
+	UMyProGameInstance* GameInstance = Cast<UMyProGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
 	TArray<AActor*> PlayerStarts;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), PlayerStarts);
 	AActor* PlayerStart = PlayerStarts[0];
@@ -1499,6 +1570,10 @@ void AProjectNo1Character::BlessingPointInteract()
 			UE_LOG(LogTemp, Log, TEXT("Interact"));
 			Attributes->Health += Attributes->MaxHealth;
 			SavePlayerState();
+			if (GameInstance)
+			{
+				GameInstance->SaveGame();
+			}
 			PlayBlessInteractSound();
 			if (PlayerStart)
 			{
@@ -1641,6 +1716,65 @@ void AProjectNo1Character::AttackComboReset()
 {
 	CurrentComboStep = 0; //콤보 공격 리셋
 }
+
+void AProjectNo1Character::AttackSweepTrace()
+{
+		FVector ForwardVector = GetActorForwardVector(); // 플레이어 전방
+		FVector RightVector = GetActorRightVector(); // 플레이어 측면
+		FVector Start = GetActorLocation() + (ForwardVector *100.0f);
+		FVector End = Start + ForwardVector * 100.0f; // 일정 거리만큼 트레이스
+		FRotator PlayerRotation = GetActorRotation();
+		FHitResult HitResult;
+		FCollisionQueryParams CollisionParams;
+		CollisionParams.AddIgnoredActor(this); // 플레이어는 무시
+		CollisionParams.OwnerTag = "EngageableTarget";
+		bool bResult = GetWorld()->SweepSingleByChannel(
+			HitResult,
+			Start,
+			End,
+			FQuat::Identity,
+			ECollisionChannel::ECC_Visibility,
+			FCollisionShape::MakeSphere(50.0f),
+			CollisionParams);
+
+		// 트레이스 실행
+		if (bResult) {
+				if (AActor* Actor = HitResult.GetActor()) {
+					if (HitResult.GetActor()->ActorHasTag("Enemy"))
+					{
+						UE_LOG(LogTemp, Log, TEXT("Hit Actor : %s"), *Actor->GetName());
+						FDamageEvent DamageEvent;
+
+						ALichEnemy* HitEnemy = Cast<ALichEnemy>(HitResult.GetActor());
+						AGoblin* Goblin = Cast<AGoblin>(HitResult.GetActor());
+						ACaveEnemy* CaveEnemy = Cast<ACaveEnemy>(HitResult.GetActor());
+						ABossCharacter* BossCharacter = Cast<ABossCharacter>(HitResult.GetActor());
+
+						Actor->SetOwner(this);
+						Actor->SetInstigator(this);
+						UGameplayStatics::ApplyDamage(HitResult.GetActor(), WeaponDamage, GetInstigatorController(), this, UDamageType::StaticClass());
+						ExecuteGetHit(HitResult);
+						if (HitEnemy) {
+							HitEnemy->ShowHitNumber(WeaponDamage, HitResult.Location);
+							HitEnemy->CombatTargetPlayer();
+						}
+						if (Goblin) {
+							Goblin->ShowHitNumber(WeaponDamage, HitResult.Location);
+							Goblin->CombatTargetPlayer();
+						}
+						if (CaveEnemy) {
+							CaveEnemy->ShowHitNumber(WeaponDamage, HitResult.Location);
+							CaveEnemy->CombatTargetPlayer();
+						}
+						if (BossCharacter) {
+							BossCharacter->ShowHitNumber(WeaponDamage, HitResult.Location);
+							BossCharacter->CombatTargetPlayer();
+						}
+					}
+				}
+		}
+}
+
 
 void AProjectNo1Character::Dive()
 {

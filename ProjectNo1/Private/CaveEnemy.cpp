@@ -223,7 +223,7 @@ void ACaveEnemy::MoveToTarget(AActor* Target)
 	EnemyController->MoveTo(MoveRequest);
 }
 
-float ACaveEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) //������ �ޱ�
+float ACaveEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) 
 {
 	HandleDamage(DamageAmount);
 	CombatTarget = EventInstigator->GetPawn();

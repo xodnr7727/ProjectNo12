@@ -21,9 +21,9 @@ void AProjectNo1GameMode::BeginPlay()
 {
 	Super::BeginPlay();
 	UMyProGameInstance* GameInstance = Cast<UMyProGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
-	if (GameInstance && !GameInstance->bIsInitialized)
+	if (GameInstance)
 	{
-		GameInstance->InitializeDefaultValues();
+		GameInstance->Init();
 	}
 	if (AProjectNo1Character* PlayerCharacter = Cast<AProjectNo1Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)))
 	{

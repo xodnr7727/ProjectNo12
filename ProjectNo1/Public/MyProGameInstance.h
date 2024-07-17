@@ -15,9 +15,15 @@ class PROJECTNO1_API UMyProGameInstance : public UGameInstance
 	GENERATED_BODY()
 
 public:
-    UMyProGameInstance();
 
-    void InitializeDefaultValues();
+    virtual void Init() override;
+
+    UFUNCTION(BlueprintCallable, Category = "SaveLoad")
+    void SaveGame();
+
+    UFUNCTION(BlueprintCallable, Category = "SaveLoad")
+    void LoadGame();
+
 
     UPROPERTY(EditAnywhere, Category = "PlayerState")
     float PlayerHealth;
@@ -55,6 +61,4 @@ public:
     UPROPERTY(EditAnywhere, Category = "PlayerState")
     float PlayerArmor;
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Player Stats")
-    bool bIsInitialized;
 };

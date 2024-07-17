@@ -44,8 +44,9 @@ public:
 	virtual void AddGold(ATreasure* Treasure) override;
 	void ICDamageGold(); //데미지 증가 골드 소모
 	void ICAmorGold(); //아머 증가 골드 소모
-	void GoldIncreaseAmor(); //아머 증가
+	void IncreaseDamage();
 	void SetStatus(); //스텟창 동기화
+	void SetStatusWithDmgAm();
 	void LevelUpAll();
 	void LevelUpEC();
 	void LevelUpES();
@@ -169,6 +170,9 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void AttackComboReset(); //콤보 리셋
 
+	UFUNCTION(BlueprintCallable)
+	void AttackSweepTrace();
+
 	/*행동 부울 조건 */
 	bool HasEnoughStamina();
 	bool HasEnoughPotionStamina(); //포션 스태미너 유무
@@ -290,9 +294,14 @@ protected:
 	void ExecuteGetHit(FHitResult& HitResult);
 	bool IsAttackSkill();
 	void DeactivateSkillEffect(); //이펙트 해제
-	void ReCounterDamage();
-	void ReStunDamage();//데미지 복구
+	void RestoreAllDamage();
 	void RestoreDamage(); //공격력 복구
+	void IncreaseSkillDamage();
+	void RestoreSkillDamage();
+	void IncreaseStunDamage();
+	void RestoreStunDamage();
+	void IncreaseCounterDamage();
+	void RestoreCounterDamage();
 	void IncreaseSpellDamage();
 	void RestoreSpellDamage();
 
@@ -439,7 +448,7 @@ private:
 		UPROPERTY(EditAnywhere, Category = "Skill")
 		float WeaponSpellCooldown; // 스킬 쿨타임 변수
 		UPROPERTY(EditAnywhere, Category = "Skill")
-		float WeaponSpellDuration; // 스킬 지속 시간
+		float WeaponSpellCountdown; // 스킬 쿨타임 변수
 		bool bCanWeaponSpell; // 스킬 사용할 수 있는지 여부
 		bool AttackWeaponSpell; // 스킬 사용할 수 있는지 여부
 
@@ -538,17 +547,19 @@ private:
 		float Amor;
 
 		UPROPERTY(EditAnywhere, Category = "Combat")
+		float WeaponDamage;
+
+		UPROPERTY(EditAnywhere, Category = "Combat")
 		bool bDamageIncreaseState;
 
 		UPROPERTY()
 		ABlessingPoint* LastBlessingPoint;
-
 		bool bIsBlessingPointInteractEnabled;
-
 		bool bInRange;
 public:
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
 	FORCEINLINE EActionState GetActionState() const { return ActionState; }
 	FORCEINLINE float GetAmor() const { return Amor; }
+	FORCEINLINE float GetWeaponDamage() const { return WeaponDamage; }
 };
 

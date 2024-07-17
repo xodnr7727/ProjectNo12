@@ -56,20 +56,8 @@ public:
 	virtual void DisableCapsuleCollision();
 	virtual void PlayEquipSound();
 
-	void IncreaseDamage();
-	void RestoreDamage();
-	void IncreaseSkillDamage();
-	void RestoreSkillDamage();
-	void IncreaseStunDamage();
-	void RestoreStunDamage();
-	void IncreaseCounterDamage();
-	void RestoreCounterDamage();
-
 	void IncreaseLaserSkillDamage();
 	void RestoreLaserSkillDamage();
-
-	void GoldIncreaseDamage();
-	void GoldIncreaseAmor();
 
 	void AttachMeshToSocket(USceneComponent* InParent, const FName& InSocketName);
 
@@ -125,6 +113,9 @@ private:
 		bool bShowBoxDebug = false;
 
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+		float Damage;
+
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	    USoundBase* EquipSound;
 
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
@@ -150,9 +141,6 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	    USkeletalMeshComponent* SwordMesh;
-
-	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
-		float Damage;
 
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 		USoundBase* BlockSound;
