@@ -23,7 +23,7 @@ public:
 	void MapForestOpen();
 
 protected:
-	void NativeConstruct();
+	virtual void NativeConstruct() override;
 
 	UFUNCTION()
 	void OnIceLandClicked();

@@ -9,6 +9,7 @@
 #include "HUD/InfoWidget.h"
 #include "HUD/MapWidget.h"
 #include "HUD/DamageIncreaseWidget.h"
+#include "HUD/SystemWidget.h"
 
 
 void UAllMenuWidget::NativeConstruct()
@@ -34,6 +35,11 @@ void UAllMenuWidget::NativeConstruct()
     if (UpgradeButton)
     {
         UpgradeButton->OnClicked.AddDynamic(this, &UAllMenuWidget::OnUpgradeClicked);
+    }
+
+    if (OptionButton)
+    {
+        OptionButton->OnClicked.AddDynamic(this, &UAllMenuWidget::OnOptionClicked);
     }
 
 }
@@ -68,6 +74,8 @@ void UAllMenuWidget::OnUpgradeClicked()
 
 void UAllMenuWidget::OnOptionClicked()
 {
+    PlayerCharacter->OpenSystemWidget();
+    this->Hide();
 }
 
 void UAllMenuWidget::CloseMenu()

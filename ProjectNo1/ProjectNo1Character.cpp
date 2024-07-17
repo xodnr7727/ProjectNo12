@@ -45,6 +45,7 @@
 #include "HUD/AllMenuWidget.h"
 #include "HUD/MapWidget.h"
 #include "HUD/InfoWidget.h"
+#include "HUD/SystemWidget.h"
 #include "MyPlayerController.h"
 #include "Soul.h" 
 #include "NiagaraFunctionLibrary.h"
@@ -450,7 +451,7 @@ void AProjectNo1Character::BeginPlay()
 	RageSkillEffect->DeactivateSystem(); // 초기에는 비활성화
 	PotionSkillEffect->DeactivateSystem(); // 초기에는 비활성화
 	Tags.Add(FName("EngageableTarget"));
-	InitializeSlashOverlay();//기본 UI 설정
+	//InitializeSlashOverlay();//기본 UI 설정
 	SpawnDefaultWeapon();//주무기 장착
 	SpawnDefaultWeaponTwo();//쉴드 장착
 	SpawnDefaultPotionOne();//포션 장착
@@ -458,9 +459,10 @@ void AProjectNo1Character::BeginPlay()
 	InfoWidget();//인포 UI
 	DamageIncreaseWidget();//데미지 증가 UI
 	MapWidget();//맵 UI
+	SystemWidget();
 	AllMenuWidget();//전체 메뉴 UI
 	BlessingPointSetting();
-	SetStatusWithDmgAm();
+	//SetStatusWithDmgAm();
 
 	OnStunnedEnemyDetected.AddDynamic(this, &AProjectNo1Character::EnableSpecialTargetingAttack);
 	OffStunnedEnemyDetected.AddDynamic(this, &AProjectNo1Character::DisableSpecialTargetingAttack);
@@ -1966,7 +1968,18 @@ void AProjectNo1Character::PlayerDieUI()
 		}
 	}
 }
-
+void AProjectNo1Character::PlayerStartUI()
+{
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	if (PlayerController)
+	{
+		AMyProNo1HUD* MyProNo1HUD = Cast<AMyProNo1HUD>(PlayerController->GetHUD());
+		if (MyProNo1HUD)
+		{
+			MyProNo1HUD->PlayerStartUI();
+		}
+	}
+}
 void AProjectNo1Character::CheckBossMonsters()
 {
 	TArray<AActor*> FoundLichEnemies;
@@ -2127,6 +2140,27 @@ void AProjectNo1Character::OpenMapWidget()
 		{
 			MapWidgetInstance->Show();
 		}
+}
+
+void AProjectNo1Character::SystemWidget()
+{
+	if (SystemWidgetClass)
+	{
+		SystemWidgetInstance = CreateWidget<USystemWidget>(GetWorld(), SystemWidgetClass);
+		if (SystemWidgetInstance)
+		{
+			SystemWidgetInstance->AddToViewport();
+			SystemWidgetInstance->Hide();
+		}
+	}
+}
+
+void AProjectNo1Character::OpenSystemWidget()
+{
+	if (SystemWidgetInstance)
+	{
+		SystemWidgetInstance->Show();
+	}
 }
 
 void AProjectNo1Character::PlayerCanMove()

@@ -15,6 +15,20 @@ public:
 	AProjectNo1GameMode();
 	virtual void BeginPlay() override;
 	void RestartPlayerAtPlayerStart(ACharacter* Character);
+
+	UFUNCTION()
+	void OpenStartWidget();
+
+protected:
+	UFUNCTION()
+	void StartWidget();
+
+private:
+	UPROPERTY(EditAnywhere, Category = "UI")
+	TSubclassOf<class  UStartWidget> StartWidgetClass;
+
+	UPROPERTY()
+	UStartWidget* StartWidgetInstance;
 };
 
 

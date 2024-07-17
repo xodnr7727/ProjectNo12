@@ -10,6 +10,10 @@ void AMyProNo1HUD::BeginPlay()
 {
 	Super::BeginPlay();
 
+}
+
+void AMyProNo1HUD::PlayerStartUI()
+{
 	UWorld* World = GetWorld();
 	if (World)
 	{
@@ -21,6 +25,7 @@ void AMyProNo1HUD::BeginPlay()
 		}
 	}
 }
+
 void AMyProNo1HUD::PlayerDeadUI()
 {
 	// 게임 종료 UI 생성

@@ -27,7 +27,7 @@ public:
 	void SetInfoArmor(float WArmor);
 
 protected:	
-	void NativeConstruct();
+	virtual void NativeConstruct() override;
 
 	UFUNCTION()
 	void OnBackClicked();

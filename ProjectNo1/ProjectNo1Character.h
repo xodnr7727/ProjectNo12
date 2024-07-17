@@ -54,6 +54,7 @@ public:
 	void LoadPlayerState();//플레이어 데이터 로드
 
 	void Respawn(); // 캐릭터 죽을 시 리스폰
+	void PlayerStartUI();
 
 	/*지도 지역 오픈*/
 	void CaveRegionOpen();
@@ -68,6 +69,12 @@ public:
 
 	UFUNCTION()
 	void OpenMapWidget(); //지도 오픈
+
+	UFUNCTION()
+	void SystemWidget();
+
+	UFUNCTION()
+	void OpenSystemWidget();
 
 	UFUNCTION()
 	void OpenDamageIncreaseWidget(); //공방 오픈
@@ -540,6 +547,12 @@ private:
 		UPROPERTY()
 		UInfoWidget* InfoWidgetInstance;
 
+		UPROPERTY(EditAnywhere, Category = "UI")
+		TSubclassOf<class USystemWidget> SystemWidgetClass;
+
+		UPROPERTY()
+		USystemWidget* SystemWidgetInstance;
+
 		UPROPERTY(EditAnywhere, Category = "Combat")
 		bool bPlayerDead;
 
@@ -561,5 +574,6 @@ public:
 	FORCEINLINE EActionState GetActionState() const { return ActionState; }
 	FORCEINLINE float GetAmor() const { return Amor; }
 	FORCEINLINE float GetWeaponDamage() const { return WeaponDamage; }
+
 };
 

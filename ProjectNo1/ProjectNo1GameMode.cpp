@@ -6,6 +6,8 @@
 #include "UObject/ConstructorHelpers.h"
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
+#include "GameFramework/PlayerController.h"
+#include "HUD/StartWidget.h"
 
 AProjectNo1GameMode::AProjectNo1GameMode()
 {
@@ -20,14 +22,31 @@ AProjectNo1GameMode::AProjectNo1GameMode()
 void AProjectNo1GameMode::BeginPlay()
 {
 	Super::BeginPlay();
-	UMyProGameInstance* GameInstance = Cast<UMyProGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
-	if (GameInstance)
+	StartWidget();
+}
+
+void AProjectNo1GameMode::StartWidget()
+{
+	if (StartWidgetClass)
 	{
-		GameInstance->Init();
+		StartWidgetInstance = CreateWidget<UStartWidget>(GetWorld(), StartWidgetClass);
+		if (StartWidgetInstance)
+		{
+			StartWidgetInstance->AddToViewport();
+		}
 	}
-	if (AProjectNo1Character* PlayerCharacter = Cast<AProjectNo1Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)))
+	if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
 	{
-		PlayerCharacter->LoadPlayerState();
+		PC->SetPause(true);
+		PC->bShowMouseCursor = true;
+	}
+}
+
+void AProjectNo1GameMode::OpenStartWidget()
+{
+	if (StartWidgetInstance)
+	{
+		StartWidgetInstance->Show();
 	}
 }
 

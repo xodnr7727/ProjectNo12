@@ -14,8 +14,10 @@ class PROJECTNO1_API UAllMenuWidget : public UUserWidget
 {
 	GENERATED_BODY()
 public:
+	UFUNCTION()
 	void Show();
 
+	UFUNCTION()
 	void Hide();
 
 	UFUNCTION()
@@ -23,7 +25,7 @@ public:
 
 protected:
 
-	void NativeConstruct();
+	virtual void NativeConstruct() override;
 
 	// 다시하기 버튼 클릭 이벤트 함수
 	UFUNCTION()
@@ -68,6 +70,12 @@ private:
 
 	UPROPERTY()
 	UInfoWidget* InfoWidgetInstance;
+
+	UPROPERTY(EditAnywhere, Category = "UI")
+	TSubclassOf<class USystemWidget> SystemWidgetClass;
+
+	UPROPERTY()
+	USystemWidget* SystemWidgetInstance;
 
 	class AProjectNo1Character* PlayerCharacter;
 };

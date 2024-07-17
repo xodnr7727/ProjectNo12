@@ -161,5 +161,5 @@ void UInfoWidget::OnBackClicked()
 void UInfoWidget::OnRefreshClicked()
 {
     AProjectNo1Character* Player = Cast<AProjectNo1Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-    Player->SetStatus();
+    Player->SetStatusWithDmgAm();
 }

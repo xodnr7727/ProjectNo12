@@ -23,6 +23,7 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	void PlayerStartUI();
 	void PlayerDeadUI();
 private:
 	UPROPERTY(EditDefaultsOnly, Category = Slash)
