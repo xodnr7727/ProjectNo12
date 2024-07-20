@@ -510,6 +510,11 @@ void ABaseCharacter::PlayGetUpMontage()
 	PlayMontageSection(GetUpMontage, FName("GetUp"));
 }
 
+void ABaseCharacter::PlayInteractMontage()
+{
+	PlayMontageSection(InteractMontage, FName("Interact"));
+}
+
 void ABaseCharacter::PlayRespawnMontage()
 {
 	PlayMontageSection(RespawnMontage, FName("Respawn"));

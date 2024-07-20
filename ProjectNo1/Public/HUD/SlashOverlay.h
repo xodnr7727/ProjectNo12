@@ -31,6 +31,9 @@ public:
 	void ShowInteractTextMessage();
 	void HideInteractTextMessage();
 
+	void Show();
+	void Hide();
+
 protected:
 	void HideMessage();
 

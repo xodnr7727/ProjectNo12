@@ -451,7 +451,7 @@ void AProjectNo1Character::BeginPlay()
 	RageSkillEffect->DeactivateSystem(); // 초기에는 비활성화
 	PotionSkillEffect->DeactivateSystem(); // 초기에는 비활성화
 	Tags.Add(FName("EngageableTarget"));
-	//InitializeSlashOverlay();//기본 UI 설정
+	InitializeSlashOverlay();//기본 UI 설정
 	SpawnDefaultWeapon();//주무기 장착
 	SpawnDefaultWeaponTwo();//쉴드 장착
 	SpawnDefaultPotionOne();//포션 장착
@@ -462,7 +462,7 @@ void AProjectNo1Character::BeginPlay()
 	SystemWidget();
 	AllMenuWidget();//전체 메뉴 UI
 	BlessingPointSetting();
-	//SetStatusWithDmgAm();
+	SetStatusWithDmgAm();
 
 	OnStunnedEnemyDetected.AddDynamic(this, &AProjectNo1Character::EnableSpecialTargetingAttack);
 	OffStunnedEnemyDetected.AddDynamic(this, &AProjectNo1Character::DisableSpecialTargetingAttack);
@@ -1567,6 +1567,9 @@ void AProjectNo1Character::BlessingPointInteract()
 	AActor* PlayerStart = PlayerStarts[0];
 		UE_LOG(LogTemp, Log, TEXT("BlessingPointInteract"));
 		bIsBlessingPointInteractEnabled = false;
+		PlayInteractMontage();
+		ActionState = EActionState::EAS_Interact;
+		GetCharacterMovement()->Deactivate();
 		if (LastBlessingPoint)
 		{
 			UE_LOG(LogTemp, Log, TEXT("Interact"));
@@ -1703,6 +1706,7 @@ void AProjectNo1Character::EndAttacking()
 {
 	ActionState = EActionState::EAS_Unoccupied;
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//무적 해제
+	GetCharacterMovement()->Activate();
 }
 
 void AProjectNo1Character::AttackComboResetCountDown()
@@ -1977,9 +1981,37 @@ void AProjectNo1Character::PlayerStartUI()
 		if (MyProNo1HUD)
 		{
 			MyProNo1HUD->PlayerStartUI();
+			MyProNo1HUD->PlayerHideUI();
 		}
 	}
 }
+
+void AProjectNo1Character::ShowSlashOverlay()
+{
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	if (PlayerController)
+	{
+		AMyProNo1HUD* MyProNo1HUD = Cast<AMyProNo1HUD>(PlayerController->GetHUD());
+		if (MyProNo1HUD)
+		{
+			MyProNo1HUD->PlayerShowUI();
+		}
+	}
+}
+
+void AProjectNo1Character::HideSlashOverlay()
+{
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	if (PlayerController)
+	{
+		AMyProNo1HUD* MyProNo1HUD = Cast<AMyProNo1HUD>(PlayerController->GetHUD());
+		if (MyProNo1HUD)
+		{
+			MyProNo1HUD->PlayerHideUI();
+		}
+	}
+}
+
 void AProjectNo1Character::CheckBossMonsters()
 {
 	TArray<AActor*> FoundLichEnemies;

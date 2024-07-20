@@ -42,6 +42,10 @@ void USystemWidget::OnQuitClicked()
     if (GameMode) {
         GameMode->OpenStartWidget();
     }
+    AProjectNo1Character* Player = Cast<AProjectNo1Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+    if (Player) {
+        Player->HideSlashOverlay();
+    }
     this->Hide();
     if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
     {

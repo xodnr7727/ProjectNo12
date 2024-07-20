@@ -24,6 +24,8 @@ protected:
 
 public:
 	void PlayerStartUI();
+	void PlayerShowUI();
+	void PlayerHideUI();
 	void PlayerDeadUI();
 private:
 	UPROPERTY(EditDefaultsOnly, Category = Slash)

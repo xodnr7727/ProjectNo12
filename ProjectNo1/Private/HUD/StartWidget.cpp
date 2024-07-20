@@ -35,8 +35,8 @@ void UStartWidget::OnStartClicked()
 {
     AProjectNo1Character* Player = Cast<AProjectNo1Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
     if (Player) {
-        Player->PlayerStartUI();
-        Player->InitializeSlashOverlay();
+        Player->ShowSlashOverlay();
+        Player->PlayerCanMove();
     }
     if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
     {
@@ -48,12 +48,9 @@ void UStartWidget::OnStartClicked()
     {
         GameInstance->Init();
     }
-    AProjectNo1Character* PlayerCharacter = Cast<AProjectNo1Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-    if (PlayerCharacter)
+    if (Player)
     {
-        PlayerCharacter->LoadPlayerState();
-    }
-    if (Player) {
+        Player->LoadPlayerState();
         Player->SetStatusWithDmgAm();
     }
     this->Hide();

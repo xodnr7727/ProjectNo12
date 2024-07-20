@@ -30,6 +30,7 @@ enum class EActionState : uint8
 	EAS_EquippingWeapon UMETA(DisplayName = "Equipping Weapon"),
 	EAS_Dive UMETA(DisplayName = "Dive"),
 	EAS_Parrying UMETA(DisplayName = "Parrying"),
+	EAS_Interact UMETA(DisplayName = "Interact"),
 	EAS_Drink UMETA(DisplayName = "Drink"),
 	EAS_Sprint UMETA(DisplayName = "Sprint"),
 	EAS_AttackSkill UMETA(DisplayName = "AttackSkill"),

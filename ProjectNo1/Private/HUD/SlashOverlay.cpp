@@ -116,6 +116,15 @@ void USlashOverlay::HideInteractTextMessage()
 		InteractText->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
+void USlashOverlay::Hide()
+{
+	this->SetVisibility(ESlateVisibility::Hidden);
+}
+
+void USlashOverlay::Show()
+{
+	this->SetVisibility(ESlateVisibility::Visible);
+}
 
 /*void USlashOverlay::SetSouls(int32 Souls)
 {

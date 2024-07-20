@@ -56,6 +56,10 @@ public:
 	void Respawn(); // 캐릭터 죽을 시 리스폰
 	void PlayerStartUI();
 
+	void ShowSlashOverlay();
+
+	void HideSlashOverlay();
+
 	/*지도 지역 오픈*/
 	void CaveRegionOpen();
 	void IceLandRegionOpen();
