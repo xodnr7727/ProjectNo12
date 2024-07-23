@@ -396,6 +396,7 @@ void AProjectNo1Character::CaveRegionOpen()
 		SlashOverlay->MapOpenTextMessage();
 		MapWidgetInstance->MapCaveOpen();
 	}
+	bCaveState = true;
 }
 
 void AProjectNo1Character::IceLandRegionOpen()
@@ -404,6 +405,7 @@ void AProjectNo1Character::IceLandRegionOpen()
 		SlashOverlay->MapOpenTextMessage();
 		MapWidgetInstance->MapIceLandOpen();
 	}
+	bIceLandState = true;
 }
 
 void AProjectNo1Character::ForestRegionOpen()
@@ -412,6 +414,7 @@ void AProjectNo1Character::ForestRegionOpen()
 		SlashOverlay->MapOpenTextMessage();
 		MapWidgetInstance->MapForestOpen();
 	}
+	bForestState = true;
 }
 
 void AProjectNo1Character::Tick(float DeltaTime)
@@ -1398,6 +1401,10 @@ void AProjectNo1Character::SavePlayerState()
 		GameInstance->PlayerGold = Attributes->Gold;
 		GameInstance->PlayerDamage = WeaponDamage;
 		GameInstance->PlayerArmor = Amor;
+		GameInstance->SavedBlessingPoint = LastBlessingPoint->GetActorLocation();
+		GameInstance->bCaveState = bCaveState;
+		GameInstance->bIceLandState = bIceLandState;
+		GameInstance->bForestState = bForestState;
 	}
 	else
 	{
@@ -1421,6 +1428,12 @@ void AProjectNo1Character::LoadPlayerState()
 		Attributes->Gold = GameInstance->PlayerGold;
 		WeaponDamage = GameInstance->PlayerDamage;
 		Amor = GameInstance->PlayerArmor;
+		BlessingPoint = GameInstance->SavedBlessingPoint; //축복 포인트 위치 저장
+		SetActorLocation(BlessingPoint); //위치 로드
+		bCaveState = GameInstance->bCaveState;
+		bIceLandState = GameInstance->bIceLandState;
+		bForestState = GameInstance->bForestState;
+		MapLoadRegionOpen(); //지도 오픈 변수 로드
 		Attributes->Health += Attributes->MaxHealth;
 		Attributes->Stamina += Attributes->MaxStamina;
 		UE_LOG(LogTemp, Log, TEXT("LoadState"));
@@ -1432,6 +1445,20 @@ void AProjectNo1Character::LoadPlayerState()
 	}
 }
 
+void AProjectNo1Character::MapLoadRegionOpen()
+{
+	if (MapWidgetInstance) {
+		if (bCaveState) {
+			MapWidgetInstance->MapCaveOpen();
+		}
+		if (bIceLandState) {
+			MapWidgetInstance->MapIceLandOpen();
+		}
+		if (bForestState) {
+			MapWidgetInstance->MapForestOpen();
+		}
+	}
+}
 
 void AProjectNo1Character::Parry()
 {
@@ -1953,7 +1980,6 @@ void AProjectNo1Character::Respawn()
 			bPlayerDead = false;
 			ActionState = EActionState::EAS_Unoccupied;
 			Tags.Remove(FName("Dead"));
-			Attributes->Health += Attributes->MaxHealth;
 			LoadPlayerState();
 		}
 	}

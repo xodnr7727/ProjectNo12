@@ -61,4 +61,15 @@ public:
     UPROPERTY(EditAnywhere, Category = "PlayerState")
     float PlayerArmor;
 
+    UPROPERTY(EditAnywhere, Category = "PlayerState")
+    FVector  SavedBlessingPoint;
+
+    UPROPERTY(EditAnywhere, Category = "PlayerState")
+    bool bCaveState;
+
+    UPROPERTY(EditAnywhere, Category = "PlayerState")
+    bool bIceLandState;
+
+    UPROPERTY(EditAnywhere, Category = "PlayerState")
+    bool bForestState;
 };

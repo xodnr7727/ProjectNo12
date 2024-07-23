@@ -26,6 +26,10 @@ void UMyProGameInstance::SaveGame()
     SaveGameInstance->PlayerGold = PlayerGold;
     SaveGameInstance->PlayerDamage = PlayerDamage;
     SaveGameInstance->PlayerArmor = PlayerArmor;
+    SaveGameInstance->SavedBlessingPoint = SavedBlessingPoint;
+    SaveGameInstance->bCaveState = bCaveState;
+    SaveGameInstance->bIceLandState = bIceLandState;
+    SaveGameInstance->bForestState = bForestState;
     UE_LOG(LogTemp, Log, TEXT("SaveGame"));
     UGameplayStatics::SaveGameToSlot(SaveGameInstance, TEXT("PlayerSaveSlot"), 0);
 }
@@ -45,6 +49,10 @@ void UMyProGameInstance::LoadGame()
         PlayerGold = LoadGameInstance->PlayerGold;		
         PlayerDamage = LoadGameInstance->PlayerDamage;
         PlayerArmor = LoadGameInstance->PlayerArmor;
+        SavedBlessingPoint = LoadGameInstance->SavedBlessingPoint;
+        bCaveState = LoadGameInstance->bCaveState;
+        bIceLandState = LoadGameInstance->bIceLandState;
+        bForestState = LoadGameInstance->bForestState;
         UE_LOG(LogTemp, Log, TEXT("LoadGame"));
     }
     else

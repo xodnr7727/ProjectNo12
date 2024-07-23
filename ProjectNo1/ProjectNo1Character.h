@@ -51,7 +51,9 @@ public:
 	void LevelUpEC();
 	void LevelUpES();
 	void SavePlayerState();//플레이어 데이터 저장
-	void LoadPlayerState();//플레이어 데이터 로드
+	void LoadPlayerState();
+	void MapLoadRegionOpen();
+	//플레이어 데이터 로드
 
 	void Respawn(); // 캐릭터 죽을 시 리스폰
 	void PlayerStartUI();
@@ -573,6 +575,18 @@ private:
 		ABlessingPoint* LastBlessingPoint;
 		bool bIsBlessingPointInteractEnabled;
 		bool bInRange;
+
+		UPROPERTY()
+		FVector BlessingPoint;
+
+		UPROPERTY(EditAnywhere, Category = "Map")
+		bool bCaveState;
+
+		UPROPERTY(EditAnywhere, Category = "Map")
+		bool bIceLandState;
+
+		UPROPERTY(EditAnywhere, Category = "Map")
+		bool bForestState;
 public:
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
 	FORCEINLINE EActionState GetActionState() const { return ActionState; }
