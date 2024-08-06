@@ -71,7 +71,7 @@ ALichEnemy::ALichEnemy()
 	// Set the default value for the special targeting range
 	SwingSkillEnableRange = 300.0f;
 
-	TeleportSkillCooldown = 7.0f; // 텔레포트 스킬 쿨타임 변수
+	TeleportSkillCooldown = 13.0f; // 텔레포트 스킬 쿨타임 변수
 	bCanTeleportSkill = true;
 
 	TeleportSkillEnableRange = 700.0f;
@@ -1006,6 +1006,11 @@ void ALichEnemy::Die()
 	SpawnGd();
 }
 
+void ALichEnemy::DieState()
+{
+	EnemyState = EEnemyState::EES_Dead;
+}
+
 void ALichEnemy::SpawnEx()
 {
 	UWorld* World = GetWorld();
@@ -1216,8 +1221,8 @@ void ALichEnemy::ExecuteGetBlock(FHitResult& HitResult)
 void ALichEnemy::Attack()
 {
 	Super::Attack();
-	if (CanAttack() || CombatTarget == nullptr || !bAttack || bAction) return;
-	GetCharacterMovement()->Activate();
+	if (CombatTarget == nullptr || !bAttack || bAction) return;
+	GetCharacterMovement()->Deactivate();
 	EnemyState = EEnemyState::EES_Engaged;
 	PlayAttackMontage();
 }

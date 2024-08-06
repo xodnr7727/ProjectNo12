@@ -156,6 +156,12 @@ void ACaveEnemy::Die()
 	SpawnGd();
 }
 
+void ACaveEnemy::DieState()
+{
+	EnemyState = EEnemyState::EES_Dead;
+	bGhoulDead = true;
+}
+
 void ACaveEnemy::Respawn()
 {
 	EnemyController = Cast<AAIController>(GetController());

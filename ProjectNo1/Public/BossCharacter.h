@@ -63,6 +63,9 @@ protected:
 	AActor* ChoosePatrolTarget();
 
 	UFUNCTION(BlueprintCallable)
+	void DieState();
+
+	UFUNCTION(BlueprintCallable)
 	void RecoveryStunState();
 
 	UFUNCTION(BlueprintCallable, Category = "SpecialSkill")

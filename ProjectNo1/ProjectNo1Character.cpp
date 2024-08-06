@@ -446,6 +446,8 @@ void AProjectNo1Character::Tick(float DeltaTime)
 
 	CheckForStunnedEnemy();
 	CheckForNotStunnedEnemy();
+	CheckForBackEnemy();
+	CheckForNotBackEnemy();
 }
 
 void AProjectNo1Character::BeginPlay()
@@ -462,14 +464,15 @@ void AProjectNo1Character::BeginPlay()
 	InfoWidget();//인포 UI
 	DamageIncreaseWidget();//데미지 증가 UI
 	MapWidget();//맵 UI
-	SystemWidget();
+	SystemWidget();//설정 UI
 	AllMenuWidget();//전체 메뉴 UI
 	BlessingPointSetting();
 	SetStatusWithDmgAm();
 
 	OnStunnedEnemyDetected.AddDynamic(this, &AProjectNo1Character::EnableSpecialTargetingAttack);
 	OffStunnedEnemyDetected.AddDynamic(this, &AProjectNo1Character::DisableSpecialTargetingAttack);
-
+	OnEnemyBackDetected.AddDynamic(this, &AProjectNo1Character::EnableSpecialTargetingAttack);
+	OffEnemyBackDetected.AddDynamic(this, &AProjectNo1Character::DisableSpecialTargetingAttack);
 }
 
 void AProjectNo1Character::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -806,7 +809,7 @@ void AProjectNo1Character::ExecuteHold()
 			{
 				LichEnemy = Cast<ALichEnemy>(OverlappingActor);
 
-				if (LichEnemy && LichEnemy->IsStunned())
+				if (LichEnemy)
 				{
 					LichEnemy->TakeExecutionHold();
 				}
@@ -1529,11 +1532,6 @@ void AProjectNo1Character::CheckForStunnedEnemy()
 	}
 }
 
-void AProjectNo1Character::EnableSpecialTargetingAttack()
-{
-	bIsSpecialTargetingEnabled = true; //스턴 공격 가능
-}
-
 void AProjectNo1Character::CheckForNotStunnedEnemy()
 {
 	if (!HasStunnedEnemyInFront())
@@ -1542,6 +1540,79 @@ void AProjectNo1Character::CheckForNotStunnedEnemy()
 		OffStunnedEnemyDetected.Broadcast();
 	}
 }
+
+bool AProjectNo1Character::HasEnemyBackInFront()//플레이어 앞 적 뒤잡 체크 함수
+{
+	TArray<FHitResult> HitResults;
+	FVector StartLocation = GetActorLocation();
+	FVector EndLocation = StartLocation + GetActorForwardVector() * SpecialTargetingRange;
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.AddIgnoredActor(this); // Ignore the player
+	CollisionParams.bTraceComplex = true;
+	bool bHit = GetWorld()->SweepMultiByChannel(HitResults, StartLocation, EndLocation, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(50.0f), CollisionParams);
+
+	if (bHit)
+	{
+		for (const FHitResult& HitResult : HitResults)
+		{
+			AActor* OverlappingActor = HitResult.GetActor();
+			// 액터의 클래스가 ALichEnemy인지 확인
+			if (OverlappingActor->IsA(ALichEnemy::StaticClass()))
+			{
+				LichEnemy = Cast<ALichEnemy>(OverlappingActor);
+
+				if (LichEnemy)
+				{
+					FVector EnemyForward = LichEnemy->GetActorForwardVector();
+					FVector ToPlayer = (StartLocation - LichEnemy->GetActorLocation()).GetSafeNormal();
+
+					float DotProduct = FVector::DotProduct(EnemyForward, ToPlayer);
+					UE_LOG(LogTemp, Log, TEXT("LichEnemybehindCheck")); //확인완료
+					if (DotProduct <= -0.5f)
+					{
+						return true;
+					}
+					else {
+						UE_LOG(LogTemp, Log, TEXT("LichEnemyNotbehindCheck"));//확인완료
+						return false;
+					}
+				}
+			}
+		}
+	}
+	//DrawDebugLine(GetWorld(), StartLocation, EndLocation, FColor::Red, false, 2.0f); //확인완료
+	return false;
+}
+
+void AProjectNo1Character::CheckForBackEnemy()
+{
+	if (!HasStunnedEnemyInFront())
+	{
+		if (HasEnemyBackInFront())
+		{
+			// 델리게이트 호출
+			OnEnemyBackDetected.Broadcast();
+		}
+	}
+}
+
+void AProjectNo1Character::CheckForNotBackEnemy()
+{
+	if (!HasStunnedEnemyInFront())
+	{
+		if (!HasEnemyBackInFront())
+		{
+			// 델리게이트 호출
+			OffEnemyBackDetected.Broadcast();
+		}
+	}
+}
+
+void AProjectNo1Character::EnableSpecialTargetingAttack()
+{
+	bIsSpecialTargetingEnabled = true; //스턴 공격 가능
+}
+
 
 void AProjectNo1Character::DisableSpecialTargetingAttack()
 {
@@ -1589,6 +1660,7 @@ void AProjectNo1Character::bInRangePointFalse()
 void AProjectNo1Character::BlessingPointInteract()
 {
 	UMyProGameInstance* GameInstance = Cast<UMyProGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
 	TArray<AActor*> PlayerStarts;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), PlayerStarts);
 	AActor* PlayerStart = PlayerStarts[0];
@@ -1596,6 +1668,11 @@ void AProjectNo1Character::BlessingPointInteract()
 		bIsBlessingPointInteractEnabled = false;
 		PlayInteractMontage();
 		ActionState = EActionState::EAS_Interact;
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);//무적
+		if (PlayerController) {
+			PlayerController->SetIgnoreMoveInput(true);
+			PlayerController->SetIgnoreLookInput(true);
+		}
 		GetCharacterMovement()->Deactivate();
 		if (LastBlessingPoint)
 		{
@@ -1625,6 +1702,20 @@ void AProjectNo1Character::BlessingPointInteract()
 		{
 			UE_LOG(LogTemp, Warning, TEXT("LastBlessingPoint is nullptr"));
 		}
+}
+
+void AProjectNo1Character::EndInteract()
+{
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+
+	ActionState = EActionState::EAS_Unoccupied;
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//무적 해제
+	GetCharacterMovement()->Activate();
+
+	if (PlayerController) {
+		PlayerController->SetIgnoreMoveInput(false);
+		PlayerController->SetIgnoreLookInput(false);
+	}
 }
 
 void AProjectNo1Character::BlessingPointSetting()
@@ -2111,6 +2202,7 @@ void AProjectNo1Character::ToggleAllMenuUI()
 			if (InfoWidgetInstance) InfoWidgetInstance->Hide();
 			if (MapWidgetInstance) MapWidgetInstance->Hide();
 			if (DamageIncreaseWidgetInstance) DamageIncreaseWidgetInstance->Hide();
+			if (SystemWidgetInstance) SystemWidgetInstance->Hide();
 			bIsAllMenuUIVisible = false;
 			PlayAllMenuCloseSound();
 			UE_LOG(LogTemp, Log, TEXT("Hide"));

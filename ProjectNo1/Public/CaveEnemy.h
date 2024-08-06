@@ -47,6 +47,9 @@ protected:
 	AActor* ChoosePatrolTarget();
 
 	UFUNCTION(BlueprintCallable)
+	void DieState();
+
+	UFUNCTION(BlueprintCallable)
 	void AttackSweepTrace();
 
 	void ExecuteGetHit(FHitResult& HitResult);

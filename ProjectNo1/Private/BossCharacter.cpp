@@ -479,6 +479,12 @@ void ABossCharacter::Die()
 	SpawnGd();
 }
 
+void ABossCharacter::DieState()
+{
+	EnemyState = EEnemyState::EES_Dead;
+	bDragonDead = true;
+}
+
 void ABossCharacter::Respawn()
 {
 	PlayRespawnMontage();

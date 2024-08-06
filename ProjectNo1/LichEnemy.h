@@ -67,6 +67,9 @@ protected:
 	virtual void AttackEnd() override;
 
 	UFUNCTION(BlueprintCallable)
+	void DieState();
+
+	UFUNCTION(BlueprintCallable)
 	void DeactivateLeftCastEffect();
 
 	UFUNCTION(BlueprintCallable)

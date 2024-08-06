@@ -23,6 +23,8 @@ class UParticleSystemComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnStunnedEnemyDetected);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOffStunnedEnemyDetected);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnEnemyBackDetected);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOffEnemyBackDetected);
 
 UCLASS()
 class AProjectNo1Character : public ABaseCharacter, public IPickupInterface
@@ -95,6 +97,12 @@ public:
 		UPROPERTY(BlueprintAssignable, Category = "Events")
 		FOffStunnedEnemyDetected OffStunnedEnemyDetected;
 
+		UPROPERTY(BlueprintAssignable, Category = "Events")
+		FOnEnemyBackDetected OnEnemyBackDetected;
+
+		UPROPERTY(BlueprintAssignable, Category = "Events")
+		FOffEnemyBackDetected OffEnemyBackDetected;
+
 		/*축복 상호 작용 관련*/
 		void ShowInteractMessage();
 		void HideInteractMessage();
@@ -105,6 +113,9 @@ public:
 		void BlessingPointInteract();
 		bool IsBlessingPointInteract();
 		bool bInRangePoint();
+
+		UFUNCTION(BlueprintCallable)
+		void EndInteract();
 
 		void bInRangePointTrue();
 		void bInRangePointFalse();
@@ -288,6 +299,10 @@ protected:
 	void PerformBack();
 	void CheckForStunnedEnemy(); //스턴 몬스터 체크
 	void CheckForNotStunnedEnemy();
+	void CheckForBackEnemy(); //스턴 몬스터 체크
+	void CheckForNotBackEnemy();
+	UFUNCTION(BlueprintPure, Category = "SpecialTargeting")
+	bool HasEnemyBackInFront();
 	// Function to check if there is a stunned enemy in front of the player
 	UFUNCTION(BlueprintPure, Category = "SpecialTargeting")
 	bool HasStunnedEnemyInFront();

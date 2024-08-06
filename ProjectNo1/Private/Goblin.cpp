@@ -198,6 +198,12 @@ void AGoblin::Die()
 	SpawnGd();
 }
 
+void AGoblin::DieState()
+{
+	EnemyState = EEnemyState::EES_Dead;
+	bGoblinDead = true;
+}
+
 void AGoblin::Respawn()
 {
 	EnemyController = Cast<AAIController>(GetController());
