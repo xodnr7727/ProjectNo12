@@ -31,6 +31,9 @@ public:
 	void ShowInteractTextMessage();
 	void HideInteractTextMessage();
 
+	void ShowExecuteTextMessage();
+	void HideExecuteTextMessage();
+
 	void Show();
 	void Hide();
 
@@ -59,6 +62,9 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* InteractText;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* ExecuteText;
 
 	//UPROPERTY(meta = (BindWidget))
 	//	class UTextBlock* SoulsText;

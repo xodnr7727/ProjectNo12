@@ -14,6 +14,8 @@ class ATopArmor;
 class UAttributeComponent;
 class UAnimMontage;
 class ALichEnemy;
+class AGoblin;
+class ACaveEnemy;
 class ABlessingPoint;
 UCLASS()
 class PROJECTNO1_API ABaseCharacter : public ACharacter, public IHitInterface
@@ -199,6 +201,12 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, Category = Enemy)
 		ALichEnemy* LichEnemy;
+
+	UPROPERTY(VisibleAnywhere, Category = Enemy)
+		AGoblin* Goblin;
+
+	UPROPERTY(VisibleAnywhere, Category = Enemy)
+		ACaveEnemy* CaveEnemy;
 
 	UPROPERTY(VisibleAnywhere, Category = Weapon)
 	    AWeapon* EquippedNeck;

@@ -30,6 +30,12 @@ void USlashOverlay::NativeConstruct()
 		InteractText->SetText(FText::FromString(TEXT("Interact(B)")));
 		InteractText->SetVisibility(ESlateVisibility::Hidden); // 처음엔 숨겨놓음
 	}
+
+	if (ExecuteText)
+	{
+		ExecuteText->SetText(FText::FromString(TEXT("ExecuteText(C)")));
+		ExecuteText->SetVisibility(ESlateVisibility::Hidden); // 처음엔 숨겨놓음
+	}
 }
 
 void USlashOverlay::SetHealthBarPercent(float Percent)
@@ -116,6 +122,23 @@ void USlashOverlay::HideInteractTextMessage()
 		InteractText->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
+
+void USlashOverlay::ShowExecuteTextMessage()
+{
+	if (ExecuteText)
+	{
+		ExecuteText->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+
+void USlashOverlay::HideExecuteTextMessage()
+{
+	if (ExecuteText)
+	{
+		ExecuteText->SetVisibility(ESlateVisibility::Hidden);
+	}
+}
+
 void USlashOverlay::Hide()
 {
 	this->SetVisibility(ESlateVisibility::Hidden);

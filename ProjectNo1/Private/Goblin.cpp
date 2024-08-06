@@ -78,25 +78,6 @@ void AGoblin::Tick(float DeltaTime)
 	{
 		CheckPatrolTarget();
 	}
-	/*
-	if (PlayerCharacter)
-	{
-		// 플레이어와의 거리 계산
-		FVector PlayerLocation = PlayerCharacter->GetActorLocation();
-		FVector MonsterLocation = GetActorLocation();
-		float DistanceToPlayer = FVector::Distance(PlayerLocation, MonsterLocation);
-
-		// 플레이어에게 가까우면 이동하고 공격
-		if (DistanceToPlayer < RushRadius)
-		{
-			// 플레이어를 향해 이동
-			FVector DirectionToPlayer = PlayerLocation - MonsterLocation;
-			DirectionToPlayer.Normalize();
-			AddMovementInput(DirectionToPlayer, ChasingSpeed * DeltaTime);
-
-			// 공격 로직을 여기에 추가 (예: 타이머를 사용하여 주기적으로 공격)
-		}
-	}*/
 }
 
 
@@ -148,6 +129,34 @@ void AGoblin::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)/
 	{
 		if (!IsDead()) StartAttackTimer();
 	}
+}
+
+void AGoblin::TakeExecutionHold()
+{
+	// 몬스터를 플레이어에게 고정시키기
+	AProjectNo1Character* Player = Cast<AProjectNo1Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	if (Player)
+	{
+		// 몬스터의 위치를 플레이어 앞에 고정
+		FVector PlayerLocation = Player->GetActorLocation();
+		FRotator PlayerRotation = Player->GetActorRotation();
+		FVector FixedLocation = PlayerLocation + PlayerRotation.Vector() * 100.0f; // 플레이어 앞 100유닛에 위치
+
+		SetActorLocation(FixedLocation);
+		SetActorRotation(PlayerRotation);
+
+		// 몬스터 움직임 고정
+		GetCharacterMovement()->DisableMovement();
+	}
+}
+
+void AGoblin::TakeBack()
+{
+	FVector LaunchVelocity = GetActorForwardVector() * -1000.0f;
+	LaunchCharacter(LaunchVelocity, true, true);
+
+	// 다시 몬스터 움직임 활성화
+	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 }
 
 void AGoblin::SpawnDefaultWeapon()

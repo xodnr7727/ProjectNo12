@@ -140,6 +140,34 @@ void ACaveEnemy::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitte
 	}
 }
 
+void ACaveEnemy::TakeExecutionHold()
+{
+	// 몬스터를 플레이어에게 고정시키기
+	AProjectNo1Character* Player = Cast<AProjectNo1Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	if (Player)
+	{
+		// 몬스터의 위치를 플레이어 앞에 고정
+		FVector PlayerLocation = Player->GetActorLocation();
+		FRotator PlayerRotation = Player->GetActorRotation();
+		FVector FixedLocation = PlayerLocation + PlayerRotation.Vector() * 100.0f; // 플레이어 앞 100유닛에 위치
+
+		SetActorLocation(FixedLocation);
+		SetActorRotation(PlayerRotation);
+
+		// 몬스터 움직임 고정
+		GetCharacterMovement()->DisableMovement();
+	}
+}
+
+void ACaveEnemy::TakeBack()
+{
+	FVector LaunchVelocity = GetActorForwardVector() * -1000.0f;
+	LaunchCharacter(LaunchVelocity, true, true);
+
+	// 다시 몬스터 움직임 활성화
+	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+}
+
 void ACaveEnemy::Die()
 {
 	FTimerHandle RespawnTimerHandle;

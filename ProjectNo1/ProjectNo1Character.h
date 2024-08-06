@@ -297,6 +297,8 @@ protected:
 	void ExecuteHold();//처형 홀드
 	UFUNCTION(BlueprintCallable)
 	void PerformBack();
+	void ShowExecuteMessage();
+	void HideExecuteMessage();
 	void CheckForStunnedEnemy(); //스턴 몬스터 체크
 	void CheckForNotStunnedEnemy();
 	void CheckForBackEnemy(); //스턴 몬스터 체크

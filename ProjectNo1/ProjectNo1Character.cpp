@@ -814,9 +814,26 @@ void AProjectNo1Character::ExecuteHold()
 					LichEnemy->TakeExecutionHold();
 				}
 		    }
+			else if (OverlappingActor->IsA(AGoblin::StaticClass()))
+			{
+				Goblin = Cast<AGoblin>(OverlappingActor);
+
+				if (Goblin)
+				{
+					Goblin->TakeExecutionHold();
+				}
+			}
+			else if (OverlappingActor->IsA(ACaveEnemy::StaticClass()))
+			{
+				CaveEnemy = Cast<ACaveEnemy>(OverlappingActor);
+
+				if (CaveEnemy)
+				{
+					CaveEnemy->TakeExecutionHold();
+				}
+			}
 	    }
     }
-	PerformBack();
 }
 
 void AProjectNo1Character::PerformBack()
@@ -841,9 +858,42 @@ void AProjectNo1Character::PerformBack()
 					LichEnemy->TakeBack();
 				}
 			}
+			else if (OverlappingActor->IsA(AGoblin::StaticClass()))
+			{
+				Goblin = Cast<AGoblin>(OverlappingActor);
+				if (Goblin)
+				{
+					Goblin->TakeBack();
+				}
+			}
+			else if (OverlappingActor->IsA(ACaveEnemy::StaticClass()))
+			{
+				CaveEnemy = Cast<ACaveEnemy>(OverlappingActor);
+				if (CaveEnemy)
+				{
+					CaveEnemy->TakeBack();
+				}
+			}
 		}
 	}
 }
+
+void AProjectNo1Character::ShowExecuteMessage()
+{
+	if (SlashOverlay) {
+		SlashOverlay->ShowExecuteTextMessage();
+		UE_LOG(LogTemp, Log, TEXT("ShowExecuteTextMessage")); 
+	}
+}
+
+void AProjectNo1Character::HideExecuteMessage()
+{
+	if (SlashOverlay) {
+		SlashOverlay->HideExecuteTextMessage();
+		UE_LOG(LogTemp, Log, TEXT("HideExecuteTextMessage"));
+	}
+}
+
 void AProjectNo1Character::OnSwordSkillPressed()
 {
 	FTimerHandle SwordSkillCountdown;
@@ -979,8 +1029,8 @@ void AProjectNo1Character::WeaponSpellLineTrace()
 					FDamageEvent DamageEvent;
 
 					ALichEnemy* HitEnemy = Cast<ALichEnemy>(HitResult.GetActor());
-					AGoblin* Goblin = Cast<AGoblin>(HitResult.GetActor());
-					ACaveEnemy* CaveEnemy = Cast<ACaveEnemy>(HitResult.GetActor());
+					AGoblin* GoblinEnemy = Cast<AGoblin>(HitResult.GetActor());
+					ACaveEnemy* GhoulEnemy = Cast<ACaveEnemy>(HitResult.GetActor());
 					ABossCharacter* BossCharacter = Cast<ABossCharacter>(HitResult.GetActor());
 
 					Actor->SetOwner(this);
@@ -991,13 +1041,13 @@ void AProjectNo1Character::WeaponSpellLineTrace()
 						HitEnemy->ShowHitNumber(SpellDamage, HitResult.Location);
 						HitEnemy->CombatTargetPlayer();
 					}
-					if (Goblin) {
-						Goblin->ShowHitNumber(SpellDamage, HitResult.Location);
-						Goblin->CombatTargetPlayer();
+					if (GoblinEnemy) {
+						GoblinEnemy->ShowHitNumber(SpellDamage, HitResult.Location);
+						GoblinEnemy->CombatTargetPlayer();
 					}
-					if (CaveEnemy) {
-						CaveEnemy->ShowHitNumber(SpellDamage, HitResult.Location);
-						CaveEnemy->CombatTargetPlayer();
+					if (GhoulEnemy) {
+						GhoulEnemy->ShowHitNumber(SpellDamage, HitResult.Location);
+						GhoulEnemy->CombatTargetPlayer();
 					}
 					if (BossCharacter) {
 						BossCharacter->ShowHitNumber(SpellDamage, HitResult.Location);
@@ -1510,16 +1560,19 @@ bool AProjectNo1Character::HasStunnedEnemyInFront()//플레이어 앞 적 스턴
 				if (LichEnemy && LichEnemy->IsStunned())
 				{
 					//UE_LOG(LogTemp, Log, TEXT("LichEnemyStunnedCheck")); //확인완료
+					ShowExecuteMessage();
 					return true;
 				}
 				else if(LichEnemy && LichEnemy->IsNotStunned()){
 					//UE_LOG(LogTemp, Log, TEXT("LichEnemyNotStunnedCheck"));//확인완료
+					HideExecuteMessage();
 					return false;
 				}
 			}
 		}
 	}
 	//DrawDebugLine(GetWorld(), StartLocation, EndLocation, FColor::Red, false, 2.0f); //확인완료
+	HideExecuteMessage();
 	return false;
 }
 
@@ -1567,13 +1620,59 @@ bool AProjectNo1Character::HasEnemyBackInFront()//플레이어 앞 적 뒤잡 �
 					FVector ToPlayer = (StartLocation - LichEnemy->GetActorLocation()).GetSafeNormal();
 
 					float DotProduct = FVector::DotProduct(EnemyForward, ToPlayer);
-					UE_LOG(LogTemp, Log, TEXT("LichEnemybehindCheck")); //확인완료
 					if (DotProduct <= -0.5f)
 					{
+						//UE_LOG(LogTemp, Log, TEXT("LichEnemybehindCheck")); //확인완료
+						ShowExecuteMessage();
 						return true;
 					}
 					else {
-						UE_LOG(LogTemp, Log, TEXT("LichEnemyNotbehindCheck"));//확인완료
+						//UE_LOG(LogTemp, Log, TEXT("LichEnemyNotbehindCheck"));//확인완료
+						HideExecuteMessage();
+						return false;
+					}
+				}
+			}else if (OverlappingActor->IsA(AGoblin::StaticClass()))
+			{
+				Goblin = Cast<AGoblin>(OverlappingActor);
+
+				if (Goblin)
+				{
+					FVector EnemyForward = Goblin->GetActorForwardVector();
+					FVector ToPlayer = (StartLocation - Goblin->GetActorLocation()).GetSafeNormal();
+
+					float DotProduct = FVector::DotProduct(EnemyForward, ToPlayer);
+					if (DotProduct <= -0.5f)
+					{
+						//UE_LOG(LogTemp, Log, TEXT("GoblinbehindCheck")); //확인완료
+						ShowExecuteMessage();
+						return true;
+					}
+					else {
+						//UE_LOG(LogTemp, Log, TEXT("GoblinNotbehindCheck"));//확인완료
+						HideExecuteMessage();
+						return false;
+					}
+				}
+			}else if (OverlappingActor->IsA(ACaveEnemy::StaticClass()))
+			{
+				CaveEnemy = Cast<ACaveEnemy>(OverlappingActor);
+
+				if (CaveEnemy)
+				{
+					FVector EnemyForward = CaveEnemy->GetActorForwardVector();
+					FVector ToPlayer = (StartLocation - CaveEnemy->GetActorLocation()).GetSafeNormal();
+
+					float DotProduct = FVector::DotProduct(EnemyForward, ToPlayer);
+					if (DotProduct <= -0.5f)
+					{
+						//UE_LOG(LogTemp, Log, TEXT("CaveEnemybehindCheck")); //확인완료
+						ShowExecuteMessage();
+						return true;
+					}
+					else {
+						//UE_LOG(LogTemp, Log, TEXT("CaveEnemyNotbehindCheck"));//확인완료
+						HideExecuteMessage();
 						return false;
 					}
 				}
@@ -1581,6 +1680,7 @@ bool AProjectNo1Character::HasEnemyBackInFront()//플레이어 앞 적 뒤잡 �
 		}
 	}
 	//DrawDebugLine(GetWorld(), StartLocation, EndLocation, FColor::Red, false, 2.0f); //확인완료
+	HideExecuteMessage();
 	return false;
 }
 
@@ -1870,8 +1970,8 @@ void AProjectNo1Character::AttackSweepTrace()
 						FDamageEvent DamageEvent;
 
 						ALichEnemy* HitEnemy = Cast<ALichEnemy>(HitResult.GetActor());
-						AGoblin* Goblin = Cast<AGoblin>(HitResult.GetActor());
-						ACaveEnemy* CaveEnemy = Cast<ACaveEnemy>(HitResult.GetActor());
+						AGoblin* GoblinEnemy = Cast<AGoblin>(HitResult.GetActor());
+						ACaveEnemy* GhoulEnemy = Cast<ACaveEnemy>(HitResult.GetActor());
 						ABossCharacter* BossCharacter = Cast<ABossCharacter>(HitResult.GetActor());
 
 						Actor->SetOwner(this);
@@ -1882,13 +1982,13 @@ void AProjectNo1Character::AttackSweepTrace()
 							HitEnemy->ShowHitNumber(WeaponDamage, HitResult.Location);
 							HitEnemy->CombatTargetPlayer();
 						}
-						if (Goblin) {
-							Goblin->ShowHitNumber(WeaponDamage, HitResult.Location);
-							Goblin->CombatTargetPlayer();
+						if (GoblinEnemy) {
+							GoblinEnemy->ShowHitNumber(WeaponDamage, HitResult.Location);
+							GoblinEnemy->CombatTargetPlayer();
 						}
-						if (CaveEnemy) {
-							CaveEnemy->ShowHitNumber(WeaponDamage, HitResult.Location);
-							CaveEnemy->CombatTargetPlayer();
+						if (GhoulEnemy) {
+							GhoulEnemy->ShowHitNumber(WeaponDamage, HitResult.Location);
+							GhoulEnemy->CombatTargetPlayer();
 						}
 						if (BossCharacter) {
 							BossCharacter->ShowHitNumber(WeaponDamage, HitResult.Location);
