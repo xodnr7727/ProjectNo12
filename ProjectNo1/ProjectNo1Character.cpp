@@ -696,6 +696,8 @@ void AProjectNo1Character::GuardCounterPressed()
 		bIsGuardCounterAttackEnabled = false;//연속 사용 X
 		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);//카운터 공격 시 무적
 		IncreaseCounterDamage();// 공격력 증가
+		ExecuteHold();
+		CounterFront();
 		GetWorldTimerManager().SetTimer(GuardCounterTimer, this, &AProjectNo1Character::EnableGuardCountdown, GuardCounterCooldown, false); // 쿨타임 타이머 시작
 		GetWorldTimerManager().SetTimer(EnableHitTimer, this, &AProjectNo1Character::EnableHit, EnableHitCountdown, false); // 카운트다운 타이머 시작
 		GetWorldTimerManager().SetTimer(CounterDamageTimer, this, &AProjectNo1Character::RestoreCounterDamage, DamagebackCountdown, false); // 데미지 복구 타이머 시작
@@ -706,6 +708,12 @@ void AProjectNo1Character::GuardCounterPressed()
 			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
 		}
 	}
+}
+
+void AProjectNo1Character::CounterFront() 
+{
+	FVector LaunchVelocity = GetActorForwardVector() * 500.0f;
+	LaunchCharacter(LaunchVelocity, true, true);
 }
 
 void AProjectNo1Character::DeactivateGuardCounterEffect()

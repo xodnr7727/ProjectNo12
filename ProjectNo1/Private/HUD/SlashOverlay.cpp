@@ -33,7 +33,7 @@ void USlashOverlay::NativeConstruct()
 
 	if (ExecuteText)
 	{
-		ExecuteText->SetText(FText::FromString(TEXT("ExecuteText(C)")));
+		ExecuteText->SetText(FText::FromString(TEXT("Execute(C)")));
 		ExecuteText->SetVisibility(ESlateVisibility::Hidden); // 처음엔 숨겨놓음
 	}
 }

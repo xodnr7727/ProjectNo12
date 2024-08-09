@@ -272,6 +272,7 @@ protected:
 
 	/*가드 카운터*/
 	void GuardCounterPressed();
+	void CounterFront();
 	void EnableGuardCountdown();
 	void EnableGuardCounter();
 	void DisableGuardCounter();

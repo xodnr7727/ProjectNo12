@@ -943,30 +943,14 @@ bool ALichEnemy::IsHitOnShield(AActor* Hitter)
 
 void ALichEnemy::TakeExecutionHold()
 {
-	// 몬스터를 플레이어에게 고정시키기
-	AProjectNo1Character* Player = Cast<AProjectNo1Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-	if (Player)
-	{
-		// 몬스터의 위치를 플레이어 앞에 고정
-		FVector PlayerLocation = Player->GetActorLocation();
-		FRotator PlayerRotation = Player->GetActorRotation();
-		FVector FixedLocation = PlayerLocation + PlayerRotation.Vector() * 100.0f; // 플레이어 앞 100유닛에 위치
-
-		SetActorLocation(FixedLocation);
-		SetActorRotation(PlayerRotation);
-
 		// 몬스터 움직임 고정
 		GetCharacterMovement()->DisableMovement();
-	}
 }
 
 void ALichEnemy::TakeBack() //넉백 함수
 {
 	// 다시 몬스터 움직임 활성화
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
-
-	FVector LaunchVelocity = GetActorForwardVector() * -500.0f; 
-	LaunchCharacter(LaunchVelocity, true, true);
 }
 
 void ALichEnemy::SpawnDefaultWeapon()
