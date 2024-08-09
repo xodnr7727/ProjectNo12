@@ -960,13 +960,13 @@ void ALichEnemy::TakeExecutionHold()
 	}
 }
 
-void ALichEnemy::TakeBack()
+void ALichEnemy::TakeBack() //넉백 함수
 {
-	FVector LaunchVelocity = GetActorForwardVector() * -1000.0f; 
-	LaunchCharacter(LaunchVelocity, true, true);
-
 	// 다시 몬스터 움직임 활성화
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+
+	FVector LaunchVelocity = GetActorForwardVector() * -500.0f; 
+	LaunchCharacter(LaunchVelocity, true, true);
 }
 
 void ALichEnemy::SpawnDefaultWeapon()

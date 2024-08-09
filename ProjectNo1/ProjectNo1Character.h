@@ -160,6 +160,7 @@ protected:
 	bool BlockCantState();
 	virtual void BlockEnd() override;
 	void IfAttack();
+	void BlockBack();
 
 	/*무기 장착 관련*/
 	void EKeyPressed();//장비 장착

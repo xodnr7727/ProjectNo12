@@ -194,9 +194,16 @@ void AProjectNo1Character::GetBlock_Implementation(const FVector& ImpactPoint, A
 	}
 		Super::GetBlock_Implementation(ImpactPoint, Hitter);
 
+		BlockBack();
 		SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 		EnableGuardCounter(); //가드 카운터 활성화
 		ActionState = EActionState::EAS_Blocking;
+}
+
+void AProjectNo1Character::BlockBack() //넉백 함수
+{
+	FVector LaunchVelocity = GetActorForwardVector() * -500.0f;
+	LaunchCharacter(LaunchVelocity, true, true);
 }
 
 void AProjectNo1Character::SetOverlappingItem(AItem* Item)
