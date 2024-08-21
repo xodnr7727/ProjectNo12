@@ -181,10 +181,10 @@ private:
 	bool IsAttacking();
 	bool IsEngaged();
 	void ClearPatrolTimer();
+
+
 	void SpawnDefaultWeapon();
-
 	void SpawnDefaultWeaponTwo();
-
 	void SpawnDefaultAmor();
 
 	/** Combat */

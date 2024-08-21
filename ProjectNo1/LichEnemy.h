@@ -298,6 +298,8 @@ private:
 	bool IsAttacking();//히트됨
 	bool IsDead();//죽음
 	void ClearPatrolTimer();
+
+
 	void SpawnDefaultWeapon();
 	void SpawnDefaultWeaponTwo();
 

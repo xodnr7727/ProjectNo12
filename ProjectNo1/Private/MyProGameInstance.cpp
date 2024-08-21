@@ -4,6 +4,7 @@
 #include "MyProGameInstance.h"
 #include "ProjectNo1/ProjectNo1Character.h"
 #include "Kismet/GameplayStatics.h"
+#include "GameFramework/PlayerStart.h"
 #include "MyProSaveGame.h"
 
 void UMyProGameInstance::Init()
@@ -36,6 +37,9 @@ void UMyProGameInstance::SaveGame()
 
 void UMyProGameInstance::LoadGame()
 {
+     TArray<AActor*> PlayerStarts;
+     UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), PlayerStarts);
+
     if (UGameplayStatics::DoesSaveGameExist(TEXT("PlayerSaveSlot"), 0))
     {
         UMyProSaveGame* LoadGameInstance = Cast<UMyProSaveGame>(UGameplayStatics::LoadGameFromSlot(TEXT("PlayerSaveSlot"), 0));
@@ -70,6 +74,11 @@ void UMyProGameInstance::LoadGame()
         PlayerLevel = 1;
         PlayerDamage = 100;
         PlayerArmor = 1;
+        if (PlayerStarts.Num() > 0)
+        {
+            AActor* PlayerStart = PlayerStarts[0];
+            SavedBlessingPoint = PlayerStart->GetActorLocation();
+        }
         UE_LOG(LogTemp, Log, TEXT("NotExistPlayerSaveSlot"));
     }
 }

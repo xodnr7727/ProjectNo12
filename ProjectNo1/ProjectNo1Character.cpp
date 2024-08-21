@@ -48,6 +48,8 @@
 #include "HUD/SystemWidget.h"
 #include "MyPlayerController.h"
 #include "Soul.h" 
+#include "EnhancedInputSubsystems.h"
+#include "EnhancedInputComponent.h"
 #include "NiagaraFunctionLibrary.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -198,6 +200,30 @@ void AProjectNo1Character::GetBlock_Implementation(const FVector& ImpactPoint, A
 		SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 		EnableGuardCounter(); //가드 카운터 활성화
 		ActionState = EActionState::EAS_Blocking;
+}
+
+void AProjectNo1Character::ExecuteGetHit(FHitResult& HitResult)
+{
+	IHitInterface* HitInterface = Cast<IHitInterface>(HitResult.GetActor());
+	if (HitInterface)
+	{
+		HitInterface->Execute_GetHit(HitResult.GetActor(), HitResult.ImpactPoint, GetOwner());
+	}
+}
+
+float AProjectNo1Character::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	float AngleToMonster = CalculateAngleBetweenPlayerAndMonster(this, DamageCauser);
+	if (ActionState == EActionState::EAS_Blocking && HasEnoughShieldStamina() && AngleToMonster <= MaxParryAngle) { //막기 상태일때 데미지 0
+		HandleDamage(0);
+		SetHUDHealth();
+		return 0;
+	}
+	else { //막기 상태 아닐때 데미지 받기
+		HandleDamage(DamageAmount - Amor);
+		SetHUDHealth();
+		return DamageAmount - Amor;
+	}
 }
 
 void AProjectNo1Character::BlockBack() //넉백 함수
@@ -460,6 +486,13 @@ void AProjectNo1Character::Tick(float DeltaTime)
 void AProjectNo1Character::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (APlayerController* PlayerController = Cast<APlayerController>(GetController())) {
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer())) {
+			Subsystem->AddMappingContext(PlayerContext, 0);
+		}
+	}
+
 	RageSkillEffect->DeactivateSystem(); // 초기에는 비활성화
 	PotionSkillEffect->DeactivateSystem(); // 초기에는 비활성화
 	Tags.Add(FName("EngageableTarget"));
@@ -484,62 +517,76 @@ void AProjectNo1Character::BeginPlay()
 
 void AProjectNo1Character::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
-	// Set up gameplay key bindings
-	check(PlayerInputComponent);
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AProjectNo1Character::Jump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
-
-	//PlayerInputComponent->BindAction("LMB", IE_Pressed, this, &AProjectNo1Character::LMBDown);
-	//PlayerInputComponent->BindAction("LMB", IE_Released, this, &AProjectNo1Character::LMBUp);
-
-	PlayerInputComponent->BindAction(FName("Attack"), IE_Pressed, this, &AProjectNo1Character::Attack);
-	//PlayerInputComponent->BindAction(FName("Attack"), IE_Released, this, &AProjectNo1Character::LMBUp);
-
-	PlayerInputComponent->BindAction(FName("Block"), IE_Pressed, this, &AProjectNo1Character::RMKeyPressed);
-	PlayerInputComponent->BindAction(FName("Block"), IE_Released, this, &AProjectNo1Character::RMKeyReleased);
-
-	PlayerInputComponent->BindAxis("Move Forward / Backward", this, &AProjectNo1Character::MoveForward);
-	PlayerInputComponent->BindAxis("Move Right / Left", this, &AProjectNo1Character::MoveRight);
-
-	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
-	// "turn" handles devices that provide an absolute delta, such as a mouse.
-	// "turnrate" is for devices that we choose to treat as a rate of change, such as an analog joystick
-	PlayerInputComponent->BindAxis("Turn Right / Left Mouse", this, &APawn::AddControllerYawInput);
-	PlayerInputComponent->BindAxis("Turn Right / Left Gamepad", this, &AProjectNo1Character::TurnAtRate);
-	PlayerInputComponent->BindAxis("Look Up / Down Mouse", this, &APawn::AddControllerPitchInput);
-	PlayerInputComponent->BindAxis("Look Up / Down Gamepad", this, &AProjectNo1Character::LookUpAtRate);
-
-	// handle touch devices
-	PlayerInputComponent->BindTouch(IE_Pressed, this, &AProjectNo1Character::TouchStarted);
-	PlayerInputComponent->BindTouch(IE_Released, this, &AProjectNo1Character::TouchStopped);
-
-	PlayerInputComponent->BindAction("Equip", IE_Pressed, this, &AProjectNo1Character::EKeyPressed);
-
-	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &AProjectNo1Character::Sprint);
-	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &AProjectNo1Character::StopSprinting);
-
-	PlayerInputComponent->BindAction(FName("Dive"), IE_Pressed, this, &AProjectNo1Character::Dive);
-
-	PlayerInputComponent->BindAction(FName("NeckSkill"), IE_Pressed, this, &AProjectNo1Character::OnNeckSkillPressed);
-
-	PlayerInputComponent->BindAction(FName("SwordSkill"), IE_Pressed, this, &AProjectNo1Character::OnSwordSkillPressed);
-
-	PlayerInputComponent->BindAction(FName("DrinkPotion"), IE_Pressed, this, &AProjectNo1Character::DrinkPotion);
-
-	PlayerInputComponent->BindAction(FName("LargeSkill"), IE_Pressed, this, &AProjectNo1Character::LargeSkillPressed);
-
-	PlayerInputComponent->BindAction(FName("Parry"), IE_Pressed, this, &AProjectNo1Character::Parry); 
-
-	PlayerInputComponent->BindAction(FName("SpecialTargetingAttack"), IE_Pressed, this, &AProjectNo1Character::SpecialTargetingAttackInput);
-
-	PlayerInputComponent->BindAction(FName("GuardCounter"), IE_Pressed, this, &AProjectNo1Character::GuardCounterPressed);
-
-	PlayerInputComponent->BindAction(FName("WeaponSpellAttack"), IE_Pressed, this, &AProjectNo1Character::WeaponSpellAttack);
-
-	PlayerInputComponent->BindAction(FName("ToggleAllMenuUI"), IE_Pressed, this, &AProjectNo1Character::ToggleAllMenuUI);
-
-	PlayerInputComponent->BindAction(FName("BlessingPointInteract"), IE_Pressed, this, &AProjectNo1Character::BlessingPointInteractInput);
+	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent)) {
+		EnhancedInputComponent->BindAction(MovementAction, ETriggerEvent::Triggered, this, &AProjectNo1Character::Move);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &AProjectNo1Character::Jump);
+		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AProjectNo1Character::Look);
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &AProjectNo1Character::Attack);
+		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Triggered, this, &AProjectNo1Character::EKeyPressed);
+		EnhancedInputComponent->BindAction(DiveAction, ETriggerEvent::Triggered, this, &AProjectNo1Character::Dive);
+		EnhancedInputComponent->BindAction(ParryAction, ETriggerEvent::Triggered, this, &AProjectNo1Character::Parry);
+		EnhancedInputComponent->BindAction(RageAction, ETriggerEvent::Triggered, this, &AProjectNo1Character::OnNeckSkillPressed);
+		EnhancedInputComponent->BindAction(WeaponSpellAction, ETriggerEvent::Triggered, this, &AProjectNo1Character::WeaponSpellAttack);
+		EnhancedInputComponent->BindAction(SwordSkillAction, ETriggerEvent::Triggered, this, &AProjectNo1Character::OnSwordSkillPressed);
+		EnhancedInputComponent->BindAction(ExcuteAction, ETriggerEvent::Triggered, this, &AProjectNo1Character::SpecialTargetingAttackInput);
+		EnhancedInputComponent->BindAction(GuardCounterAction, ETriggerEvent::Triggered, this, &AProjectNo1Character::GuardCounterPressed);
+		EnhancedInputComponent->BindAction(BlessingInteractAction, ETriggerEvent::Triggered, this, &AProjectNo1Character::BlessingPointInteractInput);
+		EnhancedInputComponent->BindAction(AllMenuAction, ETriggerEvent::Started, this, &AProjectNo1Character::ToggleAllMenuUI);
+		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Started, this, &AProjectNo1Character::RMKeyPressed);
+		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Completed, this, &AProjectNo1Character::RMKeyReleased);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AProjectNo1Character::Sprint);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AProjectNo1Character::StopSprinting);
+	}
 }
+
+void AProjectNo1Character::Move(const FInputActionValue& value)
+{
+	if (Dead() || IsAttackSkill()) return; //공격중일때 이동 불가
+	const FVector2D MovementVector = value.Get<FVector2D>();
+	const FRotator Rotation = Controller->GetControlRotation();
+	const FRotator YawRotation(0.f, Rotation.Yaw, 0.f);
+	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+	AddMovementInput(ForwardDirection, MovementVector.Y);
+	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+	AddMovementInput(RightDirection, MovementVector.X);
+}
+
+void AProjectNo1Character::Look(const FInputActionValue& value)
+{
+	const FVector2D LookVector = value.Get<FVector2D>();
+	if (Dead() || IsAttackSkill() || HitReact()) return;
+	if (GetController()) {
+		AddControllerYawInput(LookVector.X);
+		AddControllerPitchInput(LookVector.Y);
+	}
+}
+
+void AProjectNo1Character::Jump()
+{
+	if (!Dead() && IsUnoccupied())
+	{
+		Super::Jump();
+	}
+}
+
+void AProjectNo1Character::Sprint()//달리기
+{
+	if (!Dead() && HasEnoughStamina() && ActionState == EActionState::EAS_Unoccupied) {
+		GetCharacterMovement()->MaxWalkSpeed = 450.f;
+
+		ActionState = EActionState::EAS_Sprint;
+	}
+}
+
+void AProjectNo1Character::StopSprinting()
+{
+	if (ActionState == EActionState::EAS_Sprint) {
+		GetCharacterMovement()->MaxWalkSpeed = 300.f;
+
+		ActionState = EActionState::EAS_Unoccupied;
+	}
+}
+
 
 void AProjectNo1Character::OnNeckSkillPressed()
 {
@@ -909,6 +956,224 @@ void AProjectNo1Character::HideExecuteMessage()
 	}
 }
 
+void AProjectNo1Character::Parry()
+{
+	FTimerHandle ParryCount;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (!Dead() && CanAttack() && HasEnoughAttackStamina())
+	{
+		AnimInstance->Montage_Play(ParryMontage);
+		bCanParry = false; // 패리 한 후 연속 패리 x
+		GetWorldTimerManager().SetTimer(ParryCount, this, &AProjectNo1Character::ParryCanDo, ParryCountdown, false); //패리 쿨타임 타이머 시작
+		ActionState = EActionState::EAS_Parrying;
+		UE_LOG(LogTemp, Log, TEXT("Parry"));
+		if (Attributes && SlashOverlay) //공격 스태미너 소모
+		{
+			Attributes->UseStamina(Attributes->GetAttackCost());
+			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+		}
+	}
+}
+void AProjectNo1Character::ParryCanDo()
+{
+	bCanParry = true; //패리 가능
+}
+
+bool AProjectNo1Character::HasStunnedEnemyInFront()//플레이어 앞 적 스턴 체크 함수
+{
+	TArray<FHitResult> HitResults;
+	FVector StartLocation = GetActorLocation();
+	FVector EndLocation = StartLocation + GetActorForwardVector() * SpecialTargetingRange;
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.AddIgnoredActor(this); // Ignore the player
+	CollisionParams.bTraceComplex = true;
+	bool bHit = GetWorld()->SweepMultiByChannel(HitResults, StartLocation, EndLocation, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(50.0f), CollisionParams);
+
+	if (bHit)
+	{
+		for (const FHitResult& HitResult : HitResults)
+		{
+			AActor* OverlappingActor = HitResult.GetActor();
+			// 액터의 클래스가 ALichEnemy인지 확인
+			if (OverlappingActor->IsA(ALichEnemy::StaticClass()))
+			{
+				LichEnemy = Cast<ALichEnemy>(OverlappingActor);
+
+				if (LichEnemy && LichEnemy->IsStunned())
+				{
+					//UE_LOG(LogTemp, Log, TEXT("LichEnemyStunnedCheck")); //확인완료
+					ShowExecuteMessage();
+					return true;
+				}
+				else if (LichEnemy && LichEnemy->IsNotStunned()) {
+					//UE_LOG(LogTemp, Log, TEXT("LichEnemyNotStunnedCheck"));//확인완료
+					HideExecuteMessage();
+					return false;
+				}
+			}
+		}
+	}
+	//DrawDebugLine(GetWorld(), StartLocation, EndLocation, FColor::Red, false, 2.0f); //확인완료
+	HideExecuteMessage();
+	return false;
+}
+
+void AProjectNo1Character::CheckForStunnedEnemy()
+{
+	if (HasStunnedEnemyInFront())
+	{
+		// 델리게이트 호출
+		OnStunnedEnemyDetected.Broadcast();
+	}
+}
+
+void AProjectNo1Character::CheckForNotStunnedEnemy()
+{
+	if (!HasStunnedEnemyInFront())
+	{
+		// 델리게이트 호출
+		OffStunnedEnemyDetected.Broadcast();
+	}
+}
+
+bool AProjectNo1Character::HasEnemyBackInFront()//플레이어 앞 적 뒤잡 체크 함수
+{
+	TArray<FHitResult> HitResults;
+	FVector StartLocation = GetActorLocation();
+	FVector EndLocation = StartLocation + GetActorForwardVector() * SpecialTargetingRange;
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.AddIgnoredActor(this); // Ignore the player
+	CollisionParams.bTraceComplex = true;
+	bool bHit = GetWorld()->SweepMultiByChannel(HitResults, StartLocation, EndLocation, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(50.0f), CollisionParams);
+
+	if (bHit)
+	{
+		for (const FHitResult& HitResult : HitResults)
+		{
+			AActor* OverlappingActor = HitResult.GetActor();
+			// 액터의 클래스가 ALichEnemy인지 확인
+			if (OverlappingActor->IsA(ALichEnemy::StaticClass()))
+			{
+				LichEnemy = Cast<ALichEnemy>(OverlappingActor);
+
+				if (LichEnemy)
+				{
+					FVector EnemyForward = LichEnemy->GetActorForwardVector();
+					FVector ToPlayer = (StartLocation - LichEnemy->GetActorLocation()).GetSafeNormal();
+
+					float DotProduct = FVector::DotProduct(EnemyForward, ToPlayer);
+					if (DotProduct <= -0.5f)
+					{
+						//UE_LOG(LogTemp, Log, TEXT("LichEnemybehindCheck")); //확인완료
+						ShowExecuteMessage();
+						return true;
+					}
+					else {
+						//UE_LOG(LogTemp, Log, TEXT("LichEnemyNotbehindCheck"));//확인완료
+						HideExecuteMessage();
+						return false;
+					}
+				}
+			}
+			else if (OverlappingActor->IsA(AGoblin::StaticClass()))
+			{
+				Goblin = Cast<AGoblin>(OverlappingActor);
+
+				if (Goblin)
+				{
+					FVector EnemyForward = Goblin->GetActorForwardVector();
+					FVector ToPlayer = (StartLocation - Goblin->GetActorLocation()).GetSafeNormal();
+
+					float DotProduct = FVector::DotProduct(EnemyForward, ToPlayer);
+					if (DotProduct <= -0.5f)
+					{
+						//UE_LOG(LogTemp, Log, TEXT("GoblinbehindCheck")); //확인완료
+						ShowExecuteMessage();
+						return true;
+					}
+					else {
+						//UE_LOG(LogTemp, Log, TEXT("GoblinNotbehindCheck"));//확인완료
+						HideExecuteMessage();
+						return false;
+					}
+				}
+			}
+			else if (OverlappingActor->IsA(ACaveEnemy::StaticClass()))
+			{
+				CaveEnemy = Cast<ACaveEnemy>(OverlappingActor);
+
+				if (CaveEnemy)
+				{
+					FVector EnemyForward = CaveEnemy->GetActorForwardVector();
+					FVector ToPlayer = (StartLocation - CaveEnemy->GetActorLocation()).GetSafeNormal();
+
+					float DotProduct = FVector::DotProduct(EnemyForward, ToPlayer);
+					if (DotProduct <= -0.5f)
+					{
+						//UE_LOG(LogTemp, Log, TEXT("CaveEnemybehindCheck")); //확인완료
+						ShowExecuteMessage();
+						return true;
+					}
+					else {
+						//UE_LOG(LogTemp, Log, TEXT("CaveEnemyNotbehindCheck"));//확인완료
+						HideExecuteMessage();
+						return false;
+					}
+				}
+			}
+		}
+	}
+	//DrawDebugLine(GetWorld(), StartLocation, EndLocation, FColor::Red, false, 2.0f); //확인완료
+	HideExecuteMessage();
+	return false;
+}
+
+void AProjectNo1Character::CheckForBackEnemy()
+{
+	if (!HasStunnedEnemyInFront())
+	{
+		if (HasEnemyBackInFront())
+		{
+			// 델리게이트 호출
+			OnEnemyBackDetected.Broadcast();
+		}
+	}
+}
+
+void AProjectNo1Character::CheckForNotBackEnemy()
+{
+	if (!HasStunnedEnemyInFront())
+	{
+		if (!HasEnemyBackInFront())
+		{
+			// 델리게이트 호출
+			OffEnemyBackDetected.Broadcast();
+		}
+	}
+}
+
+void AProjectNo1Character::EnableSpecialTargetingAttack()
+{
+	bIsSpecialTargetingEnabled = true; //스턴 공격 가능
+}
+
+
+void AProjectNo1Character::DisableSpecialTargetingAttack()
+{
+	bIsSpecialTargetingEnabled = false; //스턴 공격 불가
+}
+
+void AProjectNo1Character::SpecialTargetingAttackInput()
+{
+	if (bIsSpecialTargetingEnabled)
+	{
+
+		SmallSkillPressed();
+		bIsSpecialTargetingEnabled = false; //연속 스턴 공격 x
+	}
+}
+
 void AProjectNo1Character::OnSwordSkillPressed()
 {
 	FTimerHandle SwordSkillCountdown;
@@ -1074,15 +1339,6 @@ void AProjectNo1Character::WeaponSpellLineTrace()
 	}
 }
 
-void AProjectNo1Character::ExecuteGetHit(FHitResult& HitResult)
-{
-	IHitInterface* HitInterface = Cast<IHitInterface>(HitResult.GetActor());
-	if (HitInterface)
-	{
-		HitInterface->Execute_GetHit(HitResult.GetActor(), HitResult.ImpactPoint, GetOwner());
-	}
-}
-
 void AProjectNo1Character::EnableWeaponSpell()
 {
 	bCanWeaponSpell = true;
@@ -1109,106 +1365,6 @@ void AProjectNo1Character::PlayWeaponSpellHitSound(const FVector& ImpactPoint)
 			WeaponSpellSound,
 			ImpactPoint
 		);
-	}
-}
-
-
-void AProjectNo1Character::Jump()
-{
-	if (!Dead() && IsUnoccupied())
-	{
-		Super::Jump();
-	}
-
-}
-
-void AProjectNo1Character::Sprint()//달리기
-{
-	if (!Dead() && HasEnoughStamina() && ActionState == EActionState::EAS_Unoccupied) {
-		GetCharacterMovement()->MaxWalkSpeed = 450.f;
-
-		ActionState = EActionState::EAS_Sprint;
-	}
-}
-
-void AProjectNo1Character::StopSprinting()
-{
-	if (ActionState == EActionState::EAS_Sprint) {
-		GetCharacterMovement()->MaxWalkSpeed = 300.f;
-
-		ActionState = EActionState::EAS_Unoccupied;
-	}
-} 
-
-float AProjectNo1Character::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
-{
-	float AngleToMonster = CalculateAngleBetweenPlayerAndMonster(this, DamageCauser);
-	if (ActionState == EActionState::EAS_Blocking && HasEnoughShieldStamina() && AngleToMonster <= MaxParryAngle) { //막기 상태일때 데미지 0
-		HandleDamage(0);
-		SetHUDHealth();
-		return 0;
-	}
-	else { //막기 상태 아닐때 데미지 받기
-		HandleDamage(DamageAmount-Amor);
-		SetHUDHealth();
-		return DamageAmount-Amor;
-	}
-}
-
-void AProjectNo1Character::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
-{
-	Jump();
-}
-
-void AProjectNo1Character::TouchStopped(ETouchIndex::Type FingerIndex, FVector Location)
-{
-	StopJumping();
-}
-
-void AProjectNo1Character::TurnAtRate(float Rate)
-{
-	if (Dead() || IsAttackSkill() || HitReact()) return;
-	// calculate delta for this frame from the rate information
-	AddControllerYawInput(Rate * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
-}
-
-void AProjectNo1Character::LookUpAtRate(float Rate)
-{
-	if (Dead() || IsAttackSkill() || HitReact()) return;
-	// calculate delta for this frame from the rate information
-	AddControllerPitchInput(Rate * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
-}
-
-void AProjectNo1Character::MoveForward(float Value)
-{
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (Dead() || IsAttackSkill()) return; //공격중일때 이동 불가
-	if ((Controller != nullptr) && (Value != 0.0f))
-	{
-		// find out which way is forward
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-
-		// get forward vector
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		AddMovementInput(Direction, Value);
-	}
-}
-
-void AProjectNo1Character::MoveRight(float Value)
-{
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (Dead() || IsAttackSkill()) return; //공격중일때 이동 불가
-	if ((Controller != nullptr) && (Value != 0.0f))
-	{
-		// find out which way is right
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-
-		// get right vector 
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-		// add movement in that direction
-		AddMovementInput(Direction, Value);
 	}
 }
 
@@ -1525,222 +1681,6 @@ void AProjectNo1Character::MapLoadRegionOpen()
 		if (bForestState) {
 			MapWidgetInstance->MapForestOpen();
 		}
-	}
-}
-
-void AProjectNo1Character::Parry()
-{
-	FTimerHandle ParryCount;
-
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (!Dead() && CanAttack() && HasEnoughAttackStamina())
-	{
-		AnimInstance->Montage_Play(ParryMontage);
-		bCanParry= false; // 패리 한 후 연속 패리 x
-		GetWorldTimerManager().SetTimer(ParryCount, this, &AProjectNo1Character::ParryCanDo, ParryCountdown, false); //패리 쿨타임 타이머 시작
-		ActionState = EActionState::EAS_Parrying;
-		UE_LOG(LogTemp, Log, TEXT("Parry"));
-		if (Attributes && SlashOverlay) //공격 스태미너 소모
-		{
-			Attributes->UseStamina(Attributes->GetAttackCost());
-			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
-		}
-	}
-}
-void AProjectNo1Character::ParryCanDo()
-{
-	bCanParry = true; //패리 가능
-}
-
-bool AProjectNo1Character::HasStunnedEnemyInFront()//플레이어 앞 적 스턴 체크 함수
-{
-	TArray<FHitResult> HitResults;
-	FVector StartLocation = GetActorLocation();
-	FVector EndLocation = StartLocation + GetActorForwardVector() * SpecialTargetingRange;
-	FCollisionQueryParams CollisionParams;
-	CollisionParams.AddIgnoredActor(this); // Ignore the player
-	CollisionParams.bTraceComplex = true;
-	bool bHit = GetWorld()->SweepMultiByChannel(HitResults, StartLocation, EndLocation, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(50.0f), CollisionParams);
-
-	if (bHit)
-	{
-		for (const FHitResult& HitResult : HitResults)
-		{
-			AActor* OverlappingActor = HitResult.GetActor();
-			// 액터의 클래스가 ALichEnemy인지 확인
-			if (OverlappingActor->IsA(ALichEnemy::StaticClass()))
-			{
-				LichEnemy = Cast<ALichEnemy>(OverlappingActor);
-
-				if (LichEnemy && LichEnemy->IsStunned())
-				{
-					//UE_LOG(LogTemp, Log, TEXT("LichEnemyStunnedCheck")); //확인완료
-					ShowExecuteMessage();
-					return true;
-				}
-				else if(LichEnemy && LichEnemy->IsNotStunned()){
-					//UE_LOG(LogTemp, Log, TEXT("LichEnemyNotStunnedCheck"));//확인완료
-					HideExecuteMessage();
-					return false;
-				}
-			}
-		}
-	}
-	//DrawDebugLine(GetWorld(), StartLocation, EndLocation, FColor::Red, false, 2.0f); //확인완료
-	HideExecuteMessage();
-	return false;
-}
-
-void AProjectNo1Character::CheckForStunnedEnemy()
-{
-	if (HasStunnedEnemyInFront())
-	{
-		// 델리게이트 호출
-		OnStunnedEnemyDetected.Broadcast();
-	}
-}
-
-void AProjectNo1Character::CheckForNotStunnedEnemy()
-{
-	if (!HasStunnedEnemyInFront())
-	{
-		// 델리게이트 호출
-		OffStunnedEnemyDetected.Broadcast();
-	}
-}
-
-bool AProjectNo1Character::HasEnemyBackInFront()//플레이어 앞 적 뒤잡 체크 함수
-{
-	TArray<FHitResult> HitResults;
-	FVector StartLocation = GetActorLocation();
-	FVector EndLocation = StartLocation + GetActorForwardVector() * SpecialTargetingRange;
-	FCollisionQueryParams CollisionParams;
-	CollisionParams.AddIgnoredActor(this); // Ignore the player
-	CollisionParams.bTraceComplex = true;
-	bool bHit = GetWorld()->SweepMultiByChannel(HitResults, StartLocation, EndLocation, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(50.0f), CollisionParams);
-
-	if (bHit)
-	{
-		for (const FHitResult& HitResult : HitResults)
-		{
-			AActor* OverlappingActor = HitResult.GetActor();
-			// 액터의 클래스가 ALichEnemy인지 확인
-			if (OverlappingActor->IsA(ALichEnemy::StaticClass()))
-			{
-				LichEnemy = Cast<ALichEnemy>(OverlappingActor);
-
-				if (LichEnemy)
-				{
-					FVector EnemyForward = LichEnemy->GetActorForwardVector();
-					FVector ToPlayer = (StartLocation - LichEnemy->GetActorLocation()).GetSafeNormal();
-
-					float DotProduct = FVector::DotProduct(EnemyForward, ToPlayer);
-					if (DotProduct <= -0.5f)
-					{
-						//UE_LOG(LogTemp, Log, TEXT("LichEnemybehindCheck")); //확인완료
-						ShowExecuteMessage();
-						return true;
-					}
-					else {
-						//UE_LOG(LogTemp, Log, TEXT("LichEnemyNotbehindCheck"));//확인완료
-						HideExecuteMessage();
-						return false;
-					}
-				}
-			}else if (OverlappingActor->IsA(AGoblin::StaticClass()))
-			{
-				Goblin = Cast<AGoblin>(OverlappingActor);
-
-				if (Goblin)
-				{
-					FVector EnemyForward = Goblin->GetActorForwardVector();
-					FVector ToPlayer = (StartLocation - Goblin->GetActorLocation()).GetSafeNormal();
-
-					float DotProduct = FVector::DotProduct(EnemyForward, ToPlayer);
-					if (DotProduct <= -0.5f)
-					{
-						//UE_LOG(LogTemp, Log, TEXT("GoblinbehindCheck")); //확인완료
-						ShowExecuteMessage();
-						return true;
-					}
-					else {
-						//UE_LOG(LogTemp, Log, TEXT("GoblinNotbehindCheck"));//확인완료
-						HideExecuteMessage();
-						return false;
-					}
-				}
-			}else if (OverlappingActor->IsA(ACaveEnemy::StaticClass()))
-			{
-				CaveEnemy = Cast<ACaveEnemy>(OverlappingActor);
-
-				if (CaveEnemy)
-				{
-					FVector EnemyForward = CaveEnemy->GetActorForwardVector();
-					FVector ToPlayer = (StartLocation - CaveEnemy->GetActorLocation()).GetSafeNormal();
-
-					float DotProduct = FVector::DotProduct(EnemyForward, ToPlayer);
-					if (DotProduct <= -0.5f)
-					{
-						//UE_LOG(LogTemp, Log, TEXT("CaveEnemybehindCheck")); //확인완료
-						ShowExecuteMessage();
-						return true;
-					}
-					else {
-						//UE_LOG(LogTemp, Log, TEXT("CaveEnemyNotbehindCheck"));//확인완료
-						HideExecuteMessage();
-						return false;
-					}
-				}
-			}
-		}
-	}
-	//DrawDebugLine(GetWorld(), StartLocation, EndLocation, FColor::Red, false, 2.0f); //확인완료
-	HideExecuteMessage();
-	return false;
-}
-
-void AProjectNo1Character::CheckForBackEnemy()
-{
-	if (!HasStunnedEnemyInFront())
-	{
-		if (HasEnemyBackInFront())
-		{
-			// 델리게이트 호출
-			OnEnemyBackDetected.Broadcast();
-		}
-	}
-}
-
-void AProjectNo1Character::CheckForNotBackEnemy()
-{
-	if (!HasStunnedEnemyInFront())
-	{
-		if (!HasEnemyBackInFront())
-		{
-			// 델리게이트 호출
-			OffEnemyBackDetected.Broadcast();
-		}
-	}
-}
-
-void AProjectNo1Character::EnableSpecialTargetingAttack()
-{
-	bIsSpecialTargetingEnabled = true; //스턴 공격 가능
-}
-
-
-void AProjectNo1Character::DisableSpecialTargetingAttack()
-{
-	bIsSpecialTargetingEnabled = false; //스턴 공격 불가
-}
-
-void AProjectNo1Character::SpecialTargetingAttackInput()
-{
-	if (bIsSpecialTargetingEnabled)
-	{
-
-		SmallSkillPressed();
-		bIsSpecialTargetingEnabled = false; //연속 스턴 공격 x
 	}
 }
 

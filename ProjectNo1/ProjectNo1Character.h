@@ -7,6 +7,7 @@
 #include "Characters/BaseCharacter.h"
 #include "CharacterTypes.h"
 #include "Interfaces/PickupInterface.h"
+#include "InputActionValue.h"
 #include "ProjectNo1Character.generated.h"
 class AItem;
 class ASoul;
@@ -20,6 +21,8 @@ class AMyPlayerController;
 class UNiagaraSystem;
 class USoundBase;
 class UParticleSystemComponent;
+class UInputMappingContext;
+class UInputAction;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnStunnedEnemyDetected);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOffStunnedEnemyDetected);
@@ -53,9 +56,8 @@ public:
 	void LevelUpEC();
 	void LevelUpES();
 	void SavePlayerState();//플레이어 데이터 저장
-	void LoadPlayerState();
+	void LoadPlayerState();//플레이어 데이터 로드
 	void MapLoadRegionOpen();
-	//플레이어 데이터 로드
 
 	void Respawn(); // 캐릭터 죽을 시 리스폰
 	void PlayerStartUI();
@@ -124,9 +126,44 @@ protected:
 
 	virtual void BeginPlay() override;
 
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputMappingContext* PlayerContext;
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* MovementAction;
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* JumpAction;
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* LookAction;
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* AttackAction;
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* BlockAction;
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* SprintAction;
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* EquipAction;
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* DiveAction;
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* ParryAction;
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* RageAction;
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* WeaponSpellAction;
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* SwordSkillAction;
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* ExcuteAction;
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* GuardCounterAction;
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* BlessingInteractAction;
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* AllMenuAction;
+
 	/*기본 움직임*/
-	void MoveForward(float Value);
-	void MoveRight(float Value);
+	void Move(const FInputActionValue& value);
+	void Look(const FInputActionValue& value);
 	void Sprint(); //달리기
 	void StopSprinting();
 	void Dive(); //구르기
@@ -208,11 +245,11 @@ protected:
 	virtual bool CanNeckSkill() override;
 
 	virtual void Die() override;
-	void PlayerDieUI();
 	
 	UFUNCTION()
 	void CheckBossMonsters();
 
+	/*UI 관련*/
 	UFUNCTION()
 	void GameClearUI();
 
@@ -233,6 +270,9 @@ protected:
 
 	UFUNCTION()
 	void MapWidget();
+
+	UFUNCTION()
+	void PlayerDieUI();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Block")
 	class UAnimMontage* ShieldMontage;
@@ -339,23 +379,6 @@ protected:
 
 	void EquipNeck(AWeapon* NewNeck);
 	void EquipProjectileWeapon(AProjectileWeapon* ProjectileWeapon);
-	/** 
-	 * Called via input to turn at a given rate. 
-	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
-	 */
-	void TurnAtRate(float Rate);
-
-	/**
-	 * Called via input to turn look up/down at a given rate. 
-	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
-	 */
-	void LookUpAtRate(float Rate);
-
-	/** Handler for when a touch input begins. */
-	void TouchStarted(ETouchIndex::Type FingerIndex, FVector Location);
-
-	/** Handler for when a touch input stops. */
-	void TouchStopped(ETouchIndex::Type FingerIndex, FVector Location);
 
 	UFUNCTION(BlueprintImplementableEvent)
 		void CreateFields(const FVector& FieldLocation);
