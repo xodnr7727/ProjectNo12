@@ -391,17 +391,14 @@ void ABossCharacter::RushSpellSweepTrace()
 		FCollisionShape::MakeSphere(80.0f),
 		CollisionParams);
 	UE_LOG(LogTemp, Log, TEXT("RushSpellSweepTrace")); //확인완료
-	// 라인 트레이스의 시작점에 이펙트를 생성하여 표시
 
 	//UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), EndPointEffect, SpawnLocation, FRotator::ZeroRotator);
-	// 라인 트레이스 실행
 	if (bResult) {
 		if (AActor* Actor = HitResult.GetActor()) {
 			if (HitResult.GetActor()->ActorHasTag("EngageableTarget"))
 			{
 				UE_LOG(LogTemp, Log, TEXT("Hit Actor : %s"), *HitResult.GetActor()->GetName());
 				//DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.f, 0, 1.f);
-				// 라인 트레이스의 타격점에 이펙트를 생성하여 표시
 				//UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, HitResult.ImpactPoint, FRotator::ZeroRotator);
 				//PlayWeaponSpellHitSound(HitResult.ImpactPoint);
 				FDamageEvent DamageEvent;

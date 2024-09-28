@@ -7,6 +7,7 @@
 #include "MyProNo1HUD.generated.h"
 class USlashOverlay;
 class UInventoryUI;
+class UGameRetryUI;
 class UAllMenuWidget;
 class UInfoWidget;
 class UDamageIncreaseWidget;
@@ -40,7 +41,14 @@ private:
 	UPROPERTY()
 	UInventoryUI* InventoryUI;
 
+	UPROPERTY(EditDefaultsOnly, Category = GamePlayUI)
+	TSubclassOf<UGameRetryUI> GameRetryUIClass;
+
+	UPROPERTY()
+	UGameRetryUI* GameRetryUI;
+
 public:
 	FORCEINLINE USlashOverlay* GetSlashOverlay() const { return SlashOverlay; }
 	FORCEINLINE UInventoryUI* GetInventoryUI() const { return InventoryUI; }
+	FORCEINLINE UGameRetryUI* GetGameRetryUI() const { return GameRetryUI; }
 };

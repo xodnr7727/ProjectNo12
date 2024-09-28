@@ -455,7 +455,7 @@ void ALichEnemy::GetStun_Implementation(const FVector& ImpactPoint, AActor* Hitt
 	if (!bAction) {
 		ClearAttackTimer();
 	}
-	EquippedWeapon->DeactivateLeftCastSkillEffect(); // 주문검 공격 이펙트 비활성화
+	EquippedWeapon->DeactivateLeftCastSkillEffect(); 
 	EnemyState = EEnemyState::EES_Stunned;
 	StopAttackMontage();
 
@@ -534,17 +534,14 @@ void ALichEnemy::SwingSpellSweepTrace()
 		FCollisionShape::MakeSphere(80.0f),
 		CollisionParams);
 	UE_LOG(LogTemp, Log, TEXT("SwingSpellSweepTrace")); //확인완료
-	// 라인 트레이스의 시작점에 이펙트를 생성하여 표시
 
 	//UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), EndPointEffect, SpawnLocation, FRotator::ZeroRotator);
-	// 라인 트레이스 실행
 	if (bResult) {
 		if (AActor* Actor = HitResult.GetActor()) {
 			if (HitResult.GetActor()->ActorHasTag("EngageableTarget"))
 			{
 				UE_LOG(LogTemp, Log, TEXT("Hit Actor : %s"), *HitResult.GetActor()->GetName());
 				//DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.f, 0, 1.f);
-				// 라인 트레이스의 타격점에 이펙트를 생성하여 표시
 				UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), LichSwingHitEffect, HitResult.ImpactPoint, FRotator::ZeroRotator);
 				PlayLichSwingHitSound(HitResult.ImpactPoint);
 				FDamageEvent DamageEvent;
@@ -743,17 +740,16 @@ void ALichEnemy::SmashSpellSweepTrace()
 		FCollisionShape::MakeSphere(80.0f),
 		CollisionParams);
 	UE_LOG(LogTemp, Log, TEXT("SmashSpellSweepTrace")); //확인완료
-	// 라인 트레이스의 시작점에 이펙트를 생성하여 표시
 
 	//UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), EndPointEffect, SpawnLocation, FRotator::ZeroRotator);
-	// 라인 트레이스 실행
+
 	if (bResult) {
 		if (AActor* Actor = HitResult.GetActor()) {
 			if (HitResult.GetActor()->ActorHasTag("EngageableTarget"))
 			{
 				UE_LOG(LogTemp, Log, TEXT("Hit Actor : %s"), *HitResult.GetActor()->GetName());
 				//DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.f, 0, 1.f);
-				// 라인 트레이스의 타격점에 이펙트를 생성하여 표시
+
 				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), LichSmashHitEffect, HitResult.ImpactPoint - FVector(0.0f, 0.0f, 80.0f), FRotator::ZeroRotator);
 				PlayLichSmashHitSound(HitResult.ImpactPoint);
 				FDamageEvent DamageEvent;
@@ -868,17 +864,14 @@ void ALichEnemy::MagicSpellSweepTrace()
 		FCollisionShape::MakeSphere(80.0f),
 		CollisionParams);
 	UE_LOG(LogTemp, Log, TEXT("MagicSpellSweepTrace")); //확인완료
-	// 라인 트레이스의 시작점에 이펙트를 생성하여 표시
 
 	//UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), EndPointEffect, SpawnLocation, FRotator::ZeroRotator);
-	// 라인 트레이스 실행
 	if (bResult) {
 		if (AActor* Actor = HitResult.GetActor()) {
 			if (HitResult.GetActor()->ActorHasTag("EngageableTarget"))
 			{
 				UE_LOG(LogTemp, Log, TEXT("Hit Actor : %s"), *HitResult.GetActor()->GetName());
 				//DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.f, 0, 1.f);
-				// 라인 트레이스의 타격점에 이펙트를 생성하여 표시
 				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), LichMagicHitEffect, HitResult.ImpactPoint, FRotator::ZeroRotator);
 				PlayLichMagicHitSound(HitResult.ImpactPoint);
 				FDamageEvent DamageEvent;
@@ -1158,17 +1151,14 @@ void ALichEnemy::AttackSweepTrace()
 		FCollisionShape::MakeSphere(60.0f),
 		CollisionParams);
 	UE_LOG(LogTemp, Log, TEXT("LichAttackSweepTrace")); //확인완료
-	// 라인 트레이스의 시작점에 이펙트를 생성하여 표시
 
 	//UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), EndPointEffect, SpawnLocation, FRotator::ZeroRotator);
-	// 라인 트레이스 실행
 	if (bResult) {
 		if (AActor* Actor = HitResult.GetActor()) {
 			if (HitResult.GetActor()->ActorHasTag("EngageableTarget"))
 			{
 				UE_LOG(LogTemp, Log, TEXT("Hit Actor : %s"), *HitResult.GetActor()->GetName());
-				//DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.f, 0, 1.f);
-				// 라인 트레이스의 타격점에 이펙트를 생성하여 표시
+
 				//UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, HitResult.ImpactPoint, FRotator::ZeroRotator);
 				//PlayWeaponSpellHitSound(HitResult.ImpactPoint);
 				FDamageEvent DamageEvent;

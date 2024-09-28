@@ -40,6 +40,7 @@
 #include "Weapons/ProjectileWeapon.h"
 #include "HUD/MyProNo1HUD.h"
 #include "HUD/InventoryUI.h"
+#include "HUD/GameRetryUI.h"
 #include "HUD/SlashOverlay.h"
 #include "HUD/DamageIncreaseWidget.h"
 #include "HUD/AllMenuWidget.h"
@@ -202,15 +203,6 @@ void AProjectNo1Character::GetBlock_Implementation(const FVector& ImpactPoint, A
 		ActionState = EActionState::EAS_Blocking;
 }
 
-void AProjectNo1Character::ExecuteGetHit(FHitResult& HitResult)
-{
-	IHitInterface* HitInterface = Cast<IHitInterface>(HitResult.GetActor());
-	if (HitInterface)
-	{
-		HitInterface->Execute_GetHit(HitResult.GetActor(), HitResult.ImpactPoint, GetOwner());
-	}
-}
-
 float AProjectNo1Character::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	float AngleToMonster = CalculateAngleBetweenPlayerAndMonster(this, DamageCauser);
@@ -226,10 +218,19 @@ float AProjectNo1Character::TakeDamage(float DamageAmount, FDamageEvent const& D
 	}
 }
 
-void AProjectNo1Character::BlockBack() //넉백 함수
+void AProjectNo1Character::BlockBack() //막기 넉백 함수
 {
 	FVector LaunchVelocity = GetActorForwardVector() * -500.0f;
 	LaunchCharacter(LaunchVelocity, true, true);
+}
+
+void AProjectNo1Character::ExecuteGetHit(FHitResult& HitResult)
+{
+	IHitInterface* HitInterface = Cast<IHitInterface>(HitResult.GetActor());
+	if (HitInterface)
+	{
+		HitInterface->Execute_GetHit(HitResult.GetActor(), HitResult.ImpactPoint, GetOwner());
+	}
 }
 
 void AProjectNo1Character::SetOverlappingItem(AItem* Item)
@@ -1868,20 +1869,6 @@ void AProjectNo1Character::Attack()
 		}
 	}
 }
-
-void AProjectNo1Character::AttackEnd()
-{
-	ActionState = EActionState::EAS_Unoccupied;
-	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//무적 해제
-}
-
-void AProjectNo1Character::EndAttacking()
-{
-	ActionState = EActionState::EAS_Unoccupied;
-	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//무적 해제
-	GetCharacterMovement()->Activate();
-}
-
 void AProjectNo1Character::AttackComboResetCountDown()
 {
 	GetWorldTimerManager().ClearTimer(AttackComboCountdown); //공격 키 재입력시 콤보 초기화 타이머 초기화
@@ -1894,6 +1881,19 @@ void AProjectNo1Character::AttackComboStartCountDown()
 void AProjectNo1Character::AttackComboReset()
 {
 	CurrentComboStep = 0; //콤보 공격 리셋
+}
+
+void AProjectNo1Character::AttackEnd()
+{
+	ActionState = EActionState::EAS_Unoccupied;
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//무적 해제
+}
+
+void AProjectNo1Character::EndAttacking()
+{
+	ActionState = EActionState::EAS_Unoccupied;
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//무적 해제
+	GetCharacterMovement()->Activate();
 }
 
 void AProjectNo1Character::AttackSweepTrace()
@@ -2137,10 +2137,10 @@ void AProjectNo1Character::PlayerDieUI()
 	UWorld* World = GetWorld();
 	if (World)
 	{
-		if (World && InventoryUIClass)
+		if (World && GameRetryUIClass)
 		{
-			InventoryUI = CreateWidget<UInventoryUI>(World, InventoryUIClass);
-			InventoryUI->AddToViewport();
+			GameRetryUI = CreateWidget<UGameRetryUI>(World, GameRetryUIClass);
+			GameRetryUI->AddToViewport();
 		}
 	}
 }

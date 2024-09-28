@@ -5,6 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "HUD/SlashOverlay.h"
 #include "HUD/InventoryUI.h"
+#include "HUD/GameRetryUI.h"
 
 void AMyProNo1HUD::BeginPlay()
 {
@@ -61,10 +62,10 @@ void AMyProNo1HUD::PlayerDeadUI()
 	if (World)
 	{
 		APlayerController* Controller = World->GetFirstPlayerController();
-		if (Controller && InventoryUIClass)
+		if (Controller && GameRetryUIClass)
 		{
-			InventoryUI = CreateWidget<UInventoryUI>(Controller, InventoryUIClass);
-			InventoryUI->AddToViewport();
+			GameRetryUI = CreateWidget<UGameRetryUI>(Controller, GameRetryUIClass);
+			GameRetryUI->AddToViewport();
 		}
 	}
 }

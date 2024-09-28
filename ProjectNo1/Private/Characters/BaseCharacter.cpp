@@ -68,7 +68,6 @@ void ABaseCharacter::BallHit_Implementation(const FVector& ImpactPoint, AActor* 
 	SpawnArrowParticles(ImpactPoint);
 }
 
-
 void ABaseCharacter::GetStun_Implementation(const FVector& ImpactPoint, AActor* Hitter) // 몬스터가 스턴되는 함수
 {
 	if (IsAlive() && Hitter)

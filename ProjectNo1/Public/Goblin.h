@@ -84,8 +84,6 @@ public:
 
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 
-	void ReceiveHitAndKnockback(const FVector& HitDirection, float InKnockbackStrength);
-
 	void TakeExecutionHold();
 	void TakeBack();
 

@@ -145,20 +145,22 @@ void AShield::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 		}
 	}
 }
-void AShield::ExecuteGetHit(FHitResult& BoxHit)
-{
-	IHitInterface* HitInterface = Cast<IHitInterface>(BoxHit.GetActor());
-	if (HitInterface)
-	{
-		HitInterface->Execute_GetHit(BoxHit.GetActor(), BoxHit.ImpactPoint, GetOwner());
-	}
-}
+
 void AShield::ExecuteGetStun(FHitResult& BoxHit)
 {
 	IHitInterface* HitInterface = Cast<IHitInterface>(BoxHit.GetActor());
 	if (HitInterface)
 	{
 		HitInterface->Execute_GetStun(BoxHit.GetActor(), BoxHit.ImpactPoint, GetOwner());
+	}
+}
+
+void AShield::ExecuteGetHit(FHitResult& BoxHit)
+{
+	IHitInterface* HitInterface = Cast<IHitInterface>(BoxHit.GetActor());
+	if (HitInterface)
+	{
+		HitInterface->Execute_GetHit(BoxHit.GetActor(), BoxHit.ImpactPoint, GetOwner());
 	}
 }
 

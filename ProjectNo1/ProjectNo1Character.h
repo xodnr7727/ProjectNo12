@@ -17,6 +17,7 @@ class UCameraComponent;
 class UAnimMontage;
 class USlashOverlay;
 class UInventoryUI;
+class UGameRetryUI;
 class AMyPlayerController;
 class UNiagaraSystem;
 class USoundBase;
@@ -362,10 +363,12 @@ protected:
 	void BlessingPointInteractInput();
 
 	void EnableHit(); //무적해제
-	void ActivateSkillParticles();
 	void ExecuteGetHit(FHitResult& HitResult);
+
 	bool IsAttackSkill();
+	void ActivateSkillParticles();
 	void DeactivateSkillEffect(); //이펙트 해제
+
 	void RestoreAllDamage();
 	void RestoreDamage(); //공격력 복구
 	void IncreaseSkillDamage();
@@ -431,6 +434,12 @@ private:
 
 		UPROPERTY()
 		UInventoryUI* InventoryUI;
+
+		UPROPERTY(EditDefaultsOnly, Category = "UI")
+		TSubclassOf<UGameRetryUI> GameRetryUIClass;
+
+		UPROPERTY()
+		UGameRetryUI* GameRetryUI;
 
 		UPROPERTY(EditAnywhere, Category = "UI")
 		TSubclassOf<class UUserWidget> ClearWidgetClass;
